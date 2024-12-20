@@ -1,7 +1,7 @@
 package redis.clients.jedis;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.exceptions.InvalidURIException;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
@@ -9,11 +9,12 @@ import redis.clients.jedis.exceptions.JedisException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class JedisPoolTest {
 
@@ -106,19 +107,21 @@ public class JedisPoolTest {
     assertTrue(pool.isClosed());
   }
 
-  @Test(expected = JedisException.class)
+  @Test
   public void checkPoolOverflow() {
-    var config = new JedisPoolConfig();
-    config.setMaxTotal(1);
-    // config.setBlockWhenExhausted(false);
-    try (JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort());
+    assertThrows(JedisException.class, () -> {
+      var config = new JedisPoolConfig();
+      config.setMaxTotal(1);
+      // config.setBlockWhenExhausted(false);
+      try (JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort());
          Jedis jedis = pool.getResource()) {
-      jedis.auth(endpointStandalone0.getPassword());
+        jedis.auth(endpointStandalone0.getPassword());
 
-      try (Jedis jedis2 = pool.getResource()) {
-        jedis2.auth(endpointStandalone0.getPassword());
+        try (Jedis jedis2 = pool.getResource()) {
+          jedis2.auth(endpointStandalone0.getPassword());
+        }
       }
-    }
+    });
   }
 
   @Test
@@ -178,9 +181,10 @@ public class JedisPoolTest {
     }
   }
 
-  @Test(expected = InvalidURIException.class)
-  public void shouldThrowInvalidURIExceptionForInvalidURI() throws URISyntaxException {
-    new JedisPool(new URI("localhost:6380")).close();
+  @Test
+  public void shouldThrowInvalidURIExceptionForInvalidURI() {
+    assertThrows(InvalidURIException.class, () ->
+        new JedisPool(new URI("localhost:6380")).close());
   }
 
   @Test
@@ -203,7 +207,7 @@ public class JedisPoolTest {
       jedis0.close();
 
       Jedis jedis1 = pool.getResource();
-      assertTrue("Jedis instance was not reused", jedis1 == jedis0);
+      assertTrue(jedis1 == jedis0, "Jedis instance was not reused");
       assertEquals(0, jedis1.getDB());
 
       jedis1.close();
@@ -225,7 +229,7 @@ public class JedisPoolTest {
                                         endpointStandalone0.getPassword(), 0, "invalid client name"); Jedis jedis = pool.getResource()) {
     } catch (Exception e) {
       if (!e.getMessage().startsWith("client info cannot contain space")) {
-        Assert.fail("invalid client name test fail");
+        Assertions.fail("invalid client name test fail");
       }
     }
   }

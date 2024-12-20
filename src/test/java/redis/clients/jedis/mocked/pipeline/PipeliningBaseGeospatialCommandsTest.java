@@ -1,15 +1,6 @@
 package redis.clients.jedis.mocked.pipeline;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.GeoCoordinate;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.args.GeoUnit;
@@ -18,6 +9,14 @@ import redis.clients.jedis.params.GeoRadiusParam;
 import redis.clients.jedis.params.GeoRadiusStoreParam;
 import redis.clients.jedis.params.GeoSearchParam;
 import redis.clients.jedis.resps.GeoRadiusResponse;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.when;
 
 public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTestBase {
 

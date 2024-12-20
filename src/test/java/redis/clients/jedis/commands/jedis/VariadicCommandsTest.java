@@ -1,18 +1,18 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import redis.clients.jedis.RedisProtocol;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 @RunWith(Parameterized.class)
 public class VariadicCommandsTest extends JedisCommandsTestBase {

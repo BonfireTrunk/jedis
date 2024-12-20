@@ -1,18 +1,8 @@
 package redis.clients.jedis.commands.unified.cluster;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.RedisProtocol;
@@ -22,6 +12,16 @@ import redis.clients.jedis.params.ZParams;
 import redis.clients.jedis.params.ZRangeParams;
 import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.KeyValue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 @RunWith(Parameterized.class)
 public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
@@ -36,12 +36,12 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = ClusterCommandsTestHelper.getCleanCluster(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     jedis.close();
     ClusterCommandsTestHelper.clearClusterData();

@@ -1,6 +1,16 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import redis.clients.jedis.search.FTSpellCheckParams;
+import redis.clients.jedis.search.schemafields.TextField;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,26 +18,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
-import redis.clients.jedis.search.FTSpellCheckParams;
-import redis.clients.jedis.search.schemafields.TextField;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(Parameterized.class)
 public class SpellCheckTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "spellcheck";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -92,17 +91,17 @@ public class SpellCheckTest extends RedisModuleCommandsTestBase {
   @Test
   public void distanceBound() {
     client.ftCreate(index, TextField.of("name"), TextField.of("body"));
-    Assert.assertThrows(JedisDataException.class, () -> client.ftSpellCheck(index, "name",
+    Assertions.assertThrows(JedisDataException.class, () -> client.ftSpellCheck(index, "name",
         FTSpellCheckParams.spellCheckParams().distance(0)));
   }
 
   @Test
   public void dialectBound() {
     client.ftCreate(index, TextField.of("t"));
-    JedisDataException error = Assert.assertThrows(JedisDataException.class,
+    JedisDataException error = Assertions.assertThrows(JedisDataException.class,
         () -> client.ftSpellCheck(index, "Tooni toque kerfuffle",
             FTSpellCheckParams.spellCheckParams().dialect(0)));
-    MatcherAssert.assertThat(error.getMessage(),
+    assertThat(error.getMessage(),
         Matchers.containsString("DIALECT requires a non negative integer"));
   }
 }

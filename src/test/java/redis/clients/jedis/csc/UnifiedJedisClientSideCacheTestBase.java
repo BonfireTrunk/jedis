@@ -1,17 +1,16 @@
 package redis.clients.jedis.csc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.UnifiedJedis;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import redis.clients.jedis.UnifiedJedis;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public abstract class UnifiedJedisClientSideCacheTestBase {
 
@@ -21,13 +20,13 @@ public abstract class UnifiedJedisClientSideCacheTestBase {
 
   protected abstract UnifiedJedis createCachedJedis(CacheConfig cacheConfig);
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     control = createRegularJedis();
     control.flushAll();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     control.close();
   }

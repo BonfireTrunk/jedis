@@ -1,26 +1,26 @@
 package redis.clients.jedis.modules.bloom;
 
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.bloom.TDigestMergeParams;
+import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.bloom.TDigestMergeParams;
-import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(Parameterized.class)
 public class TDigestTest extends RedisModuleCommandsTestBase {
 
   private static final Random random = new Random();
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }

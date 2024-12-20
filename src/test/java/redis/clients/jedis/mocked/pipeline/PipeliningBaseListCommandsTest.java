@@ -1,18 +1,17 @@
 package redis.clients.jedis.mocked.pipeline;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.args.ListDirection;
 import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.params.LPosParams;
 import redis.clients.jedis.util.KeyValue;
+
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.when;
 
 public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase {
 

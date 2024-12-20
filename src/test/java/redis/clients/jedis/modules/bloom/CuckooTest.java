@@ -1,24 +1,26 @@
 package redis.clients.jedis.modules.bloom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.bloom.CFInsertParams;
 import redis.clients.jedis.bloom.CFReserveParams;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests for the Cuckoo Filter Implementation
@@ -26,7 +28,7 @@ import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 @RunWith(Parameterized.class)
 public class CuckooTest extends RedisModuleCommandsTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -219,9 +221,8 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void testDeleteFilterDoesNotExist() {
-    Exception ex = assertThrows(JedisDataException.class, () -> {
-      client.cfDel("cuckoo19", "foo");
-    });
+    Exception ex = assertThrows(JedisDataException.class, () ->
+        client.cfDel("cuckoo19", "foo"));
     assertTrue(ex.getMessage().contains("Not found"));
   }
 
@@ -244,13 +245,13 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void testInfoFilterDoesNotExists() {
-    Exception ex = assertThrows(JedisDataException.class, () -> {
-      client.cfInfo("cuckoo23");
-    });
+    Exception ex = assertThrows(JedisDataException.class, () ->
+        client.cfInfo("cuckoo23"));
     assertTrue(ex.getMessage().contains("ERR not found"));
   }
 
-  @Test(timeout = 2000L)
+  @Test
+  @Timeout(value = 2000L, unit = TimeUnit.MILLISECONDS)
   public void testScanDumpAndLoadChunk() {
     client.cfReserve("cuckoo24", 100L /*capacity*/, CFReserveParams.reserveParams().bucketSize(50));
     client.cfAdd("cuckoo24-dump", "a");

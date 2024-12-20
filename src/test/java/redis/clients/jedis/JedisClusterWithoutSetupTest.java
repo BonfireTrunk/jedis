@@ -1,11 +1,11 @@
 package redis.clients.jedis;
 
-import static java.util.Collections.emptySet;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.exceptions.JedisClusterOperationException;
+
+import static java.util.Collections.emptySet;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JedisClusterWithoutSetupTest {
 

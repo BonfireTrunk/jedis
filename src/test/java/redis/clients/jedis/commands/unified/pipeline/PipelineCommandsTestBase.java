@@ -1,15 +1,14 @@
 package redis.clients.jedis.commands.unified.pipeline;
 
-import java.util.Collection;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.commands.CommandsTestsParameters;
 import redis.clients.jedis.commands.unified.pooled.PooledCommandsTestHelper;
+
+import java.util.Collection;
 
 public abstract class PipelineCommandsTestBase {
 
@@ -19,7 +18,6 @@ public abstract class PipelineCommandsTestBase {
    *
    * @see CommandsTestsParameters#respVersions()
    */
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return CommandsTestsParameters.respVersions();
   }
@@ -27,7 +25,7 @@ public abstract class PipelineCommandsTestBase {
   protected JedisPooled jedis;
   protected Pipeline pipe;
 
-  protected final RedisProtocol protocol;
+  protected RedisProtocol protocol;
 
   /**
    * The RESP protocol is to be injected by the subclasses, usually via JUnit
@@ -38,18 +36,18 @@ public abstract class PipelineCommandsTestBase {
    *
    * @param protocol The RESP protocol to use during the tests.
    */
-  public PipelineCommandsTestBase(RedisProtocol protocol) {
+  public void initPipelineCommandsTestBase(RedisProtocol protocol) {
     this.protocol = protocol;
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = PooledCommandsTestHelper.getPooled(protocol);
     PooledCommandsTestHelper.clearData();
     pipe = jedis.pipelined();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     pipe.close();
     jedis.close();

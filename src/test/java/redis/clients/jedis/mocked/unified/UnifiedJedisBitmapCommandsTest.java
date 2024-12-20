@@ -1,18 +1,18 @@
 package redis.clients.jedis.mocked.unified;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.args.BitCountOption;
+import redis.clients.jedis.args.BitOP;
+import redis.clients.jedis.params.BitPosParams;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
-import redis.clients.jedis.args.BitCountOption;
-import redis.clients.jedis.args.BitOP;
-import redis.clients.jedis.params.BitPosParams;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class UnifiedJedisBitmapCommandsTest extends UnifiedJedisMockedTestBase {
 

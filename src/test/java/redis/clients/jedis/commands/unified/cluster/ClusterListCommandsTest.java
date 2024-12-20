@@ -1,18 +1,8 @@
 package redis.clients.jedis.commands.unified.cluster;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
@@ -21,6 +11,16 @@ import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.args.ListDirection;
 import redis.clients.jedis.commands.unified.ListCommandsTestBase;
 import redis.clients.jedis.util.KeyValue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @RunWith(Parameterized.class)
 public class ClusterListCommandsTest extends ListCommandsTestBase {
@@ -31,12 +31,12 @@ public class ClusterListCommandsTest extends ListCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = ClusterCommandsTestHelper.getCleanCluster(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     jedis.close();
     ClusterCommandsTestHelper.clearClusterData();

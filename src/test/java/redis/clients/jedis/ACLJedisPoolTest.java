@@ -1,7 +1,7 @@
 package redis.clients.jedis;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.exceptions.InvalidURIException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.RedisVersionUtil;
@@ -9,10 +9,11 @@ import redis.clients.jedis.util.RedisVersionUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This test class is a copy of {@link JedisPoolTest}.
@@ -24,11 +25,11 @@ public class ACLJedisPoolTest {
 
   private static final EndpointConfig endpointWithDefaultUser = HostAndPorts.getRedisEndpoint("standalone0");
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() throws Exception {
     // Use to check if the ACL test should be ran. ACL are available only in 6.0 and later
-    org.junit.Assume.assumeTrue("Not running ACL test on this version of Redis",
-                                RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint));
+    org.junit.jupiter.api.Assumptions.assumeTrue(RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint),
+                                                 "Not running ACL test on this version of Redis");
   }
 
   @Test
@@ -113,19 +114,21 @@ public class ACLJedisPoolTest {
     assertTrue(pool.isClosed());
   }
 
-  @Test(expected = JedisException.class)
+  @Test
   public void checkPoolOverflow() {
-    var config = new JedisPoolConfig();
-    config.setMaxTotal(1);
-    // config.setBlockWhenExhausted(false);
-    try (JedisPool pool = new JedisPool(config, endpoint.getHost(), endpoint.getPort());
+    assertThrows(JedisException.class, () -> {
+      var config = new JedisPoolConfig();
+      config.setMaxTotal(1);
+      // config.setBlockWhenExhausted(false);
+      try (JedisPool pool = new JedisPool(config, endpoint.getHost(), endpoint.getPort());
          Jedis jedis = pool.getResource()) {
-      jedis.auth(endpoint.getUsername(), endpoint.getPassword());
+        jedis.auth(endpoint.getUsername(), endpoint.getPassword());
 
-      try (Jedis jedis2 = pool.getResource()) {
-        jedis2.auth(endpoint.getUsername(), endpoint.getPassword());
+        try (Jedis jedis2 = pool.getResource()) {
+          jedis2.auth(endpoint.getUsername(), endpoint.getPassword());
+        }
       }
-    }
+    });
   }
 
   @Test
@@ -204,9 +207,10 @@ public class ACLJedisPoolTest {
     }
   }
 
-  @Test(expected = InvalidURIException.class)
-  public void shouldThrowInvalidURIExceptionForInvalidURI() throws URISyntaxException {
-    new JedisPool(new URI("localhost:6379")).close();
+  @Test
+  public void shouldThrowInvalidURIExceptionForInvalidURI() {
+    assertThrows(InvalidURIException.class, () ->
+        new JedisPool(new URI("localhost:6379")).close());
   }
 
   @Test
@@ -229,7 +233,7 @@ public class ACLJedisPoolTest {
       jedis0.close();
 
       Jedis jedis1 = pool.getResource();
-      assertTrue("Jedis instance was not reused", jedis1 == jedis0);
+      assertTrue(jedis1 == jedis0, "Jedis instance was not reused");
       assertEquals(0, jedis1.getDB());
 
       jedis1.close();

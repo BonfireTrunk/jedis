@@ -1,31 +1,32 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
-
-import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.LongConsumer;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import redis.clients.jedis.exceptions.JedisAskDataException;
 import redis.clients.jedis.exceptions.JedisClusterOperationException;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisMovedDataException;
 import redis.clients.jedis.executors.ClusterCommandExecutor;
 import redis.clients.jedis.providers.ClusterConnectionProvider;
+
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongConsumer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 public class ClusterCommandExecutorTest {
 
@@ -294,28 +295,30 @@ public class ClusterCommandExecutorTest {
     inOrder.verify(connectionHandler).renewSlotCache();
     inOrder.verify(connectionHandler).getConnection(STR_COM_OBJECT.getArguments());
     inOrder.verifyNoMoreInteractions();
-    MatcherAssert.assertThat(totalSleepMs.get(), Matchers.greaterThan(0L));
+    assertThat(totalSleepMs.get(), Matchers.greaterThan(0L));
   }
 
-  @Test(expected = JedisClusterOperationException.class)
+  @Test
   public void runRethrowsJedisNoReachableClusterNodeException() {
-    ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
-    when(connectionHandler.getConnection(STR_COM_OBJECT.getArguments())).thenThrow(
-      JedisClusterOperationException.class);
+    assertThrows(JedisClusterOperationException.class, () -> {
+      ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
+      when(connectionHandler.getConnection(STR_COM_OBJECT.getArguments())).thenThrow(
+          JedisClusterOperationException.class);
 
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, Duration.ZERO) {
-      @Override
-      public <T> T execute(Connection connection, CommandObject<T> commandObject) {
-        return null;
-      }
+      ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, Duration.ZERO) {
+        @Override
+        public <T> T execute(Connection connection, CommandObject<T> commandObject) {
+          return null;
+        }
 
-      @Override
-      protected void sleep(long ignored) {
-        throw new RuntimeException("This test should never sleep");
-      }
-    };
+        @Override
+        protected void sleep(long ignored) {
+          throw new RuntimeException("This test should never sleep");
+        }
+      };
 
-    testMe.executeCommand(STR_COM_OBJECT);
+      testMe.executeCommand(STR_COM_OBJECT);
+    });
   }
 
   @Test

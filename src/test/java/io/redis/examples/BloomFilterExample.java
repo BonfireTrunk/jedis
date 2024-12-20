@@ -3,9 +3,10 @@
 // HIDE_START
 package io.redis.examples;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
-import org.junit.Test;
-import org.junit.Assert;
+
 import java.util.List;
 
 public class BloomFilterExample {
@@ -24,7 +25,7 @@ public class BloomFilterExample {
         System.out.println(res1); // >>> OK
 
         // REMOVE_START
-        Assert.assertEquals("OK", res1);
+        Assertions.assertEquals("OK", res1);
         // REMOVE_END
 
         boolean res2 = jedis.bfAdd("bikes:models", "Smoky Mountain Striker");

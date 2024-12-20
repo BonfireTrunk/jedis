@@ -1,34 +1,37 @@
 package redis.clients.jedis.modules.graph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.*;
-
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.graph.Header;
 import redis.clients.jedis.graph.Record;
 import redis.clients.jedis.graph.ResultSet;
 import redis.clients.jedis.graph.Statistics;
-import redis.clients.jedis.graph.entities.*;
+import redis.clients.jedis.graph.entities.Edge;
+import redis.clients.jedis.graph.entities.Node;
+import redis.clients.jedis.graph.entities.Path;
+import redis.clients.jedis.graph.entities.Point;
+import redis.clients.jedis.graph.entities.Property;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 
-@org.junit.Ignore
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@org.junit.jupiter.api.Disabled
 @RunWith(Parameterized.class)
 public class GraphAPITest extends RedisModuleCommandsTestBase {
 
-  @BeforeClass
+    @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -37,7 +40,7 @@ public class GraphAPITest extends RedisModuleCommandsTestBase {
     super(protocol);
   }
 
-  @After
+    @AfterEach
   @Override
   public void tearDown() throws Exception {
     client.graphDelete("social");

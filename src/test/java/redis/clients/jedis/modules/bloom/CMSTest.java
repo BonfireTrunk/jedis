@@ -1,21 +1,21 @@
 package redis.clients.jedis.modules.bloom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for the Count-Min-Sketch Implementation
@@ -23,7 +23,7 @@ import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 @RunWith(Parameterized.class)
 public class CMSTest extends RedisModuleCommandsTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -58,9 +58,8 @@ public class CMSTest extends RedisModuleCommandsTestBase {
   @Test
   public void testKeyAlreadyExists() {
     client.cmsInitByDim("dup", 16L, 4L);
-    JedisException thrown = assertThrows(JedisException.class, () -> {
-      client.cmsInitByDim("dup", 8L, 6L);
-    });
+    JedisException thrown = assertThrows(JedisException.class, () ->
+        client.cmsInitByDim("dup", 8L, 6L));
     assertEquals("CMS: key already exists", thrown.getMessage());
   }
 

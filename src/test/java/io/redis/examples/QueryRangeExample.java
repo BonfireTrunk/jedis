@@ -2,22 +2,25 @@
 // REMOVE_START
 package io.redis.examples;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-// REMOVE_END
-// HIDE_START
-import java.util.List;
-// REMOVE_START
-import java.util.stream.Stream;
-// REMOVE_END
-
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
-import redis.clients.jedis.search.*;
-import redis.clients.jedis.search.schemafields.*;
+import redis.clients.jedis.args.SortingOrder;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.json.Path2;
-import redis.clients.jedis.args.SortingOrder;
+import redis.clients.jedis.search.Document;
+import redis.clients.jedis.search.FTCreateParams;
+import redis.clients.jedis.search.FTSearchParams;
+import redis.clients.jedis.search.IndexDataType;
+import redis.clients.jedis.search.SearchResult;
+import redis.clients.jedis.search.schemafields.NumericField;
+import redis.clients.jedis.search.schemafields.SchemaField;
+import redis.clients.jedis.search.schemafields.TagField;
+import redis.clients.jedis.search.schemafields.TextField;
+
+import java.util.List;
+import java.util.stream.Stream;
+
 // HIDE_END
 
 
@@ -233,8 +236,8 @@ public class QueryRangeExample {
 
         // Tests for 'range1' step.
         // REMOVE_START
-        Assert.assertEquals(3, res1.getTotalResults());
-        Assert.assertArrayEquals(
+        Assertions.assertEquals(3, res1.getTotalResults());
+        Assertions.assertArrayEquals(
             Stream.of("bicycle:5", "bicycle:9", "bicycle:2").sorted().toArray(),
             docs1.stream().map(Document::getId).sorted().toArray()
         );
@@ -262,8 +265,8 @@ public class QueryRangeExample {
 
         // Tests for 'range2' step.
         // REMOVE_START
-        Assert.assertEquals(3, res2.getTotalResults());
-        Assert.assertArrayEquals(
+        Assertions.assertEquals(3, res2.getTotalResults());
+        Assertions.assertArrayEquals(
             Stream.of("bicycle:5", "bicycle:9", "bicycle:2").sorted().toArray(),
             docs2.stream().map(Document::getId).sorted().toArray()
         );
@@ -293,8 +296,8 @@ public class QueryRangeExample {
 
         // Tests for 'range3' step.
         // REMOVE_START
-        Assert.assertEquals(5, res3.getTotalResults());
-        Assert.assertArrayEquals(
+        Assertions.assertEquals(5, res3.getTotalResults());
+        Assertions.assertArrayEquals(
             Stream.of("bicycle:1", "bicycle:4", "bicycle:6", "bicycle:3", "bicycle:8").sorted()
                 .toArray(),
             docs3.stream().map(Document::getId).sorted().toArray());
@@ -325,12 +328,12 @@ public class QueryRangeExample {
 
         // Tests for 'range4' step.
         // REMOVE_START
-        Assert.assertEquals(7, res4.getTotalResults());
-        Assert.assertEquals("bicycle:0", docs4.get(0).getId());
-        Assert.assertEquals("bicycle:7", docs4.get(1).getId());
-        Assert.assertEquals("bicycle:5", docs4.get(2).getId());
-        Assert.assertEquals("bicycle:2", docs4.get(3).getId());
-        Assert.assertEquals("bicycle:9", docs4.get(4).getId());
+        Assertions.assertEquals(7, res4.getTotalResults());
+        Assertions.assertEquals("bicycle:0", docs4.get(0).getId());
+        Assertions.assertEquals("bicycle:7", docs4.get(1).getId());
+        Assertions.assertEquals("bicycle:5", docs4.get(2).getId());
+        Assertions.assertEquals("bicycle:2", docs4.get(3).getId());
+        Assertions.assertEquals("bicycle:9", docs4.get(4).getId());
         // REMOVE_END
 
 // HIDE_START

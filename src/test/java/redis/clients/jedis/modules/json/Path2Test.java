@@ -1,21 +1,24 @@
 package redis.clients.jedis.modules.json;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.json.Path2;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Path2Test {
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void _null() {
-    Path2.of(null);
+    assertThrows(NullPointerException.class, () ->
+        Path2.of(null));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void empty() {
-    Path2.of("");
+    assertThrows(IllegalArgumentException.class, () ->
+        Path2.of(""));
   }
 
   @Test

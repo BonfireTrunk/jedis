@@ -1,44 +1,65 @@
 package redis.clients.jedis.modules.search;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
-import static redis.clients.jedis.util.AssertUtil.assertOK;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-
 import redis.clients.jedis.GeoCoordinate;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.args.GeoUnit;
 import redis.clients.jedis.args.SortingOrder;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.json.Path;
-import redis.clients.jedis.search.*;
-import redis.clients.jedis.search.schemafields.*;
-import redis.clients.jedis.search.schemafields.GeoShapeField.CoordinateSystem;
-import redis.clients.jedis.search.schemafields.VectorField.VectorAlgorithm;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import redis.clients.jedis.search.Document;
+import redis.clients.jedis.search.FTCreateParams;
+import redis.clients.jedis.search.FTProfileParams;
+import redis.clients.jedis.search.FTSearchParams;
+import redis.clients.jedis.search.FieldName;
+import redis.clients.jedis.search.FtSearchIteration;
+import redis.clients.jedis.search.IndexDataType;
+import redis.clients.jedis.search.RediSearchUtil;
+import redis.clients.jedis.search.SearchResult;
+import redis.clients.jedis.search.schemafields.GeoField;
+import redis.clients.jedis.search.schemafields.GeoShapeField;
+import redis.clients.jedis.search.schemafields.GeoShapeField.CoordinateSystem;
+import redis.clients.jedis.search.schemafields.NumericField;
+import redis.clients.jedis.search.schemafields.SchemaField;
+import redis.clients.jedis.search.schemafields.TagField;
+import redis.clients.jedis.search.schemafields.TextField;
+import redis.clients.jedis.search.schemafields.VectorField;
+import redis.clients.jedis.search.schemafields.VectorField.VectorAlgorithm;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static redis.clients.jedis.util.AssertUtil.assertOK;
 
 @RunWith(Parameterized.class)
 public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "testindex";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -1241,7 +1262,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
             .build()));
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void searchProfile() {
     assertOK(client.ftCreate(index, TextField.of("t1"), TextField.of("t2")));
@@ -1278,7 +1299,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
             .map(map -> map.get("Type")).collect(Collectors.toList()));
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void vectorSearchProfile() {
     assertOK(client.ftCreate(index, VectorField.builder().fieldName("v")
@@ -1318,7 +1339,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertEquals("Sorter", resultProcessorsProfile.get(2).get("Type"));
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void maxPrefixExpansionSearchProfile() {
     final String configParam = "MAXPREFIXEXPANSIONS";
@@ -1346,7 +1367,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     }
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void noContentSearchProfile() {
     assertOK(client.ftCreate(index, TextField.of("t")));
@@ -1374,7 +1395,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     }
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void deepReplySearchProfile() {
     assertOK(client.ftCreate(index, TextField.of("t")));
@@ -1416,7 +1437,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     }
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void limitedSearchProfile() {
     assertOK(client.ftCreate(index, TextField.of("t")));

@@ -1,17 +1,15 @@
 // EXAMPLE: set_tutorial
 package io.redis.examples;
 
-//REMOVE_START
-import org.junit.Test;
-import static org.junit.Assert.*;
-//REMOVE_END
-
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.params.SetParams;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class StringExample {
   @Test

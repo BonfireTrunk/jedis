@@ -1,18 +1,17 @@
 package redis.clients.jedis.modules.graph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.graph.entities.Edge;
+import redis.clients.jedis.graph.entities.Node;
+import redis.clients.jedis.graph.entities.Path;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import redis.clients.jedis.graph.entities.Edge;
-import redis.clients.jedis.graph.entities.Node;
-import redis.clients.jedis.graph.entities.Path;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PathTest {
 

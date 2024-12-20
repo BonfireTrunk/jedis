@@ -1,18 +1,25 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.*;
-import static redis.clients.jedis.Protocol.Command.INCR;
-import static redis.clients.jedis.Protocol.Command.GET;
-import static redis.clients.jedis.Protocol.Command.SET;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.util.SafeEncoder;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.Protocol.Command.GET;
+import static redis.clients.jedis.Protocol.Command.INCR;
+import static redis.clients.jedis.Protocol.Command.SET;
 
 public class ReliableTransactionTest {
 
@@ -28,7 +35,7 @@ public class ReliableTransactionTest {
   private Connection conn;
   private Jedis nj;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     conn = new Connection(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().timeoutMillis(500).build());
@@ -38,7 +45,7 @@ public class ReliableTransactionTest {
     nj.flushAll();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     nj.close();
     conn.close();
@@ -184,14 +191,16 @@ public class ReliableTransactionTest {
     assertArrayEquals("foo".getBytes(), set.get());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void transactionResponseWithinPipeline() {
-    nj.set("string", "foo");
+    assertThrows(IllegalStateException.class, () -> {
+      nj.set("string", "foo");
 
-    ReliableTransaction t = new ReliableTransaction(conn);
-    Response<String> string = t.get("string");
-    string.get();
-    t.exec();
+      ReliableTransaction t      = new ReliableTransaction(conn);
+      Response<String>    string = t.get("string");
+      string.get();
+      t.exec();
+    });
   }
 
   @Test

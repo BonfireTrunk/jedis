@@ -1,19 +1,18 @@
 package redis.clients.jedis.commands.jedis;
 
-import static redis.clients.jedis.Protocol.CLUSTER_HASHSLOTS;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.util.JedisClusterCRC16;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.HostAndPorts;
-import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.util.JedisClusterCRC16;
+import static redis.clients.jedis.Protocol.CLUSTER_HASHSLOTS;
 
 public abstract class ClusterJedisCommandsTestBase {
 
@@ -27,7 +26,7 @@ public abstract class ClusterJedisCommandsTestBase {
   private final Set<HostAndPort> jedisClusterNode = new HashSet<>();
   JedisCluster cluster;
 
-  @Before
+  @BeforeEach
   public void setUp() throws InterruptedException {
     node1 = new Jedis(nodeInfo1);
     node1.auth("cluster");
@@ -77,7 +76,7 @@ public abstract class ClusterJedisCommandsTestBase {
 
   }
 
-  @AfterClass
+  @AfterAll
   public static void cleanUp() {
     int slotTest = JedisClusterCRC16.getSlot("test");
     int slot51 = JedisClusterCRC16.getSlot("51");
@@ -87,7 +86,7 @@ public abstract class ClusterJedisCommandsTestBase {
     node2.clusterDelSlots(slotTest, slot51);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     // clear all slots
 //    int[] slotsToDelete = new int[JedisCluster.HASHSLOTS];

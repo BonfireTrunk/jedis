@@ -1,21 +1,27 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.*;
-import static redis.clients.jedis.Protocol.CLUSTER_HASHSLOTS;
-
-import java.util.*;
-
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import redis.clients.jedis.args.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import redis.clients.jedis.args.BitOP;
+import redis.clients.jedis.args.ClusterResetType;
+import redis.clients.jedis.args.GeoUnit;
+import redis.clients.jedis.args.ListDirection;
+import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.*;
+import redis.clients.jedis.params.BitPosParams;
+import redis.clients.jedis.params.GeoAddParams;
+import redis.clients.jedis.params.GeoRadiusParam;
+import redis.clients.jedis.params.GeoRadiusStoreParam;
+import redis.clients.jedis.params.LPosParams;
+import redis.clients.jedis.params.SetParams;
+import redis.clients.jedis.params.SortingParams;
+import redis.clients.jedis.params.XAddParams;
+import redis.clients.jedis.params.ZAddParams;
 import redis.clients.jedis.providers.ClusterConnectionProvider;
 import redis.clients.jedis.resps.GeoRadiusResponse;
 import redis.clients.jedis.resps.StreamEntry;
@@ -23,6 +29,20 @@ import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.AssertUtil;
 import redis.clients.jedis.util.JedisClusterTestUtil;
 import redis.clients.jedis.util.SafeEncoder;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.Protocol.CLUSTER_HASHSLOTS;
 
 public class ClusterPipeliningTest {
 
@@ -40,7 +60,7 @@ public class ClusterPipeliningTest {
   private static HostAndPort nodeInfo3 = HostAndPorts.getClusterServers().get(2);
   private Set<HostAndPort> nodes = new HashSet<>(Arrays.asList(nodeInfo1, nodeInfo2, nodeInfo3));
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws InterruptedException {
     node1 = new Jedis(nodeInfo1);
     node1.auth("cluster");
@@ -80,21 +100,21 @@ public class ClusterPipeliningTest {
     JedisClusterTestUtil.waitForClusterReady(node1, node2, node3);
   }
 
-  @Before
+  @BeforeEach
   public void prepare() {
     node1.flushAll();
     node2.flushAll();
     node3.flushAll();
   }
 
-  @After
+  @AfterEach
   public void cleanUp() {
     node1.flushDB();
     node2.flushDB();
     node3.flushDB();
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws InterruptedException {
     node1.flushDB();
     node2.flushDB();
@@ -351,14 +371,16 @@ public class ClusterPipeliningTest {
     assertTrue(Arrays.equals(secondKey, value1) || Arrays.equals(secondKey, value2));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void pipelineResponseWithinPipeline() {
-    try (ClusterConnectionProvider provider = new ClusterConnectionProvider(nodes, DEFAULT_CLIENT_CONFIG)) {
-      ClusterPipeline p = new ClusterPipeline(provider);
-      Response<String> string = p.get("string");
-      string.get();
-      p.sync();
-    }
+    assertThrows(IllegalStateException.class, () -> {
+      try (ClusterConnectionProvider provider = new ClusterConnectionProvider(nodes, DEFAULT_CLIENT_CONFIG)) {
+        ClusterPipeline  p      = new ClusterPipeline(provider);
+        Response<String> string = p.get("string");
+        string.get();
+        p.sync();
+      }
+    });
   }
 
   @Test
@@ -932,8 +954,8 @@ public class ClusterPipeliningTest {
       p.sync();
 
       List<?> results = (List<?>) result.get();
-      MatcherAssert.assertThat((List<String>) results.get(0), Matchers.hasItem("key1"));
-      MatcherAssert.assertThat((List<Long>) results.get(1), Matchers.hasItem(2L));
+      assertThat((List<String>) results.get(0), Matchers.hasItem("key1"));
+      assertThat((List<Long>) results.get(1), Matchers.hasItem(2L));
     }
   }
 
@@ -948,8 +970,8 @@ public class ClusterPipeliningTest {
       p.sync();
 
       List<?> results = (List<?>) result.get();
-      MatcherAssert.assertThat((List<byte[]>) results.get(0), Matchers.hasItem(bKey));
-      MatcherAssert.assertThat((List<Long>) results.get(1), Matchers.hasItem(2L));
+      assertThat((List<byte[]>) results.get(0), Matchers.hasItem(bKey));
+      assertThat((List<Long>) results.get(1), Matchers.hasItem(2L));
     }
   }
 
@@ -1076,7 +1098,8 @@ public class ClusterPipeliningTest {
     }
   }
 
-  @Test(timeout = 10_000L)
+  @Test
+  @Timeout(value = 10_000L, unit = TimeUnit.MILLISECONDS)
   public void multiple() {
     final int maxTotal = 100;
     ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
@@ -1109,6 +1132,6 @@ public class ClusterPipeliningTest {
         .filter(thread -> thread != null && thread.getName() != null
             && thread.getName().startsWith("pool-"))
         .count();
-    MatcherAssert.assertThat(count, Matchers.lessThanOrEqualTo(20));
+    assertThat(count, Matchers.lessThanOrEqualTo(20));
   }
 }

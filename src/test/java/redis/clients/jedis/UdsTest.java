@@ -1,14 +1,15 @@
 package redis.clients.jedis;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UdsTest {
 

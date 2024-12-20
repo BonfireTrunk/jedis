@@ -1,13 +1,13 @@
 //EXAMPLE: tdigest_tutorial
 //HIDE_START
 package io.redis.examples;
-//HIDE_END
 
-//REMOVE_START
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
+
 import java.util.List;
+
 //REMOVE_END
 
 public class TDigestExample {
@@ -34,7 +34,7 @@ public class TDigestExample {
         //STEP_END
 
         //REMOVE_START
-        Assert.assertEquals("OK","OK");
+        Assertions.assertEquals("OK", "OK");
         //REMOVE_END
 
         //STEP_START tdig_cdf

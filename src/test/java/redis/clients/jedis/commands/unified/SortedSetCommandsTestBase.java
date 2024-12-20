@@ -1,22 +1,36 @@
 package redis.clients.jedis.commands.unified;
 
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
-
-import java.util.*;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.args.SortedSetOption;
-import redis.clients.jedis.params.*;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.params.ZAddParams;
+import redis.clients.jedis.params.ZIncrByParams;
+import redis.clients.jedis.params.ZParams;
+import redis.clients.jedis.params.ZRangeParams;
 import redis.clients.jedis.resps.ScanResult;
 import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.AssertUtil;
 import redis.clients.jedis.util.KeyValue;
 import redis.clients.jedis.util.SafeEncoder;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 public abstract class SortedSetCommandsTestBase extends UnifiedJedisCommandsTestBase {
   final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };

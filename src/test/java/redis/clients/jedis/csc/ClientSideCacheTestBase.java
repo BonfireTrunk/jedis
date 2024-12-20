@@ -1,7 +1,7 @@
 package redis.clients.jedis.csc;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import redis.clients.jedis.ConnectionPoolConfig;
 import redis.clients.jedis.EndpointConfig;
 import redis.clients.jedis.HostAndPort;
@@ -20,13 +20,13 @@ abstract class ClientSideCacheTestBase {
 
   protected Jedis control;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     control = new Jedis(hnp, endpoint.getClientConfigBuilder().build());
     control.flushAll();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     control.close();
   }

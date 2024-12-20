@@ -1,12 +1,15 @@
 package redis.clients.jedis.commands.jedis;
 
-import java.util.Collection;
-
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runners.Parameterized.Parameters;
-import redis.clients.jedis.*;
+import redis.clients.jedis.EndpointConfig;
+import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.commands.CommandsTestsParameters;
+
+import java.util.Collection;
 
 public abstract class JedisCommandsTestBase {
 
@@ -40,14 +43,14 @@ public abstract class JedisCommandsTestBase {
     this.protocol = protocol;
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     jedis = new Jedis(endpoint.getHostAndPort(), endpoint.getClientConfigBuilder()
         .protocol(protocol).timeoutMillis(500).build());
     jedis.flushAll();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     jedis.close();
   }

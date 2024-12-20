@@ -1,16 +1,12 @@
 package redis.clients.jedis.commands.commandobjects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThrows;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.args.FlushMode;
+import redis.clients.jedis.args.FunctionRestorePolicy;
+import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.resps.FunctionStats;
+import redis.clients.jedis.resps.LibraryInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,13 +14,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.args.FlushMode;
-import redis.clients.jedis.args.FunctionRestorePolicy;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.resps.FunctionStats;
-import redis.clients.jedis.resps.LibraryInfo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=scripting">Scripting</a> commands.

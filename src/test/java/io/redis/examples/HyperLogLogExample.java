@@ -1,8 +1,8 @@
 // EXAMPLE: hll_tutorial
 package io.redis.examples;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
 
 public class HyperLogLogExample {
@@ -31,7 +31,7 @@ public class HyperLogLogExample {
         System.out.println(res4); // >>> OK
 
         // REMOVE_START
-        Assert.assertEquals("OK", res4);
+        Assertions.assertEquals("OK", res4);
         // REMOVE_END
 
         long res5 = jedis.pfcount("all_bikes");

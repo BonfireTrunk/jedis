@@ -1,17 +1,11 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayCollectionContainsAll;
-import static redis.clients.jedis.util.AssertUtil.assertByteArraySetEquals;
-import static redis.clients.jedis.util.AssertUtil.assertCollectionContainsAll;
-import static redis.clients.jedis.util.ByteArrayUtil.byteArrayCollectionRemoveAll;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,13 +13,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.params.ScanParams;
-import redis.clients.jedis.resps.ScanResult;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayCollectionContainsAll;
+import static redis.clients.jedis.util.AssertUtil.assertByteArraySetEquals;
+import static redis.clients.jedis.util.AssertUtil.assertCollectionContainsAll;
+import static redis.clients.jedis.util.ByteArrayUtil.byteArrayCollectionRemoveAll;
 
 @RunWith(Parameterized.class)
 public class SetCommandsTest extends JedisCommandsTestBase {

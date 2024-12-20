@@ -1,6 +1,6 @@
 package redis.clients.jedis;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.Arrays;
@@ -8,14 +8,17 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static redis.clients.jedis.Protocol.ResponseKeyword.MESSAGE;
 import static redis.clients.jedis.Protocol.ResponseKeyword.SUBSCRIBE;
 
-public class JedisPubSubBaseTest extends TestCase {
+public class JedisPubSubBaseTest {
 
-    public void testProceed_givenThreadInterrupt_exitLoop() throws InterruptedException {
+  @Test
+  public void testProceed_givenThreadInterrupt_exitLoop() throws InterruptedException {
         // setup
         final JedisPubSubBase<String> pubSub = new JedisPubSubBase<String>() {
 

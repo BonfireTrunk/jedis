@@ -1,16 +1,8 @@
 package redis.clients.jedis.commands.unified.pooled;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.AbstractPipeline;
@@ -20,6 +12,14 @@ import redis.clients.jedis.Response;
 import redis.clients.jedis.commands.unified.UnifiedJedisCommandsTestBase;
 import redis.clients.jedis.exceptions.JedisDataException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 @RunWith(Parameterized.class)
 public class PooledMiscellaneousTest extends UnifiedJedisCommandsTestBase {
 
@@ -27,13 +27,13 @@ public class PooledMiscellaneousTest extends UnifiedJedisCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = PooledCommandsTestHelper.getPooled(protocol);
     PooledCommandsTestHelper.clearData();
   }
 
-  @After
+  @AfterEach
   public void cleanUp() {
     jedis.close();
   }

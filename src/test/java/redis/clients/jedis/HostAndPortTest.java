@@ -1,8 +1,9 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class HostAndPortTest {
 
@@ -15,9 +16,11 @@ public class HostAndPortTest {
     assertEquals(port, hp.getPort());
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void checkFromWithoutPort() throws Exception {
-    String host = "localhost";
-    HostAndPort.from(host + ":");
+  @Test
+  public void checkFromWithoutPort() {
+    assertThrows(IllegalArgumentException.class, () -> {
+      String host = "localhost";
+      HostAndPort.from(host + ":");
+    });
   }
 }

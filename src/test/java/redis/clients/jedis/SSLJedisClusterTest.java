@@ -1,21 +1,20 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.SSLJedisTest.BasicHostnameVerifier;
+import redis.clients.jedis.exceptions.JedisClusterOperationException;
 
-import java.util.Collections;
-import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import java.util.Collections;
+import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import redis.clients.jedis.exceptions.JedisClusterOperationException;
-import redis.clients.jedis.SSLJedisTest.BasicHostnameVerifier;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SSLJedisClusterTest extends JedisClusterTestBase {
 
@@ -40,7 +39,7 @@ public class SSLJedisClusterTest extends JedisClusterTestBase {
     return new HostAndPort(hostAndPort.getHost(), hostAndPort.getPort() + 1000);
   };
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     SSLJedisTest.setupTrustStore(); // set up trust store for SSL tests
   }
@@ -107,7 +106,7 @@ public class SSLJedisClusterTest extends JedisClusterTestBase {
             .sslParameters(sslParameters).hostAndPortMapper(portMap).build(), DEFAULT_REDIRECTIONS,
         DEFAULT_POOL_CONFIG)) {
       jc.get("foo");
-      Assert.fail("It should fail after all cluster attempts.");
+      Assertions.fail("It should fail after all cluster attempts.");
 //    } catch (JedisClusterMaxAttemptsException e) {
     } catch (JedisClusterOperationException e) {
       // initial connection to localhost works, but subsequent connections to nodes use 127.0.0.1
@@ -157,7 +156,7 @@ public class SSLJedisClusterTest extends JedisClusterTestBase {
             .hostnameVerifier(hostnameVerifier).hostAndPortMapper(portMap).build(),
         DEFAULT_REDIRECTIONS, DEFAULT_POOL_CONFIG)) {
       jc.get("foo");
-      Assert.fail("It should fail after all cluster attempts.");
+      Assertions.fail("It should fail after all cluster attempts.");
 //    } catch (JedisClusterMaxAttemptsException e) {
     } catch (JedisClusterOperationException e) {
       // initial connection made with 'localhost' but subsequent connections to nodes use 127.0.0.1

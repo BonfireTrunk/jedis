@@ -1,11 +1,46 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.EndpointConfig;
+import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.StreamEntryID;
+import redis.clients.jedis.Transaction;
+import redis.clients.jedis.args.ExpiryOption;
+import redis.clients.jedis.args.FlushMode;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.RestoreParams;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.params.SetParams;
+import redis.clients.jedis.resps.ScanResult;
+import redis.clients.jedis.util.AssertUtil;
+import redis.clients.jedis.util.KeyValue;
+import redis.clients.jedis.util.SafeEncoder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static redis.clients.jedis.Protocol.Command.BLPOP;
-import static redis.clients.jedis.Protocol.Command.HGETALL;
 import static redis.clients.jedis.Protocol.Command.GET;
+import static redis.clients.jedis.Protocol.Command.HGETALL;
 import static redis.clients.jedis.Protocol.Command.LRANGE;
 import static redis.clients.jedis.Protocol.Command.PING;
 import static redis.clients.jedis.Protocol.Command.RPUSH;
@@ -13,25 +48,6 @@ import static redis.clients.jedis.Protocol.Command.SET;
 import static redis.clients.jedis.Protocol.Command.XINFO;
 import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
 import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
-
-import java.util.*;
-import org.hamcrest.Matchers;
-import org.junit.Assume;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.*;
-import redis.clients.jedis.args.ExpiryOption;
-import redis.clients.jedis.params.ScanParams;
-import redis.clients.jedis.resps.ScanResult;
-import redis.clients.jedis.args.FlushMode;
-import redis.clients.jedis.params.RestoreParams;
-import redis.clients.jedis.util.SafeEncoder;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.SetParams;
-import redis.clients.jedis.util.AssertUtil;
-import redis.clients.jedis.util.KeyValue;
 
 @RunWith(Parameterized.class)
 public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
@@ -985,7 +1001,7 @@ public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
 
   @Test
   public void encodeCompleteResponseHgetall() {
-    Assume.assumeFalse(protocol == RedisProtocol.RESP3);
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entries = new HashMap<>();
     entries.put("foo", "bar");
@@ -1003,7 +1019,7 @@ public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
 
   @Test
   public void encodeCompleteResponseHgetallResp3() {
-    Assume.assumeTrue(protocol == RedisProtocol.RESP3);
+    Assumptions.assumeTrue(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entries = new HashMap<>();
     entries.put("foo", "bar");
@@ -1013,14 +1029,13 @@ public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
     List<KeyValue> encodeObj = (List<KeyValue>) SafeEncoder.encodeObject(jedis.sendCommand(HGETALL, "hash:test:encode"));
 
     assertEquals(2, encodeObj.size());
-    encodeObj.forEach(kv -> {
-      assertThat(entries, Matchers.hasEntry(kv.getKey(), kv.getValue()));
-    });
+    encodeObj.forEach(kv ->
+                          assertThat(entries, Matchers.hasEntry(kv.getKey(), kv.getValue())));
   }
 
   @Test
   public void encodeCompleteResponseXinfoStream() {
-    Assume.assumeFalse(protocol == RedisProtocol.RESP3);
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entry = new HashMap<>();
     entry.put("foo", "bar");
@@ -1032,7 +1047,7 @@ public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
     List encodeObj = (List) SafeEncoder.encodeObject(obj);
 
     assertThat(encodeObj.size(), Matchers.greaterThanOrEqualTo(14));
-    assertEquals("must have even number of elements", 0, encodeObj.size() % 2); // must be even
+    assertEquals(0, encodeObj.size() % 2, "must have even number of elements"); // must be even
 
     assertEquals(1L, findValueFromMapAsList(encodeObj, "length"));
     assertEquals(entryID.toString(), findValueFromMapAsList(encodeObj, "last-generated-id"));
@@ -1047,7 +1062,7 @@ public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
 
   @Test
   public void encodeCompleteResponseXinfoStreamResp3() {
-    Assume.assumeTrue(protocol == RedisProtocol.RESP3);
+    Assumptions.assumeTrue(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entry = new HashMap<>();
     entry.put("foo", "bar");
@@ -1135,9 +1150,8 @@ public class AllKindOfValuesCommandsTest extends JedisCommandsTestBase {
 
     // auth reset
     String counter = "counter";
-    Exception ex1 = assertThrows(JedisDataException.class, () -> {
-      jedis.set(counter, "1");
-    });
+    Exception ex1 = assertThrows(JedisDataException.class, () ->
+        jedis.set(counter, "1"));
     assertEquals("NOAUTH Authentication required.", ex1.getMessage());
 
     // multi reset

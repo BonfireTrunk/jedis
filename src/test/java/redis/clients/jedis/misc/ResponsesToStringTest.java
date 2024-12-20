@@ -1,11 +1,11 @@
 package redis.clients.jedis.misc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.GeoCoordinate;
 import redis.clients.jedis.resps.GeoRadiusResponse;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class ResponsesToStringTest {
 

@@ -1,8 +1,15 @@
 package redis.clients.jedis.misc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.*;
+import redis.clients.jedis.exceptions.JedisAccessControlException;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.providers.MultiClusterPooledConnectionProvider;
+import redis.clients.jedis.util.IOUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,17 +17,9 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import redis.clients.jedis.*;
-import redis.clients.jedis.exceptions.JedisAccessControlException;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.providers.MultiClusterPooledConnectionProvider;
-import redis.clients.jedis.util.IOUtils;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AutomaticFailoverTest {
 
@@ -41,14 +40,14 @@ public class AutomaticFailoverTest {
         .collect(Collectors.toList());
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis2 = new Jedis(workingEndpoint.getHostAndPort(),
         workingEndpoint.getClientConfigBuilder().build());
     jedis2.flushAll();
   }
 
-  @After
+  @AfterEach
   public void cleanUp() {
     IOUtils.closeQuietly(jedis2);
   }

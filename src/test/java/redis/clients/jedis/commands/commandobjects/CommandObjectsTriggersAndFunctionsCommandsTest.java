@@ -1,33 +1,31 @@
 package redis.clients.jedis.commands.commandobjects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
-
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.gears.TFunctionListParams;
 import redis.clients.jedis.gears.TFunctionLoadParams;
 import redis.clients.jedis.gears.resps.GearsLibraryInfo;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+
 /**
  * Tests related to <a href="https://redis.io/commands/?group=triggers_and_functions">Triggers and functions</a> commands.
  */
-@Ignore
+@Disabled
 public class CommandObjectsTriggersAndFunctionsCommandsTest extends CommandObjectsModulesTestBase {
 
   public CommandObjectsTriggersAndFunctionsCommandsTest(RedisProtocol protocol) {
     super(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     try {
       exec(commandObjects.tFunctionDelete("lib"));

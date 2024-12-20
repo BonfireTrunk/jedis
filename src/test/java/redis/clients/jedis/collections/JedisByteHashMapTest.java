@@ -1,5 +1,10 @@
 package redis.clients.jedis.collections;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.util.JedisByteHashMap;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -10,18 +15,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import redis.clients.jedis.util.JedisByteHashMap;
-
 public class JedisByteHashMapTest {
   private static JedisByteHashMap map = new JedisByteHashMap();
 
   private byte[][] keys = { { 'k', 'e', 'y', '1' }, { 'k', 'e', 'y', '2' }, { 'k', 'e', 'y', '3' } };
   private byte[][] vals = { { 'v', 'a', 'l', '1' }, { 'v', 'a', 'l', '2' }, { 'v', 'a', 'l', '3' } };
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
     map.clear();
   }
@@ -63,52 +63,52 @@ public class JedisByteHashMapTest {
   public void mapOperations() {
     // put
     map.put(keys[0], vals[0]);
-    Assert.assertEquals(1, map.size());
+    Assertions.assertEquals(1, map.size());
 
     // putAll
     Map<byte[], byte[]> kvMap = new HashMap<>();
     kvMap.put(keys[1], vals[1]);
     kvMap.put(keys[2], vals[2]);
     map.putAll(kvMap);
-    Assert.assertEquals(3, map.size());
+    Assertions.assertEquals(3, map.size());
 
     // containsKey
-    Assert.assertTrue(map.containsKey(keys[0]));
+    Assertions.assertTrue(map.containsKey(keys[0]));
 
     // containsValue
-    Assert.assertTrue(map.containsValue(vals[0]));
+    Assertions.assertTrue(map.containsValue(vals[0]));
 
     // entrySet
     Set<Entry<byte[], byte[]>> entries = map.entrySet();
-    Assert.assertEquals(3, entries.size());
+    Assertions.assertEquals(3, entries.size());
     for (Entry<byte[], byte[]> entry : entries) {
-      Assert.assertTrue(arrayContainsKey(keys, entry.getKey()));
-      Assert.assertTrue(arrayContainsKey(vals, entry.getValue()));
+      Assertions.assertTrue(arrayContainsKey(keys, entry.getKey()));
+      Assertions.assertTrue(arrayContainsKey(vals, entry.getValue()));
     }
 
     // get
-    Assert.assertArrayEquals(vals[0], map.get(keys[0]));
+    Assertions.assertArrayEquals(vals[0], map.get(keys[0]));
 
     // isEmpty
-    Assert.assertFalse(map.isEmpty());
+    Assertions.assertFalse(map.isEmpty());
 
     // keySet
     for (byte[] key : map.keySet()) {
-      Assert.assertTrue(arrayContainsKey(keys, key));
+      Assertions.assertTrue(arrayContainsKey(keys, key));
     }
 
     // values
     for (byte[] value : map.values()) {
-      Assert.assertTrue(arrayContainsKey(vals, value));
+      Assertions.assertTrue(arrayContainsKey(vals, value));
     }
 
     // remove
     map.remove(keys[0]);
-    Assert.assertEquals(2, map.size());
+    Assertions.assertEquals(2, map.size());
 
     // clear
     map.clear();
-    Assert.assertEquals(0, map.size());
+    Assertions.assertEquals(0, map.size());
   }
 
   @Test
@@ -125,6 +125,6 @@ public class JedisByteHashMapTest {
     ObjectInputStream objIn = new ObjectInputStream(byteIn);
     JedisByteHashMap mapRead = (JedisByteHashMap) objIn.readObject();
 
-    Assert.assertTrue(entrySetSame(map.entrySet(), mapRead.entrySet()));
+    Assertions.assertTrue(entrySetSame(map.entrySet(), mapRead.entrySet()));
   }
 }

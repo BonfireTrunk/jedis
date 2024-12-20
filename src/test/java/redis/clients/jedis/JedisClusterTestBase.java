@@ -1,11 +1,11 @@
 package redis.clients.jedis;
 
-import static redis.clients.jedis.Protocol.CLUSTER_HASHSLOTS;
-
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import redis.clients.jedis.args.ClusterResetType;
 import redis.clients.jedis.util.JedisClusterTestUtil;
+
+import static redis.clients.jedis.Protocol.CLUSTER_HASHSLOTS;
 
 public abstract class JedisClusterTestBase {
 
@@ -23,7 +23,7 @@ public abstract class JedisClusterTestBase {
 
   protected static final String LOCAL_IP = "127.0.0.1";
 
-  @Before
+  @BeforeEach
   public void setUp() throws InterruptedException {
     node1 = new Jedis(nodeInfo1);
     node1.auth("cluster");
@@ -83,7 +83,7 @@ public abstract class JedisClusterTestBase {
     node4.clusterReset(ClusterResetType.HARD);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     cleanUp();
   }

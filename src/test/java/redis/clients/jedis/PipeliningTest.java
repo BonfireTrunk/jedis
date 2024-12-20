@@ -1,17 +1,16 @@
 package redis.clients.jedis;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.matchesPattern;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.commands.ProtocolCommand;
+import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.SetParams;
+import redis.clients.jedis.resps.Tuple;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -21,18 +20,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.commands.ProtocolCommand;
-import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.SetParams;
-import redis.clients.jedis.resps.Tuple;
-import redis.clients.jedis.util.SafeEncoder;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @RunWith(Parameterized.class)
 public class PipeliningTest extends JedisCommandsTestBase {
@@ -246,14 +243,16 @@ public class PipeliningTest extends JedisCommandsTestBase {
     assertNull(score.get());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void pipelineResponseWithinPipeline() {
-    jedis.set("string", "foo");
+    assertThrows(IllegalStateException.class, () -> {
+      jedis.set("string", "foo");
 
-    Pipeline p = jedis.pipelined();
-    Response<String> string = p.get("string");
-    string.get();
-    p.sync();
+      Pipeline         p      = jedis.pipelined();
+      Response<String> string = p.get("string");
+      string.get();
+      p.sync();
+    });
   }
 
   @Test
@@ -290,12 +289,14 @@ public class PipeliningTest extends JedisCommandsTestBase {
     assertEquals(r.get(), "bar");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testJedisThrowExceptionWhenInPipeline() {
-    Pipeline pipeline = jedis.pipelined();
-    pipeline.set("foo", "3");
-    jedis.get("somekey");
-    fail("Can't use jedis instance when in Pipeline");
+    assertThrows(IllegalStateException.class, () -> {
+      Pipeline pipeline = jedis.pipelined();
+      pipeline.set("foo", "3");
+      jedis.get("somekey");
+      fail("Can't use jedis instance when in Pipeline");
+    });
   }
 
   @Test

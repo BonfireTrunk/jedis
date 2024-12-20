@@ -1,12 +1,12 @@
 package redis.clients.jedis.csc;
 
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import redis.clients.jedis.HostAndPorts;
 import redis.clients.jedis.SSLJedisTest;
 
 public class SSLJedisPooledClientSideCacheTest extends JedisPooledClientSideCacheTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     SSLJedisTest.setupTrustStore();
 

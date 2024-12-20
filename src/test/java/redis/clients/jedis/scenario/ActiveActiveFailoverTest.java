@@ -1,13 +1,19 @@
 package redis.clients.jedis.scenario;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.*;
-import redis.clients.jedis.providers.MultiClusterPooledConnectionProvider;
+import redis.clients.jedis.ConnectionPool;
+import redis.clients.jedis.EndpointConfig;
+import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.JedisClientConfig;
+import redis.clients.jedis.MultiClusterClientConfig;
+import redis.clients.jedis.StreamEntryID;
+import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.providers.MultiClusterPooledConnectionProvider;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -18,7 +24,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ActiveActiveFailoverTest {
   private static final Logger log = LoggerFactory.getLogger(ActiveActiveFailoverTest.class);
@@ -27,13 +35,13 @@ public class ActiveActiveFailoverTest {
 
   private final FaultInjectionClient faultClient = new FaultInjectionClient();
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeClass() {
     try {
       ActiveActiveFailoverTest.endpoint = HostAndPorts.getRedisEndpoint("re-active-active");
     } catch (IllegalArgumentException e) {
       log.warn("Skipping test because no Redis endpoint is configured");
-      org.junit.Assume.assumeTrue(false);
+      org.junit.jupiter.api.Assumptions.assumeTrue(false);
     }
   }
 

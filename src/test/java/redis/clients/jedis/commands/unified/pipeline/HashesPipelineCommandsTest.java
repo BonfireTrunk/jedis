@@ -1,14 +1,21 @@
 package redis.clients.jedis.commands.unified.pipeline;
 
-import static redis.clients.jedis.util.AssertUtil.assertPipelineSyncAll;
-
-import java.util.*;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.RedisProtocol;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static redis.clients.jedis.util.AssertUtil.assertPipelineSyncAll;
 
 @RunWith(Parameterized.class)
 public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {

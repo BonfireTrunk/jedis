@@ -1,19 +1,9 @@
 package redis.clients.jedis.modules.graph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.AbstractTransaction;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.graph.Header;
@@ -23,13 +13,22 @@ import redis.clients.jedis.graph.entities.Node;
 import redis.clients.jedis.graph.entities.Property;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 
-@org.junit.Ignore
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@org.junit.jupiter.api.Disabled
 @RunWith(Parameterized.class)
 public class GraphTransactionTest extends RedisModuleCommandsTestBase {
 
 //  private Connection c;
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }

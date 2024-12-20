@@ -1,12 +1,14 @@
 package redis.clients.jedis.scenario;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.*;
+import redis.clients.jedis.EndpointConfig;
+import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.JedisPubSubBase;
+import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.providers.ConnectionProvider;
 import redis.clients.jedis.providers.PooledConnectionProvider;
@@ -17,9 +19,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-@RunWith(Parameterized.class)
 public class ConnectionInterruptionTest {
 
   private static final Logger log = LoggerFactory.getLogger(ConnectionInterruptionTest.class);
@@ -28,26 +31,25 @@ public class ConnectionInterruptionTest {
 
   private final FaultInjectionClient faultClient = new FaultInjectionClient();
 
-  @Parameterized.Parameters
   public static Iterable<?> data() {
     return Arrays.asList("dmc_restart", "network_failure");
   }
-
-  @Parameterized.Parameter
   public String triggerAction;
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeClass() {
     try {
       ConnectionInterruptionTest.endpoint = HostAndPorts.getRedisEndpoint("re-standalone");
     } catch (IllegalArgumentException e) {
       log.warn("Skipping test because no Redis endpoint is configured");
-      org.junit.Assume.assumeTrue(false);
+      org.junit.jupiter.api.Assumptions.assumeTrue(false);
     }
   }
 
-  @Test
-  public void testWithPool() {
+  @MethodSource("data")
+  @ParameterizedTest
+  public void testWithPool(String triggerAction) {
+    initConnectionInterruptionTest(triggerAction);
     ConnectionProvider connectionProvider = new PooledConnectionProvider(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().build(), RecommendedSettings.poolConfig);
 
@@ -98,8 +100,10 @@ public class ConnectionInterruptionTest {
     client.close();
   }
 
-  @Test
-  public void testWithPubSub() {
+  @MethodSource("data")
+  @ParameterizedTest
+  public void testWithPubSub(String triggerAction) {
+    initConnectionInterruptionTest(triggerAction);
     ConnectionProvider connectionProvider = new PooledConnectionProvider(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().build(), RecommendedSettings.poolConfig);
 
@@ -178,5 +182,9 @@ public class ConnectionInterruptionTest {
     });
     subscriberThread.start();
     return subscriberThread;
+  }
+
+  public void initConnectionInterruptionTest(String triggerAction) {
+    this.triggerAction = triggerAction;
   }
 }

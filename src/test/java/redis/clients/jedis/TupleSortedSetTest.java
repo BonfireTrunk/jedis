@@ -1,16 +1,16 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
+import redis.clients.jedis.resps.Tuple;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import redis.clients.jedis.resps.Tuple;
-import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(Parameterized.class)
 public class TupleSortedSetTest extends JedisCommandsTestBase {

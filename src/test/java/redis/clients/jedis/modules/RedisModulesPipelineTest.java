@@ -1,40 +1,44 @@
 package redis.clients.jedis.modules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static redis.clients.jedis.json.Path.ROOT_PATH;
-import static redis.clients.jedis.modules.json.JsonObjects.Baz;
-import static redis.clients.jedis.modules.json.JsonObjects.IRLObject;
-import static redis.clients.jedis.search.RediSearchUtil.toStringMap;
-
 import com.google.gson.Gson;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Assume;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.json.JsonSetParams;
 import redis.clients.jedis.json.Path;
 import redis.clients.jedis.json.Path2;
-import redis.clients.jedis.search.*;
-import redis.clients.jedis.search.aggr.*;
+import redis.clients.jedis.search.IndexOptions;
+import redis.clients.jedis.search.Query;
+import redis.clients.jedis.search.Schema;
+import redis.clients.jedis.search.SearchResult;
+import redis.clients.jedis.search.aggr.AggregationBuilder;
+import redis.clients.jedis.search.aggr.AggregationResult;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static redis.clients.jedis.json.Path.ROOT_PATH;
+import static redis.clients.jedis.modules.json.JsonObjects.Baz;
+import static redis.clients.jedis.modules.json.JsonObjects.IRLObject;
+import static redis.clients.jedis.search.RediSearchUtil.toStringMap;
 
 @RunWith(Parameterized.class)
 public class RedisModulesPipelineTest extends RedisModuleCommandsTestBase {
 
   private static final Gson gson = new Gson();
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -99,7 +103,7 @@ public class RedisModulesPipelineTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void jsonV1() {
-    Assume.assumeFalse(protocol == RedisProtocol.RESP3);
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3);
 
     Map<String, String> hm1 = new HashMap<>();
     hm1.put("hello", "world");

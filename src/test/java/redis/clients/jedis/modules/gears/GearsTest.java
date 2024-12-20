@@ -1,38 +1,43 @@
 package redis.clients.jedis.modules.gears;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.gears.TFunctionListParams;
 import redis.clients.jedis.gears.TFunctionLoadParams;
-import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 import redis.clients.jedis.gears.resps.GearsLibraryInfo;
+import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore
+@Disabled
 @RunWith(Parameterized.class)
 public class GearsTest extends RedisModuleCommandsTestBase {
 
@@ -41,7 +46,7 @@ public class GearsTest extends RedisModuleCommandsTestBase {
   private static final String[] LIBRARIES_ARRAY = new String[]{
       "streamTriggers", "withFlags", "pingpong", "keyspaceTriggers", "hashitout", "withConfig"};
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -50,7 +55,7 @@ public class GearsTest extends RedisModuleCommandsTestBase {
     super(protocol);
   }
 
-  @After
+  @AfterEach
   @Override
   public void tearDown() throws Exception {
     deleteFunctions(); // delete functions before closing connections
@@ -71,10 +76,12 @@ public class GearsTest extends RedisModuleCommandsTestBase {
         libraries.stream().map(GearsLibraryInfo::getName).collect(Collectors.toList()));
   }
 
-  @Test(expected = JedisDataException.class)
-  public void testFunctionLoadAlreadyLoadedFails() throws IOException {
-    client.tFunctionLoad(readLibrary("pingpong.js"));
-    client.tFunctionLoad(readLibrary("pingpong.js"));
+  @Test
+  public void testFunctionLoadAlreadyLoadedFails() {
+    assertThrows(JedisDataException.class, () -> {
+      client.tFunctionLoad(readLibrary("pingpong.js"));
+      client.tFunctionLoad(readLibrary("pingpong.js"));
+    });
   }
 
   @Test
@@ -87,9 +94,10 @@ public class GearsTest extends RedisModuleCommandsTestBase {
         libraries.stream().map(GearsLibraryInfo::getName).collect(Collectors.toList()));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void testBadFunctionLoad() {
-    client.tFunctionLoad(BAD_FUNCTION);
+    assertThrows(JedisDataException.class, () ->
+        client.tFunctionLoad(BAD_FUNCTION));
   }
 
   private static void assertAllLibrariesNoCode(List<GearsLibraryInfo> libraryInfos) {
@@ -448,9 +456,8 @@ public class GearsTest extends RedisModuleCommandsTestBase {
       asMap = (Map) result;
     }
 
-    payload.forEach((language, author) -> {
-      assertThat(asMap, Matchers.hasEntry(language, author));
-    });
+    payload.forEach((language, author) ->
+                        assertThat(asMap, Matchers.hasEntry(language, author)));
     assertThat(Long.parseLong(asMap.get("__last_updated__")), Matchers.greaterThan(0L));
   }
 

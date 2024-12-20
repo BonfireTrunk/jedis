@@ -2,13 +2,12 @@
 // REMOVE_START
 package io.redis.examples;
 
-import org.junit.Assert;
-import org.junit.Test;
-import java.util.List;
-// REMOVE_END
-
-// HIDE_START
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
+
+import java.util.List;
+
 // HIDE_END
 
 // HIDE_START
@@ -39,10 +38,10 @@ public class BitfieldExample {
 
         // Tests for 'bf' step.
         // REMOVE_START
-        Assert.assertEquals("[0]", res1.toString());
-        Assert.assertEquals("[950, 1]", res2.toString());
-        Assert.assertEquals("[1450, 2]", res3.toString());
-        Assert.assertEquals("[1450, 2]", res4.toString());
+        Assertions.assertEquals("[0]", res1.toString());
+        Assertions.assertEquals("[950, 1]", res2.toString());
+        Assertions.assertEquals("[1450, 2]", res3.toString());
+        Assertions.assertEquals("[1450, 2]", res4.toString());
         // REMOVE_END
 
 // HIDE_START

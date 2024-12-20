@@ -1,16 +1,26 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-
 import org.hamcrest.Matchers;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import redis.clients.jedis.search.Document;
+import redis.clients.jedis.search.FTProfileParams;
+import redis.clients.jedis.search.FieldName;
+import redis.clients.jedis.search.IndexOptions;
+import redis.clients.jedis.search.Schema;
+import redis.clients.jedis.search.aggr.AggregationBuilder;
+import redis.clients.jedis.search.aggr.AggregationResult;
+import redis.clients.jedis.search.aggr.FtAggregateIteration;
+import redis.clients.jedis.search.aggr.Reducers;
+import redis.clients.jedis.search.aggr.Row;
+import redis.clients.jedis.search.aggr.SortedField;
+import redis.clients.jedis.search.schemafields.NumericField;
+import redis.clients.jedis.search.schemafields.TextField;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,29 +30,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.search.Document;
-import redis.clients.jedis.search.FieldName;
-import redis.clients.jedis.search.IndexOptions;
-import redis.clients.jedis.search.Schema;
-import redis.clients.jedis.search.aggr.AggregationBuilder;
-import redis.clients.jedis.search.aggr.AggregationResult;
-import redis.clients.jedis.search.aggr.Reducers;
-import redis.clients.jedis.search.aggr.Row;
-import redis.clients.jedis.search.aggr.SortedField;
-import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
-import redis.clients.jedis.search.FTProfileParams;
-import redis.clients.jedis.search.aggr.FtAggregateIteration;
-import redis.clients.jedis.search.schemafields.NumericField;
-import redis.clients.jedis.search.schemafields.TextField;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @RunWith(Parameterized.class)
 public class AggregationTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "aggbindex";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -134,7 +133,7 @@ public class AggregationTest extends RedisModuleCommandsTestBase {
     assertEquals("10", rows.get(1).get("sum"));
   }
 
-  @org.junit.Ignore
+  @org.junit.jupiter.api.Disabled
   @Test
   public void testAggregations2Profile() {
     Schema sc = new Schema();

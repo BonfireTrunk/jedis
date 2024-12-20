@@ -1,19 +1,19 @@
 package redis.clients.jedis.commands.unified.cluster;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.commands.unified.StringValuesCommandsTestBase;
 import redis.clients.jedis.params.LCSParams;
 import redis.clients.jedis.resps.LCSMatchResult;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(Parameterized.class)
 public class ClusterStringValuesCommandsTest extends StringValuesCommandsTestBase {
@@ -22,12 +22,12 @@ public class ClusterStringValuesCommandsTest extends StringValuesCommandsTestBas
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = ClusterCommandsTestHelper.getCleanCluster(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     jedis.close();
     ClusterCommandsTestHelper.clearClusterData();

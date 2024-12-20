@@ -1,18 +1,15 @@
 package redis.clients.jedis.commands.commandobjects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.notNullValue;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.bloom.BFInsertParams;
+import redis.clients.jedis.bloom.BFReserveParams;
 
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.bloom.BFInsertParams;
-import redis.clients.jedis.bloom.BFReserveParams;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=bf">Bloom Filter</a> commands.

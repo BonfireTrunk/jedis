@@ -1,15 +1,15 @@
 package redis.clients.jedis.commands.unified.cluster;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.commands.unified.HyperLogLogCommandsTestBase;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(Parameterized.class)
 public class ClusterHyperLogLogCommandsTest extends HyperLogLogCommandsTestBase {
@@ -18,12 +18,12 @@ public class ClusterHyperLogLogCommandsTest extends HyperLogLogCommandsTestBase 
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = ClusterCommandsTestHelper.getCleanCluster(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     jedis.close();
     ClusterCommandsTestHelper.clearClusterData();
@@ -69,8 +69,9 @@ public class ClusterHyperLogLogCommandsTest extends HyperLogLogCommandsTestBase 
     assertEquals(6, status);
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void pfmergeBinary() {
   }
 }

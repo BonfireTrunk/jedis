@@ -2,18 +2,14 @@
 // REMOVE_START
 package io.redis.examples;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.List;
-
-// REMOVE_END
-// HIDE_START
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.json.Path2;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.List;
 
 // HIDE_END
 
@@ -42,9 +38,9 @@ public class JsonExample {
 
         // Tests for 'set_get' step.
         // REMOVE_START
-        Assert.assertEquals("OK", res1);
-        Assert.assertEquals("[\"Hyperion\"]", res2.toString());
-        Assert.assertEquals("[class java.lang.String]", res3.toString());
+        Assertions.assertEquals("OK", res1);
+        Assertions.assertEquals("[\"Hyperion\"]", res2.toString());
+        Assertions.assertEquals("[class java.lang.String]", res3.toString());
         // REMOVE_END
 
 
@@ -61,9 +57,9 @@ public class JsonExample {
 
         // Tests for 'str' step.
         // REMOVE_START
-        Assert.assertEquals("[8]", res4.toString());
-        Assert.assertEquals("[23]", res5.toString());
-        Assert.assertEquals("[\"Hyperion (Enduro bikes)\"]", res6.toString());
+        Assertions.assertEquals("[8]", res4.toString());
+        Assertions.assertEquals("[23]", res5.toString());
+        Assertions.assertEquals("[\"Hyperion (Enduro bikes)\"]", res6.toString());
         // REMOVE_END
 
 
@@ -83,10 +79,10 @@ public class JsonExample {
 
         // Tests for 'num' step.
         // REMOVE_START
-        Assert.assertEquals("OK", res7);
-        Assert.assertEquals("[1]", res8.toString());
-        Assert.assertEquals("[2.5]", res9.toString());
-        Assert.assertEquals("[1.75]", res10.toString());
+        Assertions.assertEquals("OK", res7);
+        Assertions.assertEquals("[1]", res8.toString());
+        Assertions.assertEquals("[2.5]", res9.toString());
+        Assertions.assertEquals("[1.75]", res10.toString());
         // REMOVE_END
 
 
@@ -114,11 +110,11 @@ public class JsonExample {
 
         // Tests for 'arr' step.
         // REMOVE_START
-        Assert.assertEquals("OK", res11);
-        Assert.assertEquals("[[\"Deimos\",{\"crashes\":0},null]]", res12.toString());
-        Assert.assertEquals("[0]", res13.toString());
-        Assert.assertEquals(1, res14);
-        Assert.assertEquals("[[\"Deimos\",{\"crashes\":0}]]", res15.toString());
+        Assertions.assertEquals("OK", res11);
+        Assertions.assertEquals("[[\"Deimos\",{\"crashes\":0},null]]", res12.toString());
+        Assertions.assertEquals("[0]", res13.toString());
+        Assertions.assertEquals(1, res14);
+        Assertions.assertEquals("[[\"Deimos\",{\"crashes\":0}]]", res15.toString());
         // REMOVE_END
 
 
@@ -156,15 +152,15 @@ public class JsonExample {
 
         // Tests for 'arr2' step.
         // REMOVE_START
-        Assert.assertEquals("OK", res16);
-        Assert.assertEquals("[1]", res17.toString());
-        Assert.assertEquals("[[\"Norem\"]]", res18.toString());
-        Assert.assertEquals("[4]", res19.toString());
-        Assert.assertEquals("[[\"Norem\",\"Prickett\",\"Royce\",\"Castilla\"]]", res20.toString());
-        Assert.assertEquals("[1]", res21.toString());
-        Assert.assertEquals("[[\"Prickett\"]]", res22.toString());
-        Assert.assertEquals("[Prickett]", res23.toString());
-        Assert.assertEquals("[null]", res24.toString());
+        Assertions.assertEquals("OK", res16);
+        Assertions.assertEquals("[1]", res17.toString());
+        Assertions.assertEquals("[[\"Norem\"]]", res18.toString());
+        Assertions.assertEquals("[4]", res19.toString());
+        Assertions.assertEquals("[[\"Norem\",\"Prickett\",\"Royce\",\"Castilla\"]]", res20.toString());
+        Assertions.assertEquals("[1]", res21.toString());
+        Assertions.assertEquals("[[\"Prickett\"]]", res22.toString());
+        Assertions.assertEquals("[Prickett]", res23.toString());
+        Assertions.assertEquals("[null]", res24.toString());
         // REMOVE_END
 
 
@@ -186,9 +182,9 @@ public class JsonExample {
 
         // Tests for 'obj' step.
         // REMOVE_START
-        Assert.assertEquals("OK", res25);
-        Assert.assertEquals("[3]", res26.toString());
-        Assert.assertEquals("[[price, model, brand]]", res27.toString());
+        Assertions.assertEquals("OK", res25);
+        Assertions.assertEquals("[3]", res26.toString());
+        Assertions.assertEquals("[[price, model, brand]]", res27.toString());
         // REMOVE_END
 
         // STEP_START set_bikes
@@ -266,7 +262,7 @@ public class JsonExample {
 
         // Tests for 'set_bikes' step.
         // REMOVE_START
-        Assert.assertEquals("OK", res28);
+        Assertions.assertEquals("OK", res28);
         // REMOVE_END
 
 
@@ -278,7 +274,7 @@ public class JsonExample {
 
         // Tests for 'get_bikes' step.
         // REMOVE_START
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "[[{\"specs\":{\"material\":\"carbon\",\"weight\":13.1},\"price\":1920,"
             + "\"description\":\"This is a mid-travel trail slayer that is a "
             + "fantastic daily driver or one bike quiver. The Shimano Claris 8-speed "
@@ -339,9 +335,9 @@ public class JsonExample {
 
         // Tests for 'get_mtnbikes' step.
         // REMOVE_START
-        Assert.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\"]", res30.toString());
-        Assert.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\"]", res31.toString());
-        Assert.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\"]", res32.toString());
+        Assertions.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\"]", res30.toString());
+        Assertions.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\"]", res31.toString());
+        Assertions.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\"]", res32.toString());
         // REMOVE_END
 
 
@@ -353,7 +349,7 @@ public class JsonExample {
 
         // Tests for 'get_models' step.
         // REMOVE_START
-        Assert.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\",\"Salacia\",\"Mimas\"]", res33.toString());
+        Assertions.assertEquals("[\"Phoebe\",\"Quaoar\",\"Weywot\",\"Salacia\",\"Mimas\"]", res33.toString());
         // REMOVE_END
 
 
@@ -366,7 +362,7 @@ public class JsonExample {
 
         // Tests for 'get2mtnbikes' step.
         // REMOVE_START
-        Assert.assertEquals("[\"Phoebe\",\"Quaoar\"]", res34.toString());
+        Assertions.assertEquals("[\"Phoebe\",\"Quaoar\"]", res34.toString());
         // REMOVE_END
 
 
@@ -381,7 +377,7 @@ public class JsonExample {
 
         // Tests for 'filter1' step.
         // REMOVE_START
-        Assert.assertEquals(
+        Assertions.assertEquals(
             "[{\"specs\":{\"material\":\"aluminium\",\"weight\":7.9},\"price\":2072,"
             + "\"description\":\"Redesigned for the 2020 model year, this bike impressed "
             + "our testers and is the best all-around trail bike we've ever tested. The "
@@ -403,7 +399,7 @@ public class JsonExample {
 
         // Tests for 'filter2' step.
         // REMOVE_START
-        Assert.assertEquals("[\"Weywot\",\"Mimas\"]", res36.toString());
+        Assertions.assertEquals("[\"Weywot\",\"Mimas\"]", res36.toString());
         // REMOVE_END
 
 
@@ -417,7 +413,7 @@ public class JsonExample {
 
         // Tests for 'filter3' step.
         // REMOVE_START
-        Assert.assertEquals("[\"Quaoar\",\"Weywot\",\"Salacia\",\"Mimas\"]", res37.toString());
+        Assertions.assertEquals("[\"Quaoar\",\"Weywot\",\"Salacia\",\"Mimas\"]", res37.toString());
         // REMOVE_END
 
 
@@ -444,7 +440,7 @@ public class JsonExample {
 
         // Tests for 'filter4' step.
         // REMOVE_START
-        Assert.assertEquals("[\"Quaoar\",\"Weywot\"]", res38.toString());
+        Assertions.assertEquals("[\"Quaoar\",\"Weywot\"]", res38.toString());
         // REMOVE_END
 
 
@@ -462,9 +458,9 @@ public class JsonExample {
 
         // Tests for 'update_bikes' step.
         // REMOVE_START
-        Assert.assertEquals("[1920,2072,3264,1475,3941]", res39.toString());
-        Assert.assertEquals("[1820,1972,3164,1375,3841]", res40.toString());
-        Assert.assertEquals("[1920,2072,3264,1475,3941]", res41.toString());
+        Assertions.assertEquals("[1920,2072,3264,1475,3941]", res39.toString());
+        Assertions.assertEquals("[1820,1972,3164,1375,3841]", res40.toString());
+        Assertions.assertEquals("[1920,2072,3264,1475,3941]", res41.toString());
         // REMOVE_END
 
 
@@ -476,7 +472,7 @@ public class JsonExample {
 
         // Tests for 'update_filters1' step.
         // REMOVE_START
-        Assert.assertEquals("[1500,2072,3264,1500,3941]", res42.toString());
+        Assertions.assertEquals("[1500,2072,3264,1500,3941]", res42.toString());
         // REMOVE_END
 
 
@@ -494,8 +490,8 @@ public class JsonExample {
 
         // Tests for 'update_filters2' step.
         // REMOVE_START
-        Assert.assertEquals("[3, 3]", res43.toString());
-        Assert.assertEquals(
+        Assertions.assertEquals("[3, 3]", res43.toString());
+        Assertions.assertEquals(
             "[[\"black\",\"silver\",\"\\\"pink\\\"\"],[\"black\",\"white\"],"
             + "[\"black\",\"silver\",\"\\\"pink\\\"\"]]",
             res44.toString());

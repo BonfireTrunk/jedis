@@ -1,7 +1,7 @@
 package redis.clients.jedis;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
@@ -12,9 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class JedisPooledTest {
 
@@ -45,17 +46,19 @@ public class JedisPooledTest {
     }
   }
 
-  @Test(expected = JedisException.class)
+  @Test
   public void checkPoolOverflow() {
-    var config = new JedisPoolConfig();
-    config.setMaxTotal(1);
-    // config.setBlockWhenExhausted(false);
-    try (JedisPooled pool = new JedisPooled(endpointStandalone7.getHostAndPort(), config);
+    assertThrows(JedisException.class, () -> {
+      var config = new JedisPoolConfig();
+      config.setMaxTotal(1);
+      // config.setBlockWhenExhausted(false);
+      try (JedisPooled pool = new JedisPooled(endpointStandalone7.getHostAndPort(), config);
          Connection jedis = pool.getPool().getResource()) {
 
-      try (Connection jedis2 = pool.getPool().getResource()) {
+        try (Connection jedis2 = pool.getPool().getResource()) {
+        }
       }
-    }
+    });
   }
 
   @Test
@@ -87,9 +90,10 @@ public class JedisPooledTest {
     }
   }
 
-  @Test(expected = Exception.class)
-  public void shouldThrowExceptionForInvalidURI() throws URISyntaxException {
-    new JedisPooled(new URI("localhost:6380")).close();
+  @Test
+  public void shouldThrowExceptionForInvalidURI() {
+    assertThrows(Exception.class, () ->
+        new JedisPooled(new URI("localhost:6380")).close());
   }
 
   @Test
@@ -114,7 +118,7 @@ public class JedisPooledTest {
          Connection jedis = pool.getPool().getResource()) {
     } catch (Exception e) {
       if (!e.getMessage().startsWith("client info cannot contain space")) {
-        Assert.fail("invalid client name test fail");
+        Assertions.fail("invalid client name test fail");
       }
     }
   }

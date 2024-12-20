@@ -1,7 +1,7 @@
 package redis.clients.jedis;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.providers.SentineledConnectionProvider;
@@ -9,9 +9,10 @@ import redis.clients.jedis.providers.SentineledConnectionProvider;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @see JedisSentinelPoolTest
@@ -25,7 +26,7 @@ public class SentineledConnectionProviderTest {
 
   protected Set<HostAndPort> sentinels = new HashSet<>();
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     sentinels.clear();
 
@@ -46,23 +47,27 @@ public class SentineledConnectionProviderTest {
     }
   }
 
-  @Test(expected = JedisConnectionException.class)
+  @Test
   public void initializeWithNotAvailableSentinelsShouldThrowException() {
-    Set<HostAndPort> wrongSentinels = new HashSet<>();
-    wrongSentinels.add(new HostAndPort("localhost", 65432));
-    wrongSentinels.add(new HostAndPort("localhost", 65431));
+    assertThrows(JedisConnectionException.class, () -> {
+      Set<HostAndPort> wrongSentinels = new HashSet<>();
+      wrongSentinels.add(new HostAndPort("localhost", 65432));
+      wrongSentinels.add(new HostAndPort("localhost", 65431));
 
-    try (SentineledConnectionProvider provider = new SentineledConnectionProvider(MASTER_NAME,
-                                                                                  DefaultJedisClientConfig.builder().build(), wrongSentinels, DefaultJedisClientConfig.builder().build())) {
-    }
+      try (SentineledConnectionProvider provider = new SentineledConnectionProvider(MASTER_NAME,
+                                                                                    DefaultJedisClientConfig.builder().build(), wrongSentinels, DefaultJedisClientConfig.builder().build())) {
+      }
+    });
   }
 
-  @Test(expected = JedisException.class)
+  @Test
   public void initializeWithNotMonitoredMasterNameShouldThrowException() {
-    final String wrongMasterName = "wrongMasterName";
-    try (SentineledConnectionProvider provider = new SentineledConnectionProvider(wrongMasterName,
-                                                                                  DefaultJedisClientConfig.builder().build(), sentinels, DefaultJedisClientConfig.builder().build())) {
-    }
+    assertThrows(JedisException.class, () -> {
+      final String wrongMasterName = "wrongMasterName";
+      try (SentineledConnectionProvider provider = new SentineledConnectionProvider(wrongMasterName,
+                                                                                    DefaultJedisClientConfig.builder().build(), sentinels, DefaultJedisClientConfig.builder().build())) {
+      }
+    });
   }
 
   @Test

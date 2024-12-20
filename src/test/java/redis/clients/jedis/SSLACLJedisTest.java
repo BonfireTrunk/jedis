@@ -1,19 +1,25 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.util.RedisVersionUtil;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.*;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import redis.clients.jedis.util.RedisVersionUtil;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * This test class is a copy of {@link SSLJedisTest}.
@@ -26,13 +32,13 @@ public class SSLACLJedisTest {
 
   protected static final EndpointConfig endpointWithDefaultUser = HostAndPorts.getRedisEndpoint("standalone0-tls");
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     // We need to set up certificates first before connecting to the endpoint with enabled TLS
     SSLJedisTest.setupTrustStore();
     // Use to check if the ACL test should be ran. ACL are available only in 6.0 and later
-    org.junit.Assume.assumeTrue("Not running ACL test on this version of Redis",
-        RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint));
+    org.junit.jupiter.api.Assumptions.assumeTrue(RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint),
+                                                 "Not running ACL test on this version of Redis");
   }
 
   @Test

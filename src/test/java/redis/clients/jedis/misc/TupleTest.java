@@ -1,14 +1,15 @@
 package redis.clients.jedis.misc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.resps.Tuple;
 
 import java.util.HashSet;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.junit.Test;
-import redis.clients.jedis.resps.Tuple;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TupleTest {
 
@@ -78,8 +79,8 @@ public class TupleTest {
   public void testToString() {
     Tuple t1 = new Tuple("key-name", 1d);
     String toStringResult = t1.toString();
-    MatcherAssert.assertThat(toStringResult, Matchers.containsString("key-name"));
-    MatcherAssert.assertThat(toStringResult, Matchers.containsString("1"));
+    assertThat(toStringResult, Matchers.containsString("key-name"));
+    assertThat(toStringResult, Matchers.containsString("1"));
   }
 
   @Test

@@ -1,11 +1,18 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static redis.clients.jedis.params.ClientKillParams.SkipMe;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.args.ClientAttributeOption;
+import redis.clients.jedis.args.ClientType;
+import redis.clients.jedis.args.UnblockType;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.params.ClientKillParams;
+import redis.clients.jedis.resps.TrackingInfo;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -15,20 +22,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.args.ClientAttributeOption;
-import redis.clients.jedis.args.ClientType;
-import redis.clients.jedis.args.UnblockType;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.params.ClientKillParams;
-import redis.clients.jedis.resps.TrackingInfo;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.params.ClientKillParams.SkipMe;
 
 @RunWith(Parameterized.class)
 public class ClientCommandsTest extends JedisCommandsTestBase {
@@ -42,7 +41,7 @@ public class ClientCommandsTest extends JedisCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -51,7 +50,7 @@ public class ClientCommandsTest extends JedisCommandsTestBase {
     client.clientSetname(clientName);
   }
 
-  @After
+  @AfterEach
   @Override
   public void tearDown() throws Exception {
     client.close();

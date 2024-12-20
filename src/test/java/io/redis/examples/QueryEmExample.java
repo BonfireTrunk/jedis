@@ -2,17 +2,23 @@
 // REMOVE_START
 package io.redis.examples;
 
-import org.junit.Assert;
-import org.junit.Test;
-// REMOVE_END
-
-// HIDE_START
-import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
-import redis.clients.jedis.json.Path2;
-import redis.clients.jedis.search.*;
-import redis.clients.jedis.search.schemafields.*;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.json.Path2;
+import redis.clients.jedis.search.Document;
+import redis.clients.jedis.search.FTCreateParams;
+import redis.clients.jedis.search.FTSearchParams;
+import redis.clients.jedis.search.IndexDataType;
+import redis.clients.jedis.search.RediSearchUtil;
+import redis.clients.jedis.search.SearchResult;
+import redis.clients.jedis.search.schemafields.NumericField;
+import redis.clients.jedis.search.schemafields.SchemaField;
+import redis.clients.jedis.search.schemafields.TagField;
+import redis.clients.jedis.search.schemafields.TextField;
+
+import java.util.List;
 
 public class QueryEmExample {
     @Test
@@ -235,11 +241,11 @@ public class QueryEmExample {
 
         // Tests for 'em1' step.
         // REMOVE_START
-        Assert.assertEquals(1, res1.getTotalResults());
-        Assert.assertEquals("bicycle:0", docs1.get(0).getId());
+        Assertions.assertEquals(1, res1.getTotalResults());
+        Assertions.assertEquals("bicycle:0", docs1.get(0).getId());
 
-        Assert.assertEquals(1, res2.getTotalResults());
-        Assert.assertEquals("bicycle:0", docs2.get(0).getId());
+        Assertions.assertEquals(1, res2.getTotalResults());
+        Assertions.assertEquals("bicycle:0", docs2.get(0).getId());
         // REMOVE_END
 
 
@@ -261,12 +267,12 @@ public class QueryEmExample {
 
         // Tests for 'em2' step.
         // REMOVE_START
-        Assert.assertEquals(5, res3.getTotalResults());
-        Assert.assertEquals("bicycle:5", docs3.get(0).getId());
-        Assert.assertEquals("bicycle:0", docs3.get(1).getId());
-        Assert.assertEquals("bicycle:6", docs3.get(2).getId());
-        Assert.assertEquals("bicycle:7", docs3.get(3).getId());
-        Assert.assertEquals("bicycle:8", docs3.get(4).getId());
+        Assertions.assertEquals(5, res3.getTotalResults());
+        Assertions.assertEquals("bicycle:5", docs3.get(0).getId());
+        Assertions.assertEquals("bicycle:0", docs3.get(1).getId());
+        Assertions.assertEquals("bicycle:6", docs3.get(2).getId());
+        Assertions.assertEquals("bicycle:7", docs3.get(3).getId());
+        Assertions.assertEquals("bicycle:8", docs3.get(4).getId());
         // REMOVE_END
 
 
@@ -313,8 +319,8 @@ public class QueryEmExample {
 
         // Tests for 'em4' step.
         // REMOVE_START
-        Assert.assertEquals(1, res5.getTotalResults());
-        Assert.assertEquals("bicycle:8", docs5.get(0).getId());
+        Assertions.assertEquals(1, res5.getTotalResults());
+        Assertions.assertEquals("bicycle:8", docs5.get(0).getId());
         // REMOVE_END
 
 // HIDE_START

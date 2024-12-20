@@ -1,32 +1,25 @@
 package redis.clients.jedis.commands.unified.pipeline;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayCollectionContainsAll;
-import static redis.clients.jedis.util.AssertUtil.assertByteArraySetEquals;
-import static redis.clients.jedis.util.AssertUtil.assertCollectionContainsAll;
-import static redis.clients.jedis.util.ByteArrayUtil.byteArrayCollectionRemoveAll;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayCollectionContainsAll;
+import static redis.clients.jedis.util.AssertUtil.assertByteArraySetEquals;
+import static redis.clients.jedis.util.AssertUtil.assertCollectionContainsAll;
+import static redis.clients.jedis.util.ByteArrayUtil.byteArrayCollectionRemoveAll;
 
 @RunWith(Parameterized.class)
 public class SetPipelineCommandsTest extends PipelineCommandsTestBase {

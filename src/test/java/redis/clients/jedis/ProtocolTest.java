@@ -1,11 +1,11 @@
 package redis.clients.jedis;
 
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.exceptions.JedisBusyException;
 import redis.clients.jedis.util.FragmentedByteArrayInputStream;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
+import redis.clients.jedis.util.RedisInputStream;
+import redis.clients.jedis.util.RedisOutputStream;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -17,12 +17,12 @@ import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
-import redis.clients.jedis.exceptions.JedisBusyException;
-import redis.clients.jedis.util.RedisInputStream;
-import redis.clients.jedis.util.RedisOutputStream;
-import redis.clients.jedis.util.SafeEncoder;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 public class ProtocolTest {
   @Test
@@ -47,25 +47,28 @@ public class ProtocolTest {
     assertEquals(expectedCommand, sb.toString());
   }
 
-  @Test(expected = IOException.class)
-  public void writeOverflow() throws IOException {
-    RedisOutputStream ros = new RedisOutputStream(new OutputStream() {
+  @Test
+  public void writeOverflow() {
+    assertThrows(IOException.class, () -> {
+      RedisOutputStream ros = new RedisOutputStream(new OutputStream() {
 
-      @Override
-      public void write(int b) throws IOException {
-        throw new IOException("thrown exception");
+        @Override
+        public void write(int b) throws IOException {
+          throw new IOException("thrown exception");
 
+        }
+      });
+
+      ros.write(new byte[8191]);
+
+      try {
+        ros.write((byte) '*');
+      } catch (IOException ioe) {
       }
-    });
 
-    ros.write(new byte[8191]);
-
-    try {
       ros.write((byte) '*');
-    } catch (IOException ioe) {
-    }
 
-    ros.write((byte) '*');
+    });
 
   }
 

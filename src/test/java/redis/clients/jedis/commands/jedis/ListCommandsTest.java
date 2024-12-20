@@ -1,31 +1,30 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.args.ListDirection;
+import redis.clients.jedis.args.ListPosition;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.LPosParams;
+import redis.clients.jedis.util.KeyValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.args.ListPosition;
-import redis.clients.jedis.args.ListDirection;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.LPosParams;
-import redis.clients.jedis.util.KeyValue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 @RunWith(Parameterized.class)
 public class ListCommandsTest extends JedisCommandsTestBase {
@@ -502,7 +501,7 @@ public class ListCommandsTest extends JedisCommandsTestBase {
     startMillis = System.currentTimeMillis();
     KeyValue<String, String> result = jedis.blpop(0.04, "foo");
     totalMillis = System.currentTimeMillis() - startMillis;
-    assertTrue("TotalMillis=" + totalMillis, totalMillis < 200);
+    assertTrue(totalMillis < 200, "TotalMillis=" + totalMillis);
     assertNull(result);
 
     startMillis = System.currentTimeMillis();
@@ -518,7 +517,7 @@ public class ListCommandsTest extends JedisCommandsTestBase {
     }).start();
     result = jedis.blpop(1.2, "foo");
     totalMillis = System.currentTimeMillis() - startMillis;
-    assertTrue("TotalMillis=" + totalMillis, totalMillis < 200);
+    assertTrue(totalMillis < 200, "TotalMillis=" + totalMillis);
 
     assertNotNull(result);
     assertEquals("foo", result.getKey());
@@ -624,7 +623,7 @@ public class ListCommandsTest extends JedisCommandsTestBase {
     startMillis = System.currentTimeMillis();
     KeyValue<String, String> result = jedis.brpop(0.04, "foo");
     totalMillis = System.currentTimeMillis() - startMillis;
-    assertTrue("TotalMillis=" + totalMillis, totalMillis < 200);
+    assertTrue(totalMillis < 200, "TotalMillis=" + totalMillis);
     assertNull(result);
 
     startMillis = System.currentTimeMillis();
@@ -640,7 +639,7 @@ public class ListCommandsTest extends JedisCommandsTestBase {
     }).start();
     result = jedis.brpop(1.2, "foo");
     totalMillis = System.currentTimeMillis() - startMillis;
-    assertTrue("TotalMillis=" + totalMillis, totalMillis < 200);
+    assertTrue(totalMillis < 200, "TotalMillis=" + totalMillis);
 
     assertNotNull(result);
     assertEquals("foo", result.getKey());

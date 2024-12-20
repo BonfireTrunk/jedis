@@ -1,20 +1,23 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.*;
+import redis.clients.jedis.EndpointConfig;
+import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Protocol;
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.MigrateParams;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @RunWith(Parameterized.class)
 public class MigrateTest extends JedisCommandsTestBase {
@@ -50,7 +53,7 @@ public class MigrateTest extends JedisCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -65,7 +68,7 @@ public class MigrateTest extends JedisCommandsTestBase {
     destAuth.select(dbAuth);
   }
 
-  @After
+  @AfterEach
   @Override
   public void tearDown() throws Exception {
     dest.close();

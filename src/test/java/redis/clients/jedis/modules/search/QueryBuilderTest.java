@@ -1,17 +1,29 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
-import static redis.clients.jedis.search.querybuilder.QueryBuilders.*;
-import static redis.clients.jedis.search.querybuilder.Values.*;
-
-import java.util.Arrays;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.GeoCoordinate;
 import redis.clients.jedis.args.GeoUnit;
 import redis.clients.jedis.search.querybuilder.Node;
 import redis.clients.jedis.search.querybuilder.Value;
 import redis.clients.jedis.search.querybuilder.Values;
+
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static redis.clients.jedis.search.querybuilder.QueryBuilders.disjunct;
+import static redis.clients.jedis.search.querybuilder.QueryBuilders.intersect;
+import static redis.clients.jedis.search.querybuilder.QueryBuilders.optional;
+import static redis.clients.jedis.search.querybuilder.QueryBuilders.union;
+import static redis.clients.jedis.search.querybuilder.Values.between;
+import static redis.clients.jedis.search.querybuilder.Values.eq;
+import static redis.clients.jedis.search.querybuilder.Values.ge;
+import static redis.clients.jedis.search.querybuilder.Values.geo;
+import static redis.clients.jedis.search.querybuilder.Values.gt;
+import static redis.clients.jedis.search.querybuilder.Values.le;
+import static redis.clients.jedis.search.querybuilder.Values.lt;
+import static redis.clients.jedis.search.querybuilder.Values.tags;
+import static redis.clients.jedis.search.querybuilder.Values.value;
 
 /**
  * Created by mnunberg on 2/23/18.
@@ -26,9 +38,10 @@ public class QueryBuilderTest {
     assertEquals("{foo | bar}", v.toString());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEmptyTag() {
-    tags();
+    assertThrows(IllegalArgumentException.class, () ->
+        tags());
   }
 
   @Test

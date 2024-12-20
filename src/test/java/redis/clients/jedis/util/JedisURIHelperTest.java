@@ -1,15 +1,15 @@
 package redis.clients.jedis.util;
 
-import static redis.clients.jedis.util.JedisURIHelper.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.junit.Test;
-import redis.clients.jedis.RedisProtocol;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static redis.clients.jedis.util.JedisURIHelper.getRedisProtocol;
 
 public class JedisURIHelperTest {
 

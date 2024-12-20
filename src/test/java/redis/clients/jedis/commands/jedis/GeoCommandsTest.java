@@ -1,25 +1,29 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.*;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.GeoCoordinate;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.args.GeoUnit;
+import redis.clients.jedis.params.GeoAddParams;
+import redis.clients.jedis.params.GeoRadiusParam;
+import redis.clients.jedis.params.GeoRadiusStoreParam;
+import redis.clients.jedis.params.GeoSearchParam;
+import redis.clients.jedis.resps.GeoRadiusResponse;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import redis.clients.jedis.GeoCoordinate;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.args.GeoUnit;
-import redis.clients.jedis.params.GeoSearchParam;
-import redis.clients.jedis.resps.GeoRadiusResponse;
-import redis.clients.jedis.params.GeoAddParams;
-import redis.clients.jedis.params.GeoRadiusParam;
-import redis.clients.jedis.params.GeoRadiusStoreParam;
-import redis.clients.jedis.util.SafeEncoder;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 @RunWith(Parameterized.class)
 public class GeoCommandsTest extends JedisCommandsTestBase {

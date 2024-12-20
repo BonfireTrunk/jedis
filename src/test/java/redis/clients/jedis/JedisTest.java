@@ -1,10 +1,13 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
+import redis.clients.jedis.exceptions.InvalidURIException;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -16,15 +19,12 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.exceptions.InvalidURIException;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
-import redis.clients.jedis.util.SafeEncoder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @RunWith(Parameterized.class)
 public class JedisTest extends JedisCommandsTestBase {
@@ -147,14 +147,17 @@ public class JedisTest extends JedisCommandsTestBase {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void failWhenSendingNullValues() {
-    jedis.set("foo", null);
+    assertThrows(IllegalArgumentException.class, () ->
+        jedis.set("foo", null));
   }
 
-  @Test(expected = InvalidURIException.class)
-  public void shouldThrowInvalidURIExceptionForInvalidURI() throws URISyntaxException {
-    Jedis j = new Jedis(new URI("localhost:6380"));
+  @Test
+  public void shouldThrowInvalidURIExceptionForInvalidURI() {
+    assertThrows(InvalidURIException.class, () -> {
+      Jedis j = new Jedis(new URI("localhost:6380"));
+    });
   }
 //
 //  @Test

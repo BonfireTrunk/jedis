@@ -1,21 +1,14 @@
 package redis.clients.jedis.commands.commandobjects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.closeTo;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.Matchers.notANumber;
-import static org.hamcrest.Matchers.notNullValue;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.bloom.TDigestMergeParams;
 
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.bloom.TDigestMergeParams;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=tdigest">T-Digest</a> commands.

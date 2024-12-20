@@ -1,17 +1,16 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.params.SortingParams;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.params.SortingParams;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 @RunWith(Parameterized.class)
 public class SortingCommandsTest extends JedisCommandsTestBase {

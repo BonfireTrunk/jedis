@@ -1,15 +1,15 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-
-import java.net.URISyntaxException;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.commands.jedis.JedisCommandsTestBase;
 import redis.clients.jedis.util.RedisVersionUtil;
+
+import java.net.URISyntaxException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * This test class is a copy of {@link JedisTest}.
@@ -25,10 +25,10 @@ public class ACLJedisTest extends JedisCommandsTestBase {
    * Use to check if the ACL test should be ran. ACL are available only in 6.0 and later
    * @throws Exception
    */
-  @BeforeClass
+  @BeforeAll
   public static void prepare() throws Exception {
-    org.junit.Assume.assumeTrue("Not running ACL test on this version of Redis",
-        RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint));
+    org.junit.jupiter.api.Assumptions.assumeTrue(RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint),
+                                                 "Not running ACL test on this version of Redis");
   }
 
   public ACLJedisTest(RedisProtocol redisProtocol) {

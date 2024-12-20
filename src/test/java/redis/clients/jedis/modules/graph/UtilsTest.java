@@ -1,13 +1,14 @@
 package redis.clients.jedis.modules.graph;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.graph.RedisGraphQueryUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
-import redis.clients.jedis.graph.RedisGraphQueryUtil;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UtilsTest {
 //

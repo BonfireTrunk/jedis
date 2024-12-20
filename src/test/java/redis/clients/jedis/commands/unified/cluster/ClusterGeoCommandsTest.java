@@ -1,16 +1,9 @@
 package redis.clients.jedis.commands.unified.cluster;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.GeoCoordinate;
@@ -20,6 +13,13 @@ import redis.clients.jedis.commands.unified.GeoCommandsTestBase;
 import redis.clients.jedis.params.GeoRadiusParam;
 import redis.clients.jedis.params.GeoRadiusStoreParam;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @RunWith(Parameterized.class)
 public class ClusterGeoCommandsTest extends GeoCommandsTestBase {
 
@@ -27,12 +27,12 @@ public class ClusterGeoCommandsTest extends GeoCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = ClusterCommandsTestHelper.getCleanCluster(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     jedis.close();
     ClusterCommandsTestHelper.clearClusterData();
@@ -57,8 +57,9 @@ public class ClusterGeoCommandsTest extends GeoCommandsTestBase {
     assertEquals(expected, jedis.zrange("{ITA} SicilyStore", 0, -1));
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void georadiusStoreBinary() {
   }
 
@@ -79,18 +80,21 @@ public class ClusterGeoCommandsTest extends GeoCommandsTestBase {
     assertEquals(expected, jedis.zrange("{ITA} SicilyStore", 0, -1));
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void georadiusByMemberStoreBinary() {
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void geosearchstore() {
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void geosearchstoreWithdist() {
   }
 }

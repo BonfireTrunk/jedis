@@ -1,20 +1,19 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.util.JedisSentinelTestUtil;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.util.JedisSentinelTestUtil;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class JedisSentinelTest {
 
@@ -29,11 +28,11 @@ public class JedisSentinelTest {
 
   protected static HostAndPort sentinelForFailover = HostAndPorts.getSentinelServers().get(2);
 
-  @Before
+  @BeforeEach
   public void setup() throws InterruptedException {
   }
 
-  @After
+  @AfterEach
   public void clear() throws InterruptedException {
     // New Sentinel (after 2.8.1)
     // when slave promoted to master (slave of no one), New Sentinel force

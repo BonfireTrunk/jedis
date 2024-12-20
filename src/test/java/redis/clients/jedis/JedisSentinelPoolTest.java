@@ -1,16 +1,17 @@
 package redis.clients.jedis;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JedisSentinelPoolTest {
 
@@ -21,7 +22,7 @@ public class JedisSentinelPoolTest {
 
   protected final Set<String> sentinels = new HashSet<>();
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     sentinels.clear();
 
@@ -42,21 +43,25 @@ public class JedisSentinelPoolTest {
     }
   }
 
-  @Test(expected = JedisConnectionException.class)
+  @Test
   public void initializeWithNotAvailableSentinelsShouldThrowException() {
-    Set<String> wrongSentinels = new HashSet<String>();
-    wrongSentinels.add(new HostAndPort("localhost", 65432).toString());
-    wrongSentinels.add(new HostAndPort("localhost", 65431).toString());
+    assertThrows(JedisConnectionException.class, () -> {
+      Set<String> wrongSentinels = new HashSet<String>();
+      wrongSentinels.add(new HostAndPort("localhost", 65432).toString());
+      wrongSentinels.add(new HostAndPort("localhost", 65431).toString());
 
-    JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, wrongSentinels);
-    pool.destroy();
+      JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, wrongSentinels);
+      pool.destroy();
+    });
   }
 
-  @Test(expected = JedisException.class)
+  @Test
   public void initializeWithNotMonitoredMasterNameShouldThrowException() {
-    final String wrongMasterName = "wrongMasterName";
-    JedisSentinelPool pool = new JedisSentinelPool(wrongMasterName, sentinels);
-    pool.destroy();
+    assertThrows(JedisException.class, () -> {
+      final String      wrongMasterName = "wrongMasterName";
+      JedisSentinelPool pool            = new JedisSentinelPool(wrongMasterName, sentinels);
+      pool.destroy();
+    });
   }
 
   @Test

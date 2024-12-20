@@ -1,14 +1,12 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Assert;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.search.RediSearchUtil;
-
 import redis.clients.jedis.search.schemafields.NumericField;
 import redis.clients.jedis.search.schemafields.SchemaField;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UtilTest {
 
@@ -17,7 +15,7 @@ public class UtilTest {
     float[] floats = new float[]{0.2f};
     byte[] bytes = RediSearchUtil.toByteArray(floats);
     byte[] expected = new byte[]{-51, -52, 76, 62};
-    Assert.assertArrayEquals(expected, bytes);
+    Assertions.assertArrayEquals(expected, bytes);
   }
 
   @Test

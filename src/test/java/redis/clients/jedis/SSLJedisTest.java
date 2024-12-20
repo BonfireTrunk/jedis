@@ -1,15 +1,7 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -19,15 +11,22 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SSLJedisTest {
 
   protected static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0-tls");
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     setupTrustStore();
   }
@@ -37,8 +36,8 @@ public class SSLJedisTest {
   }
 
   private static void setJvmTrustStore(String trustStoreFilePath, String trustStoreType) {
-    assertTrue(String.format("Could not find trust store at '%s'.", trustStoreFilePath),
-        new File(trustStoreFilePath).exists());
+    assertTrue(new File(trustStoreFilePath).exists(),
+               String.format("Could not find trust store at '%s'.", trustStoreFilePath));
     System.setProperty("javax.net.ssl.trustStore", trustStoreFilePath);
     System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
   }

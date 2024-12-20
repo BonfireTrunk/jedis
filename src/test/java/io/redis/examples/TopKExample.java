@@ -1,13 +1,12 @@
 //EXAMPLE: topk_tutorial
 //HIDE_START
 package io.redis.examples;
-//HIDE_END
 
-//REMOVE_START
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
 
 import java.util.List;
+
 //REMOVE_END
 
 public class TopKExample {

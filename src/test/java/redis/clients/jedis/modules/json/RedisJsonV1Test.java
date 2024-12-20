@@ -1,23 +1,11 @@
 package redis.clients.jedis.modules.json;
 
-import static org.junit.Assert.*;
-import static redis.clients.jedis.json.Path.ROOT_PATH;
-import static redis.clients.jedis.modules.json.JsonObjects.*;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.json.JsonSetParams;
@@ -25,6 +13,29 @@ import redis.clients.jedis.json.Path;
 import redis.clients.jedis.json.commands.RedisJsonV1Commands;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 import redis.clients.jedis.util.JsonObjectMapperTestUtil;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.json.Path.ROOT_PATH;
+import static redis.clients.jedis.modules.json.JsonObjects.Baz;
+import static redis.clients.jedis.modules.json.JsonObjects.FooBarObject;
+import static redis.clients.jedis.modules.json.JsonObjects.IRLObject;
+import static redis.clients.jedis.modules.json.JsonObjects.Person;
+import static redis.clients.jedis.modules.json.JsonObjects.Qux;
+import static redis.clients.jedis.modules.json.JsonObjects.Tick;
 
 /**
  * V1 of the RedisJSON is only supported with RESP2, hence this test is not parameterized.
@@ -35,7 +46,7 @@ public class RedisJsonV1Test extends RedisModuleCommandsTestBase {
 
   private RedisJsonV1Commands jsonV1;
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -44,7 +55,7 @@ public class RedisJsonV1Test extends RedisModuleCommandsTestBase {
     super(RedisProtocol.RESP2);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() {
     super.setUp();
@@ -113,10 +124,11 @@ public class RedisJsonV1Test extends RedisModuleCommandsTestBase {
     assertNull(jsonV1.jsonSet("obj", p, "strangle", JsonSetParams.jsonSetParams().xx()));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void setException() {
-    // should error on non root path for new key
-    jsonV1.jsonSet("test", Path.of(".foo"), "bar");
+    assertThrows(JedisDataException.class, () ->
+        // should error on non root path for new key
+        jsonV1.jsonSet("test", Path.of(".foo"), "bar"));
   }
 
   @Test
@@ -157,10 +169,12 @@ public class RedisJsonV1Test extends RedisModuleCommandsTestBase {
     assertEquals("string", jsonV1.jsonGet("obj", String.class, pstr));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void getAbsent() {
-    jsonV1.jsonSet("test", ROOT_PATH, "foo");
-    jsonV1.jsonGet("test", String.class, Path.of(".bar"));
+    assertThrows(JedisDataException.class, () -> {
+      jsonV1.jsonSet("test", ROOT_PATH, "foo");
+      jsonV1.jsonGet("test", String.class, Path.of(".bar"));
+    });
   }
 
   @Test
@@ -352,18 +366,21 @@ public class RedisJsonV1Test extends RedisModuleCommandsTestBase {
     assertArrayEquals(new String[]{"a", "b", "c"}, array);
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void arrAppendPathIsNotArray() {
-    String json = "{ a: 'hello', b: [1, 2, 3], c: { d: ['ello'] }}";
-    JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+    assertThrows(JedisDataException.class, () -> {
+      String     json       = "{ a: 'hello', b: [1, 2, 3], c: { d: ['ello'] }}";
+      JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
 
-    jsonV1.jsonSet("test_arrappend", ROOT_PATH, jsonObject);
-    jsonV1.jsonArrAppend("test_arrappend", Path.of(".a"), 1);
+      jsonV1.jsonSet("test_arrappend", ROOT_PATH, jsonObject);
+      jsonV1.jsonArrAppend("test_arrappend", Path.of(".a"), 1);
+    });
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void arrIndexAbsentKey() {
-    jsonV1.jsonArrIndex("quxquux", ROOT_PATH, gson.toJson(new Object()));
+    assertThrows(JedisDataException.class, () ->
+        jsonV1.jsonArrIndex("quxquux", ROOT_PATH, gson.toJson(new Object())));
   }
 
   @Test
@@ -385,10 +402,12 @@ public class RedisJsonV1Test extends RedisModuleCommandsTestBase {
     assertEquals(1L, jsonV1.jsonArrIndex("foobar", Path.of(".fooArr"), "b"));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void arrIndexNonExistentPath() {
-    jsonV1.jsonSet("foobar", ROOT_PATH, new FooBarObject());
-    assertEquals(1L, jsonV1.jsonArrIndex("foobar", Path.of(".barArr"), "x"));
+    assertThrows(JedisDataException.class, () -> {
+      jsonV1.jsonSet("foobar", ROOT_PATH, new FooBarObject());
+      assertEquals(1L, jsonV1.jsonArrIndex("foobar", Path.of(".barArr"), "x"));
+    });
   }
 
   @Test

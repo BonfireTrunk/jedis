@@ -1,23 +1,23 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.util.Arrays;
-import java.util.List;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.resps.Slowlog;
 import redis.clients.jedis.util.SafeEncoder;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @RunWith(Parameterized.class)
 public class SlowlogCommandsTest extends JedisCommandsTestBase {
@@ -33,14 +33,14 @@ public class SlowlogCommandsTest extends JedisCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
     slowlogTimeValue = jedis.configGet(SLOWLOG_TIME_PARAM).get(SLOWLOG_TIME_PARAM);
   }
 
-  @After
+  @AfterEach
   @Override
   public void tearDown() throws Exception {
     jedis.configSet(SLOWLOG_TIME_PARAM, slowlogTimeValue);

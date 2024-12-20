@@ -1,8 +1,9 @@
 package redis.clients.jedis.commands.unified.cluster;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import redis.clients.jedis.RedisProtocol;
@@ -15,29 +16,32 @@ public class ClusterBinaryValuesCommandsTest extends BinaryValuesCommandsTestBas
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = ClusterCommandsTestHelper.getCleanCluster(protocol);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     jedis.close();
     ClusterCommandsTestHelper.clearClusterData();
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void mget() {
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void mset() {
   }
 
-  @Ignore
+  @Disabled
   @Override
+  @Test
   public void msetnx() {
   }
 }

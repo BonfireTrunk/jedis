@@ -1,38 +1,34 @@
 package redis.clients.jedis.csc;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.aMapWithSize;
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import redis.clients.jedis.CommandObjects;
+import redis.clients.jedis.JedisPooled;
+import redis.clients.jedis.UnifiedJedis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.Test;
-import org.mockito.Mockito;
-
-import redis.clients.jedis.CommandObjects;
-import redis.clients.jedis.JedisPooled;
-import redis.clients.jedis.UnifiedJedis;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
 
@@ -250,14 +246,14 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       // "foo" is cached
       client.set("foo", "bar");
       client.get("foo"); // read from the server
-      Assert.assertEquals("bar", client.get("foo")); // cache hit
+      Assertions.assertEquals("bar", client.get("foo")); // cache hit
 
       // Using another connection
       controlClient.set("foo", "bar2");
-      Assert.assertEquals("bar2", controlClient.get("foo"));
+      Assertions.assertEquals("bar2", controlClient.get("foo"));
 
       //invalidating the cache and read it back from server
-      Assert.assertEquals("bar2", client.get("foo"));
+      Assertions.assertEquals("bar2", client.get("foo"));
 
       Mockito.verify(mock, Mockito.times(1)).deleteByRedisKeys(Mockito.anyList());
       Mockito.verify(mock, Mockito.times(2)).set(Mockito.any(CacheKey.class), Mockito.any(CacheEntry.class));

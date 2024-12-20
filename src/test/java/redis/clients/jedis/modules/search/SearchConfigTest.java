@@ -1,23 +1,23 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 
 import java.util.Collections;
 import java.util.Map;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @RunWith(Parameterized.class)
 public class SearchConfigTest extends RedisModuleCommandsTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
@@ -31,7 +31,7 @@ public class SearchConfigTest extends RedisModuleCommandsTestBase {
     super(protocol);
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void config() {
     Map<String, Object> map = client.ftConfigGet("TIMEOUT");
@@ -44,7 +44,7 @@ public class SearchConfigTest extends RedisModuleCommandsTestBase {
     }
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void configOnTimeout() {
     // confirm default
@@ -60,7 +60,7 @@ public class SearchConfigTest extends RedisModuleCommandsTestBase {
     }
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void dialectConfig() {
     // confirm default

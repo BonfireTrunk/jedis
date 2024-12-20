@@ -1,17 +1,16 @@
 package redis.clients.jedis;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import redis.clients.jedis.commands.ProtocolCommand;
+import redis.clients.jedis.mocked.unified.UnifiedJedisMockedTestBase;
+
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.sameInstance;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import redis.clients.jedis.commands.ProtocolCommand;
-import redis.clients.jedis.mocked.unified.UnifiedJedisMockedTestBase;
 
 /**
  * These tests are part of the mocked tests for {@link UnifiedJedis}, but, due to {@code protected}

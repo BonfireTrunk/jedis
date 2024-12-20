@@ -4,12 +4,14 @@ package io.redis.examples;
 //HIDE_END
 
 //REMOVE_START
+
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
-import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 //REMOVE_END
 
 public class CMSExample {

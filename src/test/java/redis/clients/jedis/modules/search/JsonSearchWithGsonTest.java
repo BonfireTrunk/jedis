@@ -1,26 +1,30 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static redis.clients.jedis.util.AssertUtil.assertOK;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.search.*;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import redis.clients.jedis.search.Document;
+import redis.clients.jedis.search.FTCreateParams;
+import redis.clients.jedis.search.FTSearchParams;
+import redis.clients.jedis.search.FieldName;
+import redis.clients.jedis.search.IndexDataType;
+import redis.clients.jedis.search.SearchResult;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static redis.clients.jedis.util.AssertUtil.assertOK;
 
 @RunWith(Parameterized.class)
 public class JsonSearchWithGsonTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "gson-index";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }

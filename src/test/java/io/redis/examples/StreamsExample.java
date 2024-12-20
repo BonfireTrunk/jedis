@@ -2,19 +2,31 @@
 //HIDE_START
 package io.redis.examples;
 
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.StreamEntryID;
 import redis.clients.jedis.UnifiedJedis;
-//HIDE_END
-
-//REMOVE_START
-import org.junit.Test;
 import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.*;
-import redis.clients.jedis.resps.*;
+import redis.clients.jedis.params.XAddParams;
+import redis.clients.jedis.params.XAutoClaimParams;
+import redis.clients.jedis.params.XClaimParams;
+import redis.clients.jedis.params.XPendingParams;
+import redis.clients.jedis.params.XReadGroupParams;
+import redis.clients.jedis.params.XReadParams;
+import redis.clients.jedis.params.XTrimParams;
+import redis.clients.jedis.resps.StreamConsumerInfo;
+import redis.clients.jedis.resps.StreamConsumersInfo;
+import redis.clients.jedis.resps.StreamEntry;
+import redis.clients.jedis.resps.StreamGroupInfo;
+import redis.clients.jedis.resps.StreamInfo;
+import redis.clients.jedis.resps.StreamPendingEntry;
+import redis.clients.jedis.resps.StreamPendingSummary;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 //REMOVE_END
 
 public class StreamsExample {

@@ -1,22 +1,21 @@
 package redis.clients.jedis.mocked.unified;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.args.FlushMode;
+import redis.clients.jedis.args.FunctionRestorePolicy;
+import redis.clients.jedis.resps.FunctionStats;
+import redis.clients.jedis.resps.LibraryInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
-import redis.clients.jedis.args.FlushMode;
-import redis.clients.jedis.args.FunctionRestorePolicy;
-import redis.clients.jedis.resps.FunctionStats;
-import redis.clients.jedis.resps.LibraryInfo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class UnifiedJedisScriptingAndFunctionsCommandsTest extends UnifiedJedisMockedTestBase {
 

@@ -1,9 +1,6 @@
 package redis.clients.jedis.mocked.pipeline;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import redis.clients.jedis.CommandObject;
 import redis.clients.jedis.CommandObjects;
@@ -11,6 +8,9 @@ import redis.clients.jedis.PipeliningBase;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.graph.GraphCommandObjects;
 import redis.clients.jedis.mocked.MockedCommandObjectsTestBase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for unit tests for {@link PipeliningBase}, using Mockito. Given that {@link PipeliningBase}
@@ -80,7 +80,7 @@ public abstract class PipeliningBaseMockedTestBase extends MockedCommandObjectsT
   @Mock
   protected Response<?> predefinedResponse;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     pipeliningBase = new TestPipeliningBase(commandObjects, graphCommandObjects, predefinedResponse, commands);
   }

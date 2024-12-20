@@ -1,10 +1,23 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import redis.clients.jedis.Protocol;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.GetExParams;
+import redis.clients.jedis.util.SafeEncoder;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static redis.clients.jedis.Protocol.Command.BLPOP;
 import static redis.clients.jedis.Protocol.Command.GET;
 import static redis.clients.jedis.Protocol.Command.LRANGE;
@@ -12,20 +25,6 @@ import static redis.clients.jedis.Protocol.Command.RPUSH;
 import static redis.clients.jedis.Protocol.Command.SET;
 import static redis.clients.jedis.params.SetParams.setParams;
 import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import redis.clients.jedis.Protocol;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.GetExParams;
-import redis.clients.jedis.util.SafeEncoder;
 
 @RunWith(Parameterized.class)
 public class BinaryValuesCommandsTest extends JedisCommandsTestBase {
@@ -43,7 +42,7 @@ public class BinaryValuesCommandsTest extends JedisCommandsTestBase {
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void startUp() {
     StringBuilder sb = new StringBuilder();
 
@@ -246,10 +245,12 @@ public class BinaryValuesCommandsTest extends JedisCommandsTestBase {
     assertEquals(2, jedis.incr(bfoo));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void incrWrongValue() {
-    jedis.set(bfoo, binaryValue);
-    jedis.incr(bfoo);
+    assertThrows(JedisDataException.class, () -> {
+      jedis.set(bfoo, binaryValue);
+      jedis.incr(bfoo);
+    });
   }
 
   @Test
@@ -258,10 +259,12 @@ public class BinaryValuesCommandsTest extends JedisCommandsTestBase {
     assertEquals(4, jedis.incrBy(bfoo, 2));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void incrByWrongValue() {
-    jedis.set(bfoo, binaryValue);
-    jedis.incrBy(bfoo, 2);
+    assertThrows(JedisDataException.class, () -> {
+      jedis.set(bfoo, binaryValue);
+      jedis.incrBy(bfoo, 2);
+    });
   }
 
   @Test
@@ -276,10 +279,12 @@ public class BinaryValuesCommandsTest extends JedisCommandsTestBase {
     assertEquals(-2, jedis.decr(bfoo));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void decrWrongValue() {
-    jedis.set(bfoo, binaryValue);
-    jedis.decr(bfoo);
+    assertThrows(JedisDataException.class, () -> {
+      jedis.set(bfoo, binaryValue);
+      jedis.decr(bfoo);
+    });
   }
 
   @Test
@@ -288,10 +293,12 @@ public class BinaryValuesCommandsTest extends JedisCommandsTestBase {
     assertEquals(-4, jedis.decrBy(bfoo, 2));
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test
   public void decrByWrongValue() {
-    jedis.set(bfoo, binaryValue);
-    jedis.decrBy(bfoo, 2);
+    assertThrows(JedisDataException.class, () -> {
+      jedis.set(bfoo, binaryValue);
+      jedis.decrBy(bfoo, 2);
+    });
   }
 
   @Test

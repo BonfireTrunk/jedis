@@ -2,10 +2,10 @@
 // HIDE_START
 package io.redis.examples;
 
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.UnifiedJedis;
-// REMOVE_START
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 // REMOVE_END
 

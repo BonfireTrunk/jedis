@@ -1,35 +1,16 @@
 package redis.clients.jedis.commands.commandobjects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.closeTo;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.timeseries.*;
 
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.timeseries.AggregationType;
-import redis.clients.jedis.timeseries.TSAlterParams;
-import redis.clients.jedis.timeseries.TSCreateParams;
-import redis.clients.jedis.timeseries.TSElement;
-import redis.clients.jedis.timeseries.TSGetParams;
-import redis.clients.jedis.timeseries.TSInfo;
-import redis.clients.jedis.timeseries.TSMGetElement;
-import redis.clients.jedis.timeseries.TSMGetParams;
-import redis.clients.jedis.timeseries.TSMRangeElements;
-import redis.clients.jedis.timeseries.TSMRangeParams;
-import redis.clients.jedis.timeseries.TSRangeParams;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=timeseries">Time series</a> commands.

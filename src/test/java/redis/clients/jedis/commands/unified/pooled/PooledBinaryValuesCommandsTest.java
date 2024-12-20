@@ -1,10 +1,9 @@
 package redis.clients.jedis.commands.unified.pooled;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.commands.unified.BinaryValuesCommandsTestBase;
 
@@ -15,13 +14,13 @@ public class PooledBinaryValuesCommandsTest extends BinaryValuesCommandsTestBase
     super(protocol);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     jedis = PooledCommandsTestHelper.getPooled(protocol);
     PooledCommandsTestHelper.clearData();
   }
 
-  @After
+  @AfterEach
   public void cleanUp() {
     jedis.close();
   }

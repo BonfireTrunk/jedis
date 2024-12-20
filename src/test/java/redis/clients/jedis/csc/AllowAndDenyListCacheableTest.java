@@ -1,13 +1,12 @@
 package redis.clients.jedis.csc;
 
-import static java.util.Collections.singleton;
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.csc.util.AllowAndDenyListWithStringKeys;
+
+import static java.util.Collections.singleton;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AllowAndDenyListCacheableTest extends ClientSideCacheTestBase {
 

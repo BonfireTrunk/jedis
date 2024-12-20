@@ -1,20 +1,10 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.args.FlushMode;
@@ -28,6 +18,22 @@ import redis.clients.jedis.util.ClientKillerUtil;
 import redis.clients.jedis.util.KeyValue;
 import redis.clients.jedis.util.SafeEncoder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 @RunWith(Parameterized.class)
 public class ScriptingCommandsTest extends JedisCommandsTestBase {
 
@@ -35,7 +41,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
     super(redisProtocol);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -127,8 +133,8 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
     String script = "return { {KEYS[1]} , {2} }";
     List<?> results = (List<?>) jedis.eval(script, 1, "key1");
 
-    MatcherAssert.assertThat((List<String>) results.get(0), Matchers.hasItem("key1"));
-    MatcherAssert.assertThat((List<Long>) results.get(1), Matchers.hasItem(2L));
+    assertThat((List<String>) results.get(0), Matchers.hasItem("key1"));
+    assertThat((List<Long>) results.get(1), Matchers.hasItem(2L));
   }
 
   @Test
@@ -194,9 +200,10 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
     assertArrayEquals(SafeEncoder.encode("bar"), result);
   }
 
-  @Test(expected = JedisNoScriptException.class)
+  @Test
   public void evalshaShaNotFound() {
-    jedis.evalsha("ffffffffffffffffffffffffffffffffffffffff");
+    assertThrows(JedisNoScriptException.class, () ->
+        jedis.evalsha("ffffffffffffffffffffffffffffffffffffffff"));
   }
 
   @Test

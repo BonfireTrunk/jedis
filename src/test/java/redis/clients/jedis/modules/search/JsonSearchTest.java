@@ -1,23 +1,30 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.*;
-
 import org.json.JSONObject;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import redis.clients.jedis.BuilderFactory;
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.CommandObject;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.json.JsonProtocol;
 import redis.clients.jedis.json.Path2;
-import redis.clients.jedis.search.*;
-import redis.clients.jedis.search.Schema.*;
-import redis.clients.jedis.search.SearchResult;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import redis.clients.jedis.search.Document;
+import redis.clients.jedis.search.FieldName;
+import redis.clients.jedis.search.IndexDefinition;
+import redis.clients.jedis.search.IndexOptions;
+import redis.clients.jedis.search.Query;
+import redis.clients.jedis.search.Schema;
+import redis.clients.jedis.search.Schema.Field;
+import redis.clients.jedis.search.Schema.FieldType;
+import redis.clients.jedis.search.Schema.TextField;
+import redis.clients.jedis.search.SearchResult;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @RunWith(Parameterized.class)
 public class JsonSearchTest extends RedisModuleCommandsTestBase {
@@ -26,7 +33,7 @@ public class JsonSearchTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "json-index";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }

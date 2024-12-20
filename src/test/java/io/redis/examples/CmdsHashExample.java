@@ -2,15 +2,13 @@
 // REMOVE_START
 package io.redis.examples;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.UnifiedJedis;
 
 import java.util.HashMap;
 import java.util.Map;
 
-// REMOVE_END
-// HIDE_START
-import redis.clients.jedis.UnifiedJedis;
 // HIDE_END
 
 // HIDE_START
@@ -92,9 +90,9 @@ public class CmdsHashExample {
 
         // Tests for 'hget' step.
         // REMOVE_START
-        Assert.assertEquals(1, hGetResult1);
-        Assert.assertEquals("foo", hGetResult2);
-        Assert.assertNull(hGetResult3);
+        Assertions.assertEquals(1, hGetResult1);
+        Assertions.assertEquals("foo", hGetResult2);
+        Assertions.assertNull(hGetResult3);
         jedis.del("myhash");
         // REMOVE_END
 
@@ -272,15 +270,15 @@ public class CmdsHashExample {
 
         // Tests for 'hset' step.
         // REMOVE_START
-        Assert.assertEquals(1, hSetResult1);
-        Assert.assertEquals("Hello", hSetResult2);
-        Assert.assertEquals(2, hSetResult3);
-        Assert.assertEquals("Hi", hSetResult4);
-        Assert.assertEquals("World", hSetResult5);
-        Assert.assertEquals(3, hSetResult6.size());
-        Assert.assertEquals("Hello", hSetResult6.get("field1"));
-        Assert.assertEquals("Hi", hSetResult6.get("field2"));
-        Assert.assertEquals("World", hSetResult6.get("field3"));
+        Assertions.assertEquals(1, hSetResult1);
+        Assertions.assertEquals("Hello", hSetResult2);
+        Assertions.assertEquals(2, hSetResult3);
+        Assertions.assertEquals("Hi", hSetResult4);
+        Assertions.assertEquals("World", hSetResult5);
+        Assertions.assertEquals(3, hSetResult6.size());
+        Assertions.assertEquals("Hello", hSetResult6.get("field1"));
+        Assertions.assertEquals("Hi", hSetResult6.get("field2"));
+        Assertions.assertEquals("World", hSetResult6.get("field3"));
         jedis.del("myhash");
         // REMOVE_END
 

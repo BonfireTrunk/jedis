@@ -1,19 +1,26 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.*;
-import static redis.clients.jedis.Protocol.Command.INCR;
-import static redis.clients.jedis.Protocol.Command.GET;
-import static redis.clients.jedis.Protocol.Command.SET;
-import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.util.SafeEncoder;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static redis.clients.jedis.Protocol.Command.GET;
+import static redis.clients.jedis.Protocol.Command.INCR;
+import static redis.clients.jedis.Protocol.Command.SET;
+import static redis.clients.jedis.util.AssertUtil.assertByteArrayListEquals;
 
 public class TransactionV2Test {
 
@@ -30,7 +37,7 @@ public class TransactionV2Test {
   private Connection conn;
   private Jedis nj;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     conn = new Connection(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().timeoutMillis(500).build());
@@ -41,7 +48,7 @@ public class TransactionV2Test {
     nj.flushAll();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     nj.close();
     conn.close();
@@ -186,14 +193,16 @@ public class TransactionV2Test {
     assertArrayEquals("foo".getBytes(), set.get());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void transactionResponseWithinPipeline() {
-    nj.set("string", "foo");
+    assertThrows(IllegalStateException.class, () -> {
+      nj.set("string", "foo");
 
-    Transaction t = new Transaction(conn);
-    Response<String> string = t.get("string");
-    string.get();
-    t.exec();
+      Transaction      t      = new Transaction(conn);
+      Response<String> string = t.get("string");
+      string.get();
+      t.exec();
+    });
   }
 
   @Test

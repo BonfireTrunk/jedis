@@ -1,7 +1,7 @@
 package redis.clients.jedis;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -17,7 +17,7 @@ public class SSLJedisSentinelPoolTest {
 
   private static final JedisPoolConfig POOL_CONFIG = new JedisPoolConfig();
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     SSLJedisTest.setupTrustStore();
 

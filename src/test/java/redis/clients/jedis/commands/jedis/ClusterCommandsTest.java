@@ -1,31 +1,30 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-import java.util.Map;
-
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.HostAndPorts;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.args.ClusterResetType;
-import redis.clients.jedis.HostAndPorts;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.resps.ClusterShardInfo;
 import redis.clients.jedis.resps.ClusterShardNodeInfo;
 import redis.clients.jedis.util.JedisClusterCRC16;
 import redis.clients.jedis.util.JedisClusterTestUtil;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ClusterCommandsTest {
 
@@ -35,7 +34,7 @@ public class ClusterCommandsTest {
   private static HostAndPort nodeInfo1 = HostAndPorts.getClusterServers().get(0);
   private static HostAndPort nodeInfo2 = HostAndPorts.getClusterServers().get(1);
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     node1 = new Jedis(nodeInfo1);
     node1.auth("cluster");
@@ -46,18 +45,18 @@ public class ClusterCommandsTest {
     node2.flushAll();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     node1.disconnect();
     node2.disconnect();
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void resetRedisBefore() {
     removeSlots();
   }
 
-  @AfterClass
+  @AfterAll
   public static void resetRedisAfter() {
     removeSlots();
   }
@@ -260,12 +259,12 @@ public class ClusterCommandsTest {
 
   @Test
   public void clusterMyId() {
-    MatcherAssert.assertThat(node1.clusterMyId(), Matchers.not(Matchers.isEmptyOrNullString()));
+    assertThat(node1.clusterMyId(), Matchers.not(Matchers.isEmptyOrNullString()));
   }
 
   @Test
   public void clusterMyShardId() {
-    MatcherAssert.assertThat(node1.clusterMyShardId(), Matchers.not(Matchers.isEmptyOrNullString()));
+    assertThat(node1.clusterMyShardId(), Matchers.not(Matchers.isEmptyOrNullString()));
   }
 
   @Test
@@ -279,7 +278,7 @@ public class ClusterCommandsTest {
 
   @Test
   public void ClusterBumpEpoch() {
-    MatcherAssert.assertThat(node1.clusterBumpEpoch(), Matchers.matchesPattern("^BUMPED|STILL [0-9]+$"));
+    assertThat(node1.clusterBumpEpoch(), Matchers.matchesPattern("^BUMPED|STILL [0-9]+$"));
   }
 
 }
