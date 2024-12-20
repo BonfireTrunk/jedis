@@ -2,6 +2,7 @@ package redis.clients.jedis.commands.commandobjects;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.json.JsonSetParams;
@@ -15,7 +16,6 @@ import java.util.Map;
 import static net.javacrumbs.jsonunit.JsonMatchers.jsonEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.junit.MatcherAssume.assumeThat;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=json">JSON</a> commands.
@@ -249,7 +249,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonGetWithClass() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     String key = "user:2000";
 
@@ -536,7 +536,8 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonTypeOldPath() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
+
 
     String key = "jsonKey";
 
@@ -601,7 +602,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonStrAppendRootPath() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     String key = "user:1000";
 
@@ -621,7 +622,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonStrLenRootPath() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     String key = "user:1001";
 
@@ -724,7 +725,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     person.put("name", "John");
 
     List<Long> arrAppend = exec(commandObjects.jsonArrAppend(key, Path2.ROOT_PATH,
-        "\"C++\"", "\"JavaScript\"", person));
+                                                             "\"C++\"", "\"JavaScript\"", person));
     assertThat(arrAppend, contains(5L));
 
     Object postCheck = exec(commandObjects.jsonGet(key, Path2.ROOT_PATH));
@@ -745,8 +746,8 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
 
     JSONArray data = new JSONArray()
         .put(new JSONArray()
-            .put("Java")
-            .put("Python"))
+                 .put("Java")
+                 .put("Python"))
         .put(1);
 
     exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
@@ -761,13 +762,13 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
 
     JSONArray expected = new JSONArray()
         .put(new JSONArray()
-            .put("Java")
-            .put("Python")
-            .put("Swift")
-            .put("Go")
-            .put(new JSONObject()
-                .put("name", "John")
-                .put("age", 45)))
+                 .put("Java")
+                 .put("Python")
+                 .put("Swift")
+                 .put("Go")
+                 .put(new JSONObject()
+                          .put("name", "John")
+                          .put("age", 45)))
         .put(1);
     assertThat(postCheck, jsonEquals(new JSONArray().put(expected)));
   }
@@ -815,9 +816,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
 
     JSONArray data = new JSONArray()
         .put(new JSONArray()
-            .put("Java")
-            .put("Python")
-            .put("Java")); // duplicate
+                 .put("Java")
+                 .put("Python")
+                 .put("Java")); // duplicate
 
     exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
 
@@ -887,8 +888,8 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     JSONArray data = new JSONArray()
         .put(1)
         .put(new JSONArray()
-            .put("Scala")
-            .put("Kotlin"));
+                 .put("Scala")
+                 .put("Kotlin"));
 
     exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
 
@@ -903,9 +904,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     JSONArray expected = new JSONArray()
         .put(1)
         .put(new JSONArray()
-            .put("Scala")
-            .put("Swift")
-            .put("Kotlin"));
+                 .put("Scala")
+                 .put("Swift")
+                 .put("Kotlin"));
     assertThat(postCheck, jsonEquals(new JSONArray().put(expected)));
   }
 
@@ -1191,7 +1192,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonArrLenRoot() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     String key = "json";
 
@@ -1248,7 +1249,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonObjLenRoot() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     String key = "json";
 
@@ -1269,9 +1270,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     String key = "json";
 
     JSONObject data = new JSONObject().put("user",
-        new JSONObject()
-            .put("name", "John")
-            .put("age", 30));
+                                           new JSONObject()
+                                               .put("name", "John")
+                                               .put("age", 30));
 
     String setResponse = exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
     assertThat(setResponse, equalTo("OK"));
@@ -1285,9 +1286,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     String key = "json";
 
     JSONObject data = new JSONObject().put("user",
-        new JSONObject()
-            .put("name", "John")
-            .put("age", 30));
+                                           new JSONObject()
+                                               .put("name", "John")
+                                               .put("age", 30));
 
     String setResponse = exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
     assertThat(setResponse, equalTo("OK"));
@@ -1299,7 +1300,8 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonObjKeysRoot() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
+
 
     String key = "json";
 
@@ -1320,9 +1322,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     String key = "json";
 
     JSONObject data = new JSONObject().put("user",
-        new JSONObject()
-            .put("name", "John")
-            .put("age", 30));
+                                           new JSONObject()
+                                               .put("name", "John")
+                                               .put("age", 30));
 
     String setResponse = exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
     assertThat(setResponse, equalTo("OK"));
@@ -1336,9 +1338,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     String key = "json";
 
     JSONObject data = new JSONObject().put("user",
-        new JSONObject()
-            .put("name", "John")
-            .put("age", 30));
+                                           new JSONObject()
+                                               .put("name", "John")
+                                               .put("age", 30));
 
     String setResponse = exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
     assertThat(setResponse, equalTo("OK"));
@@ -1350,7 +1352,7 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
   @Test
   @Deprecated
   public void testJsonDebugMemoryRoot() {
-    assumeThat(protocol, not(equalTo(RedisProtocol.RESP3)));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
     String key = "json";
 
     JSONObject data = new JSONObject()
@@ -1371,9 +1373,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     String key = "json";
 
     JSONObject data = new JSONObject().put("user",
-        new JSONObject()
-            .put("name", "John")
-            .put("age", 30));
+                                           new JSONObject()
+                                               .put("name", "John")
+                                               .put("age", 30));
 
     String setResponse = exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
     assertThat(setResponse, equalTo("OK"));
@@ -1388,9 +1390,9 @@ public class CommandObjectsJsonCommandsTest extends CommandObjectsModulesTestBas
     String key = "json";
 
     JSONObject data = new JSONObject().put("user",
-        new JSONObject()
-            .put("name", "John")
-            .put("age", 30));
+                                           new JSONObject()
+                                               .put("name", "John")
+                                               .put("age", 30));
 
     String setResponse = exec(commandObjects.jsonSet(key, Path2.ROOT_PATH, data));
     assertThat(setResponse, equalTo("OK"));

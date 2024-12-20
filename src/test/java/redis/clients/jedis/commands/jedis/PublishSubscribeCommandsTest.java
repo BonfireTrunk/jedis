@@ -1,7 +1,6 @@
 package redis.clients.jedis.commands.jedis;
 
-import org.hamcrest.Matchers;
-import org.hamcrest.junit.MatcherAssume;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.runner.RunWith;
@@ -552,7 +551,7 @@ public class PublishSubscribeCommandsTest extends JedisCommandsTestBase {
   @Test
   @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
   public void subscribeCacheInvalidateChannel() {
-    MatcherAssume.assumeThat(protocol, Matchers.not(RedisProtocol.RESP3));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     final String cacheInvalidate = "__redis__:invalidate";
     final AtomicBoolean onMessage = new AtomicBoolean(false);
@@ -585,7 +584,7 @@ public class PublishSubscribeCommandsTest extends JedisCommandsTestBase {
   @Test
   @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
   public void subscribeCacheInvalidateChannelBinary() {
-    MatcherAssume.assumeThat(protocol, Matchers.not(RedisProtocol.RESP3));
+    Assumptions.assumeFalse(protocol == RedisProtocol.RESP3, "Test should only run for protocols other than RESP3");
 
     final byte[] cacheInvalidate = "__redis__:invalidate".getBytes();
     final AtomicBoolean onMessage = new AtomicBoolean(false);
