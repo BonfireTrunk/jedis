@@ -1,5 +1,6 @@
 package redis.clients.jedis.commands.unified;
 
+import org.junit.runners.Parameterized;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.commands.CommandsTestsParameters;
@@ -14,11 +15,12 @@ public abstract class UnifiedJedisCommandsTestBase {
    *
    * @see CommandsTestsParameters#respVersions()
    */
+  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return CommandsTestsParameters.respVersions();
   }
 
-  protected RedisProtocol protocol;
+  protected final RedisProtocol protocol;
 
   protected UnifiedJedis jedis;
 
@@ -31,7 +33,7 @@ public abstract class UnifiedJedisCommandsTestBase {
    *
    * @param protocol The RESP protocol to use during the tests.
    */
-  public void initUnifiedJedisCommandsTestBase(RedisProtocol protocol) {
+  public UnifiedJedisCommandsTestBase(RedisProtocol protocol) {
     this.protocol = protocol;
   }
 }

@@ -2,7 +2,7 @@ package redis.clients.jedis.modules;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.Parameterized;
 import redis.clients.jedis.Connection;
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.HostAndPort;
@@ -25,7 +25,7 @@ public abstract class RedisModuleCommandsTestBase {
    *
    * @see CommandsTestsParameters#respVersions()
    */
-  @Parameters
+  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return CommandsTestsParameters.respVersions();
   }

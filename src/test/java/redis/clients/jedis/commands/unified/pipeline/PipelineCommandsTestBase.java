@@ -2,6 +2,7 @@ package redis.clients.jedis.commands.unified.pipeline;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.runners.Parameterized;
 import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.RedisProtocol;
@@ -18,6 +19,7 @@ public abstract class PipelineCommandsTestBase {
    *
    * @see CommandsTestsParameters#respVersions()
    */
+  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return CommandsTestsParameters.respVersions();
   }
@@ -36,7 +38,7 @@ public abstract class PipelineCommandsTestBase {
    *
    * @param protocol The RESP protocol to use during the tests.
    */
-  public void initPipelineCommandsTestBase(RedisProtocol protocol) {
+  public PipelineCommandsTestBase(RedisProtocol protocol) {
     this.protocol = protocol;
   }
 
