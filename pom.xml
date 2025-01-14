@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
     <groupId>today.bonfire.oss</groupId>
     <artifactId>jedis</artifactId>
-    <version>5.2.0</version>
+    <version>5.2.1</version>
     <name>Jedis</name>
     <description>Modified Jedis library to support java 21 and uses a simple object pool. This is a blazingly small and sane Redis java client.</description>
     <url>https://github.com/BonfireTrunk/jedis</url>
@@ -38,7 +38,7 @@
 
     <properties>
         <github.global.server>github</github.global.server>
-        <jedis.module.name>redis.clients.jedis</jedis.module.name>
+        <jedis.module.name>bonfire.oss.jedis</jedis.module.name>
         <resilience4j.version>1.7.1</resilience4j.version>
         <jackson.version>2.17.2</jackson.version>
         <maven.surefire.version>3.5.0</maven.surefire.version>
