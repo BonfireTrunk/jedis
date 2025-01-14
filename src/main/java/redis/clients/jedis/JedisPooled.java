@@ -410,7 +410,7 @@ public class JedisPooled extends UnifiedJedis {
   }
 
 
-  public Pool<Connection> getPool() {
+  public final Pool<Connection> getPool() {
     return ((PooledConnectionProvider) provider).getPool();
   }
 
