@@ -4,7 +4,7 @@
     <parent>
         <groupId>today.bonfire.oss</groupId>
         <artifactId>bonfire-oss-parent</artifactId>
-        <version>1.1.5</version>
+        <version>1.1.8</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -227,7 +227,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <configuration>
                     <release>${java.version}</release>
                 </configuration>
@@ -256,7 +255,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
                 <configuration>
                     <archive>
                         <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -269,7 +267,6 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>5.1.9</version>
                 <executions>
                     <execution>
                         <id>bundle-manifest</id>
