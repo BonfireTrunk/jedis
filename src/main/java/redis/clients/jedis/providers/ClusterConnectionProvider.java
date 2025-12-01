@@ -114,6 +114,10 @@ public class ClusterConnectionProvider implements ConnectionProvider {
     return cache.getNodes();
   }
 
+  public Map<String, ConnectionPool> getPrimaryNodes() {
+    return cache.getPrimaryNodes();
+  }
+
   public HostAndPort getNode(int slot) {
     return slot >= 0 ? cache.getSlotNode(slot) : null;
   }
@@ -138,7 +142,7 @@ public class ClusterConnectionProvider implements ConnectionProvider {
     // In antirez's redis-rb-cluster implementation, getRandomConnection always return
     // valid connection (able to ping-pong) or exception if all connections are invalid
 
-    List<ConnectionPool> pools = cache.getShuffledNodesPool();
+    List<ConnectionPool> pools = cache.getShuffledPrimaryNodesPool();
 
     JedisException suppressed = null;
     for (ConnectionPool pool : pools) {
@@ -208,8 +212,15 @@ public class ClusterConnectionProvider implements ConnectionProvider {
     return getConnectionFromSlot(slot);
   }
 
+
   @Override
   public Map<String, ConnectionPool> getConnectionMap() {
     return Collections.unmodifiableMap(getNodes());
   }
+
+  @Override
+  public Map<String, ConnectionPool> getPrimaryNodesConnectionMap() {
+    return Collections.unmodifiableMap(getPrimaryNodes());
+  }
+
 }

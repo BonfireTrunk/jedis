@@ -1,20 +1,28 @@
 package redis.clients.jedis.commands.unified;
 
-import org.hamcrest.Matchers;
-import org.junit.Assume;
-import org.junit.Test;
-import redis.clients.jedis.RedisProtocol;
-import redis.clients.jedis.ScanIteration;
-import redis.clients.jedis.StreamEntryID;
-import redis.clients.jedis.args.ExpiryOption;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.RestoreParams;
-import redis.clients.jedis.params.ScanParams;
-import redis.clients.jedis.params.SetParams;
-import redis.clients.jedis.resps.ScanResult;
-import redis.clients.jedis.util.AssertUtil;
-import redis.clients.jedis.util.KeyValue;
-import redis.clients.jedis.util.SafeEncoder;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static redis.clients.jedis.Protocol.Command.BLPOP;
+import static redis.clients.jedis.Protocol.Command.GET;
+import static redis.clients.jedis.Protocol.Command.HGETALL;
+import static redis.clients.jedis.Protocol.Command.LRANGE;
+import static redis.clients.jedis.Protocol.Command.PING;
+import static redis.clients.jedis.Protocol.Command.RPUSH;
+import static redis.clients.jedis.Protocol.Command.SET;
+import static redis.clients.jedis.Protocol.Command.XINFO;
+import static redis.clients.jedis.util.SafeEncoder.encode;
+import static redis.clients.jedis.util.SafeEncoder.encodeObject;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
+import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,27 +32,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static redis.clients.jedis.Protocol.Command.BLPOP;
-import static redis.clients.jedis.Protocol.Command.GET;
-import static redis.clients.jedis.Protocol.Command.HGETALL;
-import static redis.clients.jedis.Protocol.Command.LRANGE;
-import static redis.clients.jedis.Protocol.Command.PING;
-import static redis.clients.jedis.Protocol.Command.RPUSH;
-import static redis.clients.jedis.Protocol.Command.SET;
-import static redis.clients.jedis.Protocol.Command.XINFO;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
-import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
-import static redis.clients.jedis.util.SafeEncoder.encode;
-import static redis.clients.jedis.util.SafeEncoder.encodeObject;
+import io.redis.test.annotations.EnabledOnCommand;
+import io.redis.test.annotations.SinceRedisVersion;
+import org.hamcrest.Matchers;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.ScanIteration;
+import redis.clients.jedis.StreamEntryID;
+import redis.clients.jedis.args.ExpiryOption;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
+import redis.clients.jedis.params.RestoreParams;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.SetParams;
+import redis.clients.jedis.util.AssertUtil;
+import redis.clients.jedis.util.KeyValue;
+import redis.clients.jedis.util.SafeEncoder;
+import redis.clients.jedis.util.CompareCondition;
+
+@Tag("integration")
 public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisCommandsTestBase {
 
   protected final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };
@@ -217,7 +226,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
     assertNull(jedis.randomKey());
 
     for (int i = 0; i < 100; i++) {
-      jedis.set("foo" + i, "bar" + i);
+      jedis.set("foo" + i, "bar"+i);
     }
 
     String key = jedis.randomKey();
@@ -285,6 +294,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
   }
 
   @Test
+  @SinceRedisVersion(value="7.0.0", message = "Starting with Redis version 7.0.0: Added options: NX, XX, GT and LT.")
   public void expire() {
     assertEquals(0, jedis.expire("foo", 20L));
 
@@ -301,6 +311,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
   }
 
   @Test
+  @SinceRedisVersion(value="7.0.0", message = "Starting with Redis version 7.0.0: Added options: NX, XX, GT and LT.")
   public void expireAt() {
     long unixTime = (System.currentTimeMillis() / 1000L) + 20;
 
@@ -321,6 +332,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
   }
 
   @Test
+  @SinceRedisVersion(value="7.0.0")
   public void expireTime() {
     long unixTime;
 
@@ -426,6 +438,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
   }
 
   @Test
+  @Disabled(value = "TODO: Regression in 8.0-M02 discarding restore idle time.")
   public void restoreParams() {
     jedis.set("foo", "bar");
     jedis.set("from", "a");
@@ -449,8 +462,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
     assertEquals("a", jedis.get("foo"));
     assertTrue(jedis.pttl("foo") <= 1000);
 
-    jedis.restore("bar", System.currentTimeMillis() + 1000, serialized, RestoreParams
-        .restoreParams().replace().absTtl());
+    jedis.restore("bar", System.currentTimeMillis() + 1000, serialized, RestoreParams.restoreParams().replace().absTtl());
     assertTrue(jedis.pttl("bar") <= 1000);
 
     jedis.restore("bar1", 1000, serialized, RestoreParams.restoreParams().replace().idleTime(1000));
@@ -458,6 +470,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
   }
 
   @Test
+  @SinceRedisVersion(value="7.0.0", message = "Starting with Redis version 7.0.0: Added options: NX, XX, GT and LT.")
   public void pexpire() {
     assertEquals(0, jedis.pexpire("foo", 10000));
 
@@ -499,6 +512,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
   }
 
   @Test
+  @SinceRedisVersion(value="7.0.0")
   public void pexpireTime() {
     long unixTime = (System.currentTimeMillis()) + 10000;
 
@@ -642,6 +656,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
     int page2Count = scanResult.getResult().size();
     assertEquals(4, page1Count + page2Count);
 
+
     scanResult = jedis.scan(SCAN_POINTER_START, noParams, "hash");
     assertEquals(Collections.singletonList("b"), scanResult.getResult());
     scanResult = jedis.scan(SCAN_POINTER_START, noParams, "set");
@@ -674,14 +689,11 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
     assertEquals(4, page1Count + page2Count);
 
     binaryResult = jedis.scan(SCAN_POINTER_START_BINARY, noParams, hash);
-    AssertUtil.assertByteArrayListEquals(Collections.singletonList(new byte[] { 98 }),
-      binaryResult.getResult());
+    AssertUtil.assertByteArrayListEquals(Collections.singletonList(new byte[]{98}), binaryResult.getResult());
     binaryResult = jedis.scan(SCAN_POINTER_START_BINARY, noParams, set);
-    AssertUtil.assertByteArrayListEquals(Collections.singletonList(new byte[] { 100 }),
-      binaryResult.getResult());
+    AssertUtil.assertByteArrayListEquals(Collections.singletonList(new byte[]{100}), binaryResult.getResult());
     binaryResult = jedis.scan(SCAN_POINTER_START_BINARY, noParams, zset);
-    AssertUtil.assertByteArrayListEquals(Collections.singletonList(new byte[] { 102 }),
-      binaryResult.getResult());
+    AssertUtil.assertByteArrayListEquals(Collections.singletonList(new byte[]{102}), binaryResult.getResult());
   }
 
   @Test
@@ -806,7 +818,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
 
   @Test
   public void encodeCompleteResponseHgetall() {
-    Assume.assumeFalse(protocol == RedisProtocol.RESP3);
+    assumeFalse(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entries = new HashMap<>();
     entries.put("foo", "bar");
@@ -824,7 +836,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
 
   @Test
   public void encodeCompleteResponseHgetallResp3() {
-    Assume.assumeTrue(protocol == RedisProtocol.RESP3);
+    assumeTrue(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entries = new HashMap<>();
     entries.put("foo", "bar");
@@ -841,7 +853,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
 
   @Test
   public void encodeCompleteResponseXinfoStream() {
-    Assume.assumeFalse(protocol == RedisProtocol.RESP3);
+    assumeFalse(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entry = new HashMap<>();
     entry.put("foo", "bar");
@@ -853,7 +865,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
     List encodeObj = (List) SafeEncoder.encodeObject(obj);
 
     assertThat(encodeObj.size(), Matchers.greaterThanOrEqualTo(14));
-    assertEquals("must have even number of elements", 0, encodeObj.size() % 2); // must be even
+    assertEquals( 0, encodeObj.size() % 2, "must have even number of elements"); // must be even
 
     assertEquals(1L, findValueFromMapAsList(encodeObj, "length"));
     assertEquals(entryID.toString(), findValueFromMapAsList(encodeObj, "last-generated-id"));
@@ -868,7 +880,7 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
 
   @Test
   public void encodeCompleteResponseXinfoStreamResp3() {
-    Assume.assumeTrue(protocol == RedisProtocol.RESP3);
+    assumeTrue(protocol == RedisProtocol.RESP3);
 
     HashMap<String, String> entry = new HashMap<>();
     entry.put("foo", "bar");
@@ -888,10 +900,8 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
     entryAsList.add("foo");
     entryAsList.add("bar");
 
-    assertEquals(entryAsList,
-      ((List) findValueFromMapAsKeyValueList(encodeObj, "first-entry")).get(1));
-    assertEquals(entryAsList,
-      ((List) findValueFromMapAsKeyValueList(encodeObj, "last-entry")).get(1));
+    assertEquals(entryAsList, ((List) findValueFromMapAsKeyValueList(encodeObj, "first-entry")).get(1));
+    assertEquals(entryAsList, ((List) findValueFromMapAsKeyValueList(encodeObj, "last-entry")).get(1));
   }
 
   private Object findValueFromMapAsList(List list, Object key) {
@@ -959,5 +969,93 @@ public abstract class AllKindOfValuesCommandsTestBase extends UnifiedJedisComman
       allScan.addAll(batch.getResult());
     }
     assertEquals(allIn, allScan);
+  }
+
+  @Test
+  @EnabledOnCommand("DELEX")
+  public void set_ex_ifeq_then_delex() {
+    String k = "k:set-ex-ifeq";
+    // Initial set with EX
+    assertEquals("OK", jedis.set(k, "v1", SetParams.setParams().ex(100)));
+    assertTrue(jedis.ttl(k) > 0);
+
+    // Conditional update with IFEQ + EX
+    assertEquals("OK", jedis.set(k, "v2",
+        SetParams.setParams().ex(200).condition(CompareCondition.valueEq("v1"))));
+    assertEquals("v2", jedis.get(k));
+    assertTrue(jedis.ttl(k) > 100);
+
+    // Delete with DELEX using value condition
+    assertEquals(0, jedis.delex(k, CompareCondition.valueEq("wrong")));
+    assertEquals(1, jedis.delex(k, CompareCondition.valueEq("v2")));
+    assertFalse(jedis.exists(k));
+  }
+
+  @Test
+  @EnabledOnCommand("DELEX")
+  public void set_exAt_ifne_then_delex() {
+    String k = "k:set-exat-ifne";
+    long expiryTimestamp = (System.currentTimeMillis() / 1000) + 300;
+
+    // Initial set
+    jedis.set(k, "v1");
+
+    // Conditional update with IFNE + EXAT
+    assertEquals("OK", jedis.set(k, "v2",
+        SetParams.setParams().exAt(expiryTimestamp).condition(CompareCondition.valueNe("v2"))));
+    assertEquals("v2", jedis.get(k));
+    assertTrue(jedis.ttl(k) > 200);
+
+    // Delete with DELEX using value condition
+    assertEquals(0, jedis.delex(k, CompareCondition.valueNe("v2")));
+    assertEquals(1, jedis.delex(k, CompareCondition.valueNe("wrong")));
+    assertFalse(jedis.exists(k));
+  }
+
+  @Test
+  @EnabledOnCommand("DELEX")
+  public void setGet_px_ifdne_then_delex() {
+    String k = "k:setget-px-ifdne";
+    String wrongKey = "wrong";
+    // Initial set
+    jedis.set(k, "A");
+    jedis.set(wrongKey, "wrong");
+    String digestBefore = jedis.digestKey(k);
+    String digestWrong = jedis.digestKey(wrongKey); // digest for different value
+
+    // Conditional setGet with IFDNE + PX (digest not equal)
+    assertEquals("A", jedis.setGet(k, "B",
+        SetParams.setParams().px(100000).condition(CompareCondition.digestNe(digestWrong))));
+    assertEquals("B", jedis.get(k));
+    assertTrue(jedis.pttl(k) > 90000);
+
+    // Delete with DELEX using digest condition
+    String digestAfter = jedis.digestKey(k);
+    assertEquals(0, jedis.delex(k, CompareCondition.digestNe(digestAfter)));
+    assertEquals(1, jedis.delex(k, CompareCondition.digestNe(digestBefore)));
+    assertFalse(jedis.exists(k));
+  }
+
+  @Test
+  @EnabledOnCommand("DELEX")
+  public void setGet_pxAt_ifdeq_then_delex() {
+    String k = "k:setget-pxat-ifdeq";
+    long expiryTimestampMs = System.currentTimeMillis() + 300000;
+
+    // Initial set
+    jedis.set(k, "X");
+    String digestX = jedis.digestKey(k);
+
+    // Conditional setGet with IFDEQ + PXAT (digest equal)
+    assertEquals("X", jedis.setGet(k, "Y", SetParams.setParams().pxAt(expiryTimestampMs)
+        .condition(CompareCondition.digestEq(digestX))));
+    assertEquals("Y", jedis.get(k));
+    assertTrue(jedis.pttl(k) > 200000);
+
+    // Delete with DELEX using digest condition
+    String digestY = jedis.digestKey(k);
+    assertEquals(0, jedis.delex(k, CompareCondition.digestEq(digestX)));
+    assertEquals(1, jedis.delex(k, CompareCondition.digestEq(digestY)));
+    assertFalse(jedis.exists(k));
   }
 }

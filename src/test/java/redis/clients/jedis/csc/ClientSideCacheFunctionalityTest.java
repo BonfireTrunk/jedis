@@ -1,33 +1,27 @@
 package redis.clients.jedis.csc;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.aMapWithSize;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import redis.clients.jedis.CommandObjects;
@@ -36,8 +30,7 @@ import redis.clients.jedis.UnifiedJedis;
 
 public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
 
-  @Test
-  // T.5.1
+  @Test // T.5.1
   public void flushAllTest() {
     final int count = 100;
     for (int i = 0; i < count; i++) {
@@ -91,8 +84,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     }
   }
 
-  @Test
-  // T.5.2
+  @Test // T.5.2
   public void deleteByKeyUsingMGetTest() {
     try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
       Cache clientSideCache = jedis.getCache();
@@ -108,16 +100,14 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     }
   }
 
-  @Test
-  // T.5.2
+  @Test // T.5.2
   public void deleteByKeyTest() {
     final int count = 100;
     for (int i = 0; i < count; i++) {
       control.set("k" + i, "v" + i);
     }
 
-    // By using LinkedHashMap, we can get the hashes (map keys) at the same order of the actual
-    // keys.
+    // By using LinkedHashMap, we can get the hashes (map keys) at the same order of the actual keys.
     LinkedHashMap<CacheKey, CacheEntry> map = new LinkedHashMap<>();
     Cache clientSideCache = new TestCache(map);
     try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), clientSideCache)) {
@@ -139,8 +129,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     }
   }
 
-  @Test
-  // T.5.2
+  @Test // T.5.2
   public void deleteByKeysTest() {
     final int count = 100;
     final int delete = 10;
@@ -149,8 +138,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       control.set("k" + i, "v" + i);
     }
 
-    // By using LinkedHashMap, we can get the hashes (map keys) at the same order of the actual
-    // keys.
+    // By using LinkedHashMap, we can get the hashes (map keys) at the same order of the actual keys.
     LinkedHashMap<CacheKey, CacheEntry> map = new LinkedHashMap<>();
     Cache clientSideCache = new TestCache(map);
     try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), clientSideCache)) {
@@ -169,8 +157,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     }
   }
 
-  @Test
-  // T.5.3
+  @Test // T.5.3
   public void deleteByEntryTest() {
     final int count = 100;
     for (int i = 0; i < count; i++) {
@@ -213,7 +200,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
           .collect(Collectors.toList());
       List<Boolean> isDeleted = cache.delete(cacheKeysToDelete);
       assertThat(isDeleted, hasSize(delete));
-      isDeleted.forEach(Assert::assertTrue);
+      isDeleted.forEach(Assertions::assertTrue);
       assertEquals(count - delete, cache.getSize());
     }
   }
@@ -234,8 +221,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     control.set("k1", "v1");
     control.set("k2", "v2");
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder()
-        .maxSize(1).build())) {
+    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().maxSize(1).build())) {
       Cache cache = jedis.getCache();
       assertEquals(0, cache.getSize());
       jedis.get("k1");
@@ -258,18 +244,17 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       // "foo" is cached
       client.set("foo", "bar");
       client.get("foo"); // read from the server
-      Assert.assertEquals("bar", client.get("foo")); // cache hit
+      assertEquals("bar", client.get("foo")); // cache hit
 
       // Using another connection
       controlClient.set("foo", "bar2");
-      Assert.assertEquals("bar2", controlClient.get("foo"));
+      assertEquals("bar2", controlClient.get("foo"));
 
-      // invalidating the cache and read it back from server
-      Assert.assertEquals("bar2", client.get("foo"));
+      //invalidating the cache and read it back from server
+      assertEquals("bar2", client.get("foo"));
 
       Mockito.verify(mock, Mockito.times(1)).deleteByRedisKeys(Mockito.anyList());
-      Mockito.verify(mock, Mockito.times(2)).set(Mockito.any(CacheKey.class),
-        Mockito.any(CacheEntry.class));
+      Mockito.verify(mock, Mockito.times(2)).set(Mockito.any(CacheKey.class), Mockito.any(CacheEntry.class));
     } finally {
       client.close();
       controlClient.close();
@@ -292,8 +277,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       Set<String> members1 = jedis.smembers("foo");
       Set<String> members2 = jedis.smembers("foo");
 
-      Set<String> fromMap = (Set<String>) cache.get(
-        new CacheKey<>(new CommandObjects().smembers("foo"))).getValue();
+      Set<String> fromMap = (Set<String>) cache.get(new CacheKey<>(new CommandObjects().smembers("foo"))).getValue();
       assertEquals(expected, members1);
       assertEquals(expected, members2);
       assertEquals(expected, fromMap);
@@ -462,9 +446,9 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
         assertTrue(!cache.hasCacheKey(new CacheKey(new CommandObjects().get("foo" + i))));
       }
 
-      // / check expected evictions are done after the touched keys
+      // check expected evictions are done after the touched keys
       for (int i = touchOffset + expectedEvictions; i < (2 * expectedEvictions); i++) {
-        assertTrue(!cache.hasCacheKey(new CacheKey(new CommandObjects().get("foo" + i))));
+        assertFalse(cache.hasCacheKey(new CacheKey(new CommandObjects().get("foo" + i))));
       }
 
       assertEquals(maxSize, cache.getSize());
@@ -518,11 +502,10 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   @Test
   public void testNullValue() throws InterruptedException {
     int MAX_SIZE = 20;
-    String nonExisting = "non-existing-key";
+    String nonExisting = "non-existing-key-"+ UUID.randomUUID().toString();
     control.del(nonExisting);
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder()
-        .maxSize(MAX_SIZE).build())) {
+    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().maxSize(MAX_SIZE).build())) {
       Cache cache = jedis.getCache();
       CacheStats stats = cache.getStats();
 
@@ -540,8 +523,10 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       assertEquals(1, stats.getMissCount());
 
       control.set(nonExisting, "bar");
-      val = jedis.get(nonExisting);
-      assertEquals("bar", val);
+      await()
+              .atMost(5, TimeUnit.SECONDS)
+              .pollInterval(10, TimeUnit.MILLISECONDS)
+              .untilAsserted(() -> assertEquals("bar", jedis.get(nonExisting)));
       assertEquals(1, cache.getSize());
       assertEquals("bar", cache.getCacheEntries().iterator().next().getValue());
       assertEquals(1, stats.getHitCount());
@@ -552,8 +537,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   @Test
   public void testCacheFactory() throws InterruptedException {
     // this checks the instantiation with parameters (int, EvictionPolicy, Cacheable)
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder()
-        .cacheClass(TestCache.class).build())) {
+    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().cacheClass(TestCache.class).build())) {
       Cache cache = jedis.getCache();
       CacheStats stats = cache.getStats();
 
@@ -567,8 +551,8 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     }
 
     // this checks the instantiation with parameters (int, EvictionPolicy)
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder()
-        .cacheClass(TestCache.class).cacheable(null).build())) {
+    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(),
+        CacheConfig.builder().cacheClass(TestCache.class).cacheable(null).build())) {
       Cache cache = jedis.getCache();
       CacheStats stats = cache.getStats();
 

@@ -1,4 +1,4 @@
-// EXAMPLE: hash_tutorial
+//EXAMPLE: hash_tutorial
 package io.redis.examples;
 
 import redis.clients.jedis.UnifiedJedis;
@@ -6,13 +6,14 @@ import redis.clients.jedis.UnifiedJedis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-// REMOVE_START
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
 
-// REMOVE_END
+//REMOVE_START
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+//REMOVE_END
 
 public class HashExample {
+
   @Test
   public void run() {
     try (UnifiedJedis jedis = new UnifiedJedis("redis://localhost:6379")) {

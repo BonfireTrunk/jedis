@@ -1,7 +1,18 @@
 package redis.clients.jedis.providers;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.Connection;
 import redis.clients.jedis.ConnectionPool;
@@ -15,72 +26,72 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.IOUtils;
 import today.bonfire.oss.sop.SimpleObjectPoolConfig;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import redis.clients.jedis.util.Pool;
 
 public class SentineledConnectionProvider implements ConnectionProvider {
 
-  protected static final long DEFAULT_SUBSCRIBE_RETRY_WAIT_TIME_MILLIS = 5000;
   private static final Logger LOG = LoggerFactory.getLogger(SentineledConnectionProvider.class);
-  protected final Collection<SentinelListener> sentinelListeners = new ArrayList<>();
-  private final String masterName;
-  private final JedisClientConfig masterClientConfig;
-  private final Cache clientSideCache;
-  private final SimpleObjectPoolConfig masterPoolConfig;
-  private final JedisClientConfig sentinelClientConfig;
-  private final long subscribeRetryWaitTimeMillis;
-  private final Lock initPoolLock = new ReentrantLock(true);
+
+  protected static final long DEFAULT_SUBSCRIBE_RETRY_WAIT_TIME_MILLIS = 5000;
+
   private volatile HostAndPort currentMaster;
+
   private volatile ConnectionPool pool;
 
-  public SentineledConnectionProvider(String masterName,
-      final JedisClientConfig masterClientConfig, Set<HostAndPort> sentinels,
-      final JedisClientConfig sentinelClientConfig) {
+  private final String masterName;
+
+  private final JedisClientConfig masterClientConfig;
+
+  private final Cache clientSideCache;
+
+  private final SimpleObjectPoolConfig masterPoolConfig;
+
+  protected final Collection<SentinelListener> sentinelListeners = new ArrayList<>();
+
+  private final JedisClientConfig sentinelClientConfig;
+
+  private final long subscribeRetryWaitTimeMillis;
+
+  private final Lock initPoolLock = new ReentrantLock(true);
+
+  public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
+      Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
     this(masterName, masterClientConfig, null, null, sentinels, sentinelClientConfig);
   }
 
   @Experimental
-  public SentineledConnectionProvider(String masterName,
-      final JedisClientConfig masterClientConfig, Cache clientSideCache,
-      Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
+  public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
+      Cache clientSideCache, Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
     this(masterName, masterClientConfig, clientSideCache, null, sentinels, sentinelClientConfig);
   }
 
-  public SentineledConnectionProvider(String masterName,
-      final JedisClientConfig masterClientConfig, final SimpleObjectPoolConfig poolConfig,
+  public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
+      final SimpleObjectPoolConfig poolConfig,
       Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
     this(masterName, masterClientConfig, poolConfig, sentinels, sentinelClientConfig,
         DEFAULT_SUBSCRIBE_RETRY_WAIT_TIME_MILLIS);
   }
 
   @Experimental
-  public SentineledConnectionProvider(String masterName,
-      final JedisClientConfig masterClientConfig, Cache clientSideCache,
-      final SimpleObjectPoolConfig poolConfig, Set<HostAndPort> sentinels,
-      final JedisClientConfig sentinelClientConfig) {
-    this(masterName, masterClientConfig, clientSideCache, poolConfig, sentinels,
-        sentinelClientConfig, DEFAULT_SUBSCRIBE_RETRY_WAIT_TIME_MILLIS);
+  public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
+      Cache clientSideCache, final SimpleObjectPoolConfig poolConfig,
+      Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
+    this(masterName, masterClientConfig, clientSideCache, poolConfig, sentinels, sentinelClientConfig,
+        DEFAULT_SUBSCRIBE_RETRY_WAIT_TIME_MILLIS);
   }
 
-  public SentineledConnectionProvider(String masterName,
-      final JedisClientConfig masterClientConfig, final SimpleObjectPoolConfig poolConfig,
+  public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
+      final SimpleObjectPoolConfig poolConfig,
       Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig,
       final long subscribeRetryWaitTimeMillis) {
-    this(masterName, masterClientConfig, null, poolConfig, sentinels, sentinelClientConfig,
-        subscribeRetryWaitTimeMillis);
+    this(masterName, masterClientConfig, null, poolConfig, sentinels, sentinelClientConfig, subscribeRetryWaitTimeMillis);
   }
 
   @Experimental
-  public SentineledConnectionProvider(String masterName,
-      final JedisClientConfig masterClientConfig, Cache clientSideCache,
-      final SimpleObjectPoolConfig poolConfig, Set<HostAndPort> sentinels,
-      final JedisClientConfig sentinelClientConfig, final long subscribeRetryWaitTimeMillis) {
+  public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
+      Cache clientSideCache, final SimpleObjectPoolConfig poolConfig,
+      Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig,
+      final long subscribeRetryWaitTimeMillis) {
 
     this.masterName = masterName;
     this.masterClientConfig = masterClientConfig;
@@ -94,17 +105,6 @@ public class SentineledConnectionProvider implements ConnectionProvider {
     initMaster(master);
   }
 
-  /**
-   * Must be of size 2.
-   */
-  private static HostAndPort toHostAndPort(List<String> masterAddr) {
-    return toHostAndPort(masterAddr.get(0), masterAddr.get(1));
-  }
-
-  private static HostAndPort toHostAndPort(String hostStr, String portStr) {
-    return new HostAndPort(hostStr, Integer.parseInt(portStr));
-  }
-
   @Override
   public Connection getConnection() {
     return pool.getResource();
@@ -113,6 +113,16 @@ public class SentineledConnectionProvider implements ConnectionProvider {
   @Override
   public Connection getConnection(CommandArguments args) {
     return pool.getResource();
+  }
+
+  @Override
+  public Map<?, Pool<Connection>> getConnectionMap() {
+    return Collections.singletonMap(currentMaster, pool);
+  }
+
+  @Override
+  public Map<?, Pool<Connection>> getPrimaryNodesConnectionMap() {
+    return Collections.singletonMap(currentMaster, pool);
   }
 
   @Override
@@ -206,11 +216,11 @@ public class SentineledConnectionProvider implements ConnectionProvider {
     if (master == null) {
       if (sentinelAvailable) {
         // can connect to sentinel, but master name seems to not monitored
-        throw new JedisException("Can connect to sentinel, but " + masterName
-            + " seems to be not monitored.");
+        throw new JedisException(
+            "Can connect to sentinel, but " + masterName + " seems to be not monitored.");
       } else {
-        throw new JedisConnectionException("All sentinels down, cannot determine where "
-            + masterName + " is running.");
+        throw new JedisConnectionException(
+            "All sentinels down, cannot determine where " + masterName + " is running.");
       }
     }
 
@@ -226,6 +236,17 @@ public class SentineledConnectionProvider implements ConnectionProvider {
     }
 
     return master;
+  }
+
+  /**
+   * Must be of size 2.
+   */
+  private static HostAndPort toHostAndPort(List<String> masterAddr) {
+    return toHostAndPort(masterAddr.get(0), masterAddr.get(1));
+  }
+
+  private static HostAndPort toHostAndPort(String hostStr, String portStr) {
+    return new HostAndPort(hostStr, Integer.parseInt(portStr));
   }
 
   protected class SentinelListener extends Thread {
@@ -274,13 +295,14 @@ public class SentineledConnectionProvider implements ConnectionProvider {
                 if (masterName.equals(switchMasterMsg[0])) {
                   initMaster(toHostAndPort(switchMasterMsg[3], switchMasterMsg[4]));
                 } else {
-                  LOG.debug("Ignoring message on +switch-master for master {}. Our master is {}.",
-                    switchMasterMsg[0], masterName);
+                  LOG.debug(
+                      "Ignoring message on +switch-master for master {}. Our master is {}.",
+                      switchMasterMsg[0], masterName);
                 }
 
               } else {
                 LOG.error("Invalid message received on sentinel {} on channel +switch-master: {}.",
-                  node, message);
+                          node, message);
               }
             }
           }, "+switch-master");
@@ -288,7 +310,7 @@ public class SentineledConnectionProvider implements ConnectionProvider {
         } catch (JedisException e) {
 
           if (running.get()) {
-            LOG.error("Lost connection to sentinel {}. Sleeping {}ms and retrying.", node,
+            LOG.error("Lost connection to Sentinel {}. Sleeping {}ms and retrying.", node,
               subscribeRetryWaitTimeMillis, e);
             try {
               Thread.sleep(subscribeRetryWaitTimeMillis);

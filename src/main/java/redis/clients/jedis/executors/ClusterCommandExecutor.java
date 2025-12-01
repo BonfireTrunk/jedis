@@ -8,15 +8,12 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.CommandObject;
-import redis.clients.jedis.Connection;
-import redis.clients.jedis.ConnectionPool;
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.Protocol;
+import redis.clients.jedis.*;
 import redis.clients.jedis.annots.VisibleForTesting;
 import redis.clients.jedis.exceptions.*;
 import redis.clients.jedis.providers.ClusterConnectionProvider;
 import redis.clients.jedis.util.IOUtils;
+import redis.clients.jedis.util.JedisAsserts;
 
 public class ClusterCommandExecutor implements CommandExecutor {
 
@@ -25,12 +22,29 @@ public class ClusterCommandExecutor implements CommandExecutor {
   public final ClusterConnectionProvider provider;
   protected final int maxAttempts;
   protected final Duration maxTotalRetriesDuration;
+  protected final CommandFlagsRegistry flags;
 
+  /**
+   * @deprecated use {@link #ClusterCommandExecutor(ClusterConnectionProvider, int, Duration, CommandFlagsRegistry)}
+   * instead. This constructor will be removed in the next major version.
+   */
+  @Deprecated
   public ClusterCommandExecutor(ClusterConnectionProvider provider, int maxAttempts,
       Duration maxTotalRetriesDuration) {
+    this(provider, maxAttempts, maxTotalRetriesDuration, StaticCommandFlagsRegistry.registry());
+  }
+
+  public ClusterCommandExecutor(ClusterConnectionProvider provider, int maxAttempts,
+      Duration maxTotalRetriesDuration, CommandFlagsRegistry flags) {
+    JedisAsserts.notNull(flags, "CommandFlagsRegistry must not be null");
+    JedisAsserts.notNull(provider, "provider must not be null");
+    JedisAsserts.isTrue(maxAttempts > 0, "maxAttempts must be greater than 0");
+    JedisAsserts.notNull(maxTotalRetriesDuration, "maxTotalRetriesDuration must not be null");
+
     this.provider = provider;
     this.maxAttempts = maxAttempts;
     this.maxTotalRetriesDuration = maxTotalRetriesDuration;
+    this.flags = flags;
   }
 
   @Override
@@ -40,7 +54,7 @@ public class ClusterCommandExecutor implements CommandExecutor {
 
   @Override
   public final <T> T broadcastCommand(CommandObject<T> commandObject) {
-    Map<String, ConnectionPool> connectionMap = provider.getConnectionMap();
+    Map<String, ConnectionPool> connectionMap = provider.getPrimaryNodesConnectionMap();
 
     boolean isErrored = false;
     T reply = null;
@@ -109,8 +123,7 @@ public class ClusterCommandExecutor implements CommandExecutor {
         ++consecutiveConnectionFailures;
         log.debug("Failed connecting to Redis: {}", connection, jce);
         // "- 1" because we just did one, but the attemptsLeft counter hasn't been decremented yet
-        boolean reset = handleConnectionProblem(attemptsLeft - 1, consecutiveConnectionFailures,
-          deadline);
+        boolean reset = handleConnectionProblem(attemptsLeft - 1, consecutiveConnectionFailures, deadline);
         if (reset) {
           consecutiveConnectionFailures = 0;
           redirect = null;
@@ -132,19 +145,21 @@ public class ClusterCommandExecutor implements CommandExecutor {
         IOUtils.closeQuietly(connection);
       }
       if (Instant.now().isAfter(deadline)) {
-        throw new JedisClusterOperationException("Cluster retry deadline exceeded.");
+        throw new JedisClusterOperationException("Cluster retry deadline exceeded.", lastException);
       }
     }
 
-    JedisClusterOperationException maxAttemptsException = new JedisClusterOperationException(
-        "No more cluster attempts left.");
-    maxAttemptsException.addSuppressed(lastException);
+    JedisClusterOperationException maxAttemptsException
+        = new JedisClusterOperationException("No more cluster attempts left.");
+    if (lastException != null) {
+      maxAttemptsException.addSuppressed(lastException);
+    }
     throw maxAttemptsException;
   }
 
   /**
-   * WARNING: This method is accessible for the purpose of testing. This should not be used or
-   * overriden.
+   * WARNING: This method is accessible for the purpose of testing.
+   * This should not be used or overriden.
    */
   @VisibleForTesting
   protected <T> T execute(Connection connection, CommandObject<T> commandObject) {
@@ -153,14 +168,14 @@ public class ClusterCommandExecutor implements CommandExecutor {
 
   /**
    * Related values should be reset if <code>TRUE</code> is returned.
+   *
    * @param attemptsLeft
    * @param consecutiveConnectionFailures
    * @param doneDeadline
-   * @return true - if some actions are taken <br />
-   *         false - if no actions are taken
+   * @return true - if some actions are taken
+   * <br /> false - if no actions are taken
    */
-  private boolean handleConnectionProblem(int attemptsLeft, int consecutiveConnectionFailures,
-      Instant doneDeadline) {
+  private boolean handleConnectionProblem(int attemptsLeft, int consecutiveConnectionFailures, Instant doneDeadline) {
     if (this.maxAttempts < 3) {
       // Since we only renew the slots cache after two consecutive connection
       // failures (see consecutiveConnectionFailures above), we need to special
@@ -179,10 +194,10 @@ public class ClusterCommandExecutor implements CommandExecutor {
     }
 
     sleep(getBackoffSleepMillis(attemptsLeft, doneDeadline));
-    // We need this because if node is not reachable anymore - we need to finally initiate slots
-    // renewing, or we can stuck with cluster state without one node in opposite case.
-    // TODO make tracking of successful/unsuccessful operations for node - do renewing only
-    // if there were no successful responses from this node last few seconds
+    //We need this because if node is not reachable anymore - we need to finally initiate slots
+    //renewing, or we can stuck with cluster state without one node in opposite case.
+    //TODO make tracking of successful/unsuccessful operations for node - do renewing only
+    //if there were no successful responses from this node last few seconds
     provider.renewSlotCache();
     return true;
   }
@@ -202,8 +217,8 @@ public class ClusterCommandExecutor implements CommandExecutor {
   }
 
   /**
-   * WARNING: This method is accessible for the purpose of testing. This should not be used or
-   * overriden.
+   * WARNING: This method is accessible for the purpose of testing.
+   * This should not be used or overriden.
    */
   @VisibleForTesting
   protected void sleep(long sleepMillis) {

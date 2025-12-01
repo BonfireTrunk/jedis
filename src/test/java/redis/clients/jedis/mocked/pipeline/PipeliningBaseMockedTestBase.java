@@ -3,27 +3,27 @@ package redis.clients.jedis.mocked.pipeline;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
+
 import redis.clients.jedis.CommandObject;
 import redis.clients.jedis.CommandObjects;
 import redis.clients.jedis.PipeliningBase;
 import redis.clients.jedis.Response;
-import redis.clients.jedis.graph.GraphCommandObjects;
 import redis.clients.jedis.mocked.MockedCommandObjectsTestBase;
 
 /**
- * Base class for unit tests for {@link PipeliningBase}, using Mockito. Given that
- * {@link PipeliningBase} is, essentially, only requesting commands from a {@link CommandObjects}
- * instance and sending them to its subclasses, and given that it has many methods, using mocks is
- * the most convenient and reliable way to completely test it.
+ * Base class for unit tests for {@link PipeliningBase}, using Mockito. Given that {@link PipeliningBase}
+ * is, essentially, only requesting commands from a {@link CommandObjects} instance and sending them
+ * to its subclasses, and given that it has many methods, using mocks is the most convenient and
+ * reliable way to completely test it.
  */
 public abstract class PipeliningBaseMockedTestBase extends MockedCommandObjectsTestBase {
 
   /**
-   * A concrete implementation of {@link PipeliningBase} that collects all commands in a list (so
-   * that asserts can be run on the content of the list), and always returns a predefined response
-   * (so that the response can be asserted).
+   * A concrete implementation of {@link PipeliningBase} that collects all commands
+   * in a list (so that asserts can be run on the content of the list), and always returns a
+   * predefined response (so that the response can be asserted).
    */
   private static class TestPipeliningBase extends PipeliningBase {
 
@@ -31,10 +31,9 @@ public abstract class PipeliningBaseMockedTestBase extends MockedCommandObjectsT
     private final List<CommandObject<?>> commands;
 
     public TestPipeliningBase(CommandObjects commandObjects,
-        GraphCommandObjects graphCommandObjects, Response<?> predefinedResponse,
-        List<CommandObject<?>> commands) {
+                              Response<?> predefinedResponse,
+                              List<CommandObject<?>> commands) {
       super(commandObjects);
-      setGraphCommands(graphCommandObjects);
       this.predefinedResponse = predefinedResponse;
       this.commands = commands;
     }
@@ -50,8 +49,8 @@ public abstract class PipeliningBaseMockedTestBase extends MockedCommandObjectsT
   }
 
   /**
-   * {@link PipeliningBase} under-test. Given that it is an abstract class, an in-place
-   * implementation is used, that collects commands in a list.
+   * {@link PipeliningBase} under-test. Given that it is an abstract class, an in-place implementation
+   * is used, that collects commands in a list.
    */
   protected PipeliningBase pipeliningBase;
 
@@ -61,17 +60,11 @@ public abstract class PipeliningBaseMockedTestBase extends MockedCommandObjectsT
   protected final List<CommandObject<?>> commands = new ArrayList<>();
 
   /**
-   * {@link CommandObjects} instance used by the {@link PipeliningBase} under-test. Depending on the
-   * test case, it is trained to return one of the mock {@link CommandObject} instances below.
+   * {@link CommandObjects} instance used by the {@link PipeliningBase} under-test. Depending on
+   * the test case, it is trained to return one of the mock {@link CommandObject} instances below.
    */
   @Mock
   protected CommandObjects commandObjects;
-
-  /**
-   * The {@link GraphCommandObjects} instance used by the {@link PipeliningBase} under-test.
-   */
-  @Mock
-  protected GraphCommandObjects graphCommandObjects;
 
   /**
    * Mock {@link Response} that is returned by {@link PipeliningBase} from each method.
@@ -79,9 +72,8 @@ public abstract class PipeliningBaseMockedTestBase extends MockedCommandObjectsT
   @Mock
   protected Response<?> predefinedResponse;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    pipeliningBase = new TestPipeliningBase(commandObjects, graphCommandObjects,
-        predefinedResponse, commands);
+    pipeliningBase = new TestPipeliningBase(commandObjects, predefinedResponse, commands);
   }
 }

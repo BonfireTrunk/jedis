@@ -1,9 +1,12 @@
 package redis.clients.jedis;
 
 import redis.clients.jedis.annots.Experimental;
+import redis.clients.jedis.builders.SentinelClientBuilder;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConfig;
 import redis.clients.jedis.csc.CacheFactory;
+import redis.clients.jedis.executors.CommandExecutor;
+import redis.clients.jedis.providers.ConnectionProvider;
 import redis.clients.jedis.providers.SentineledConnectionProvider;
 import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
@@ -51,6 +54,34 @@ public class JedisSentineled extends UnifiedJedis {
 
   public JedisSentineled(SentineledConnectionProvider sentineledConnectionProvider) {
     super(sentineledConnectionProvider);
+  }
+
+  private JedisSentineled(CommandExecutor commandExecutor, ConnectionProvider connectionProvider, CommandObjects commandObjects, RedisProtocol redisProtocol, Cache cache) {
+    super(commandExecutor, connectionProvider, commandObjects, redisProtocol, cache);
+  }
+
+  /**
+   * Fluent builder for {@link JedisSentineled} (Redis Sentinel).
+   * <p>
+   * Obtain an instance via {@link #builder()}.
+   * </p>
+   */
+  static public class Builder extends SentinelClientBuilder<JedisSentineled> {
+
+    @Override
+    protected JedisSentineled createClient() {
+      return new JedisSentineled(commandExecutor, connectionProvider, commandObjects, clientConfig.getRedisProtocol(),
+          cache);
+    }
+  }
+
+  /**
+   * Create a new builder for configuring JedisSentineled instances.
+   *
+   * @return a new {@link JedisSentineled.Builder} instance
+   */
+  public static Builder builder() {
+    return new Builder();
   }
 
   public HostAndPort getCurrentMaster() {

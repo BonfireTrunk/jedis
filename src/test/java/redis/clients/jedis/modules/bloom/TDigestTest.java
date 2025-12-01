@@ -1,35 +1,30 @@
 package redis.clients.jedis.modules.bloom;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.bloom.TDigestMergeParams;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
 public class TDigestTest extends RedisModuleCommandsTestBase {
 
   private static final Random random = new Random();
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
-
-  //
-  // @AfterClass
-  // public static void tearDown() {
-  // // RedisModuleCommandsTestBase.tearDown();
-  // }
 
   public TDigestTest(RedisProtocol protocol) {
     super(protocol);
@@ -43,7 +38,8 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
 
   private void assertTotalWeight(String key, long totalWeight) {
     Map<String, Object> info = client.tdigestInfo(key);
-    assertEquals(totalWeight, (Long) info.get("Merged weight") + (Long) info.get("Unmerged weight"));
+    assertEquals(totalWeight, (Long) info.get("Merged weight")
+        + (Long) info.get("Unmerged weight"));
   }
 
   @Test
@@ -51,7 +47,7 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     assertEquals("OK", client.tdigestCreate("td-simple"));
 
     Map<String, Object> info = client.tdigestInfo("td-simple");
-    assertEquals(Long.valueOf(100), info.get("Compression"));
+    assertEquals(100L, info.get("Compression"));
   }
 
   @Test
@@ -74,7 +70,7 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     assertEquals("OK", client.tdigestReset("reset"));
     assertMergedUnmergedNodes("reset", 0, 0);
 
-    // client.tdigestAdd("reset", randomValueWeight(), randomValueWeight(), randomValueWeight());
+//    client.tdigestAdd("reset", randomValueWeight(), randomValueWeight(), randomValueWeight());
     client.tdigestAdd("reset", randomValue(), randomValue(), randomValue());
     assertMergedUnmergedNodes("reset", 0, 3);
 
@@ -86,14 +82,12 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
   public void add() {
     client.tdigestCreate("tdadd", 100);
 
-    // assertEquals("OK", client.tdigestAdd("tdadd", randomValueWeight()));
+//    assertEquals("OK", client.tdigestAdd("tdadd", randomValueWeight()));
     assertEquals("OK", client.tdigestAdd("tdadd", randomValue()));
     assertMergedUnmergedNodes("tdadd", 0, 1);
 
-    // assertEquals("OK", client.tdigestAdd("tdadd", randomValueWeight(), randomValueWeight(),
-    // randomValueWeight(), randomValueWeight()));
-    assertEquals("OK",
-      client.tdigestAdd("tdadd", randomValue(), randomValue(), randomValue(), randomValue()));
+//    assertEquals("OK", client.tdigestAdd("tdadd", randomValueWeight(), randomValueWeight(), randomValueWeight(), randomValueWeight()));
+    assertEquals("OK", client.tdigestAdd("tdadd", randomValue(), randomValue(), randomValue(), randomValue()));
     assertMergedUnmergedNodes("tdadd", 0, 5);
   }
 
@@ -105,9 +99,8 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     assertEquals("OK", client.tdigestMerge("td2", "td4m"));
     assertMergedUnmergedNodes("td2", 0, 0);
 
-    // client.tdigestAdd("td2", definedValueWeight(1, 1), definedValueWeight(1, 1),
-    // definedValueWeight(1, 1));
-    // client.tdigestAdd("td4m", definedValueWeight(1, 100), definedValueWeight(1, 100));
+//    client.tdigestAdd("td2", definedValueWeight(1, 1), definedValueWeight(1, 1), definedValueWeight(1, 1));
+//    client.tdigestAdd("td4m", definedValueWeight(1, 100), definedValueWeight(1, 100));
     client.tdigestAdd("td2", 1, 1, 1);
     client.tdigestAdd("td4m", 1, 1);
 
@@ -120,17 +113,15 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     client.tdigestCreate("from1", 100);
     client.tdigestCreate("from2", 200);
 
-    // client.tdigestAdd("from1", KeyValue.of(1d, 1l));
-    // client.tdigestAdd("from2", KeyValue.of(1d, 10l));
     client.tdigestAdd("from1", 1d);
     client.tdigestAdd("from2", weightedValue(1d, 10));
 
     assertEquals("OK", client.tdigestMerge("to", "from1", "from2"));
-    assertTotalWeight("to", 11l);
+    assertTotalWeight("to", 11L);
 
-    assertEquals("OK", client.tdigestMerge(TDigestMergeParams.mergeParams().compression(50)
-        .override(), "to", "from1", "from2"));
-    assertEquals(Long.valueOf(50), client.tdigestInfo("to").get("Compression"));
+    assertEquals("OK", client.tdigestMerge(TDigestMergeParams.mergeParams()
+        .compression(50).override(), "to", "from1", "from2"));
+    assertEquals(50L, client.tdigestInfo("to").get("Compression"));
   }
 
   @Test
@@ -138,9 +129,6 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     client.tdigestCreate("tdcdf", 100);
     assertEquals(singletonList(Double.NaN), client.tdigestCDF("tdcdf", 50));
 
-    // client.tdigestAdd("tdcdf", definedValueWeight(1, 1), definedValueWeight(1, 1),
-    // definedValueWeight(1, 1));
-    // client.tdigestAdd("tdcdf", definedValueWeight(100, 1), definedValueWeight(100, 1));
     client.tdigestAdd("tdcdf", 1, 1, 1);
     client.tdigestAdd("tdcdf", 100, 100);
     assertEquals(singletonList(0.6), client.tdigestCDF("tdcdf", 50));
@@ -152,9 +140,8 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     client.tdigestCreate("tdqnt", 100);
     assertEquals(singletonList(Double.NaN), client.tdigestQuantile("tdqnt", 0.5));
 
-    // client.tdigestAdd("tdqnt", definedValueWeight(1, 1), definedValueWeight(1, 1),
-    // definedValueWeight(1, 1));
-    // client.tdigestAdd("tdqnt", definedValueWeight(100, 1), definedValueWeight(100, 1));
+//    client.tdigestAdd("tdqnt", definedValueWeight(1, 1), definedValueWeight(1, 1), definedValueWeight(1, 1));
+//    client.tdigestAdd("tdqnt", definedValueWeight(100, 1), definedValueWeight(100, 1));
     client.tdigestAdd("tdqnt", 1, 1, 1);
     client.tdigestAdd("tdqnt", 100, 100);
     assertEquals(singletonList(1.0), client.tdigestQuantile("tdqnt", 0.5));
@@ -167,8 +154,8 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     assertEquals(Double.NaN, client.tdigestMin(key), 0d);
     assertEquals(Double.NaN, client.tdigestMax(key), 0d);
 
-    // client.tdigestAdd(key, definedValueWeight(2, 1));
-    // client.tdigestAdd(key, definedValueWeight(5, 1));
+//    client.tdigestAdd(key, definedValueWeight(2, 1));
+//    client.tdigestAdd(key, definedValueWeight(5, 1));
     client.tdigestAdd(key, 2);
     client.tdigestAdd(key, 5);
     assertEquals(2d, client.tdigestMin(key), 0.01);
@@ -181,7 +168,7 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     client.tdigestCreate(key, 500);
 
     for (int i = 0; i < 20; i++) {
-      // client.tdigestAdd(key, KeyValue.of(Double.valueOf(i), 1l));
+//      client.tdigestAdd(key, KeyValue.of(Double.valueOf(i), 1l));
       client.tdigestAdd(key, (double) i);
     }
 
@@ -196,20 +183,11 @@ public class TDigestTest extends RedisModuleCommandsTestBase {
     final String key = "ranks";
     client.tdigestCreate(key);
     client.tdigestAdd(key, 2d, 3d, 5d);
-    assertEquals(Arrays.asList(0l, 2l), client.tdigestRank(key, 2d, 4d));
-    assertEquals(Arrays.asList(0l, 1l), client.tdigestRevRank(key, 5d, 4d));
-    assertEquals(Arrays.asList(2d, 3d), client.tdigestByRank(key, 0l, 1l));
-    assertEquals(Arrays.asList(5d, 3d), client.tdigestByRevRank(key, 0l, 1l));
+    assertEquals(Arrays.asList(0L, 2L), client.tdigestRank(key, 2d, 4d));
+    assertEquals(Arrays.asList(0L, 1L), client.tdigestRevRank(key, 5d, 4d));
+    assertEquals(Arrays.asList(2d, 3d), client.tdigestByRank(key, 0L, 1L));
+    assertEquals(Arrays.asList(5d, 3d), client.tdigestByRevRank(key, 0L, 1L));
   }
-
-  //
-  // private static KeyValue<Double, Long> randomValueWeight() {
-  // return new KeyValue<>(random.nextDouble() * 10000, Math.abs(random.nextInt()) + 1l);
-  // }
-  //
-  // private static KeyValue<Double, Long> definedValueWeight(double value, long weight) {
-  // return new KeyValue<>(value, weight);
-  // }
 
   private static double randomValue() {
     return random.nextDouble() * 10000;

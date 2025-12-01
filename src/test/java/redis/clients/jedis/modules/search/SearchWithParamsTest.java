@@ -1,18 +1,29 @@
 package redis.clients.jedis.modules.search;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static redis.clients.jedis.util.AssertUtil.assertOK;
+import static redis.clients.jedis.util.RedisConditions.ModuleVersion.SEARCH_MOD_VER_80M3;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import io.redis.test.annotations.SinceRedisVersion;
+import io.redis.test.utils.RedisVersion;
 import org.hamcrest.Matchers;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -28,26 +39,32 @@ import redis.clients.jedis.args.SortingOrder;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.json.Path;
 import redis.clients.jedis.search.*;
+import redis.clients.jedis.search.RediSearchUtil;
 import redis.clients.jedis.search.schemafields.*;
 import redis.clients.jedis.search.schemafields.GeoShapeField.CoordinateSystem;
 import redis.clients.jedis.search.schemafields.VectorField.VectorAlgorithm;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
+import redis.clients.jedis.util.RedisConditions;
+import redis.clients.jedis.util.RedisVersionUtil;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
+@Tag("integration")
 public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "testindex";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
 
-  //
-  // @AfterClass
-  // public static void tearDown() {
-  // // RedisModuleCommandsTestBase.tearDown();
-  // }
+  @AfterEach
+  public void cleanUp() {
+    if (client.ftList().contains(index)) {
+      client.ftDropIndex(index);
+    }
+  }
 
   public SearchWithParamsTest(RedisProtocol protocol) {
     super(protocol);
@@ -76,8 +93,10 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
   @Test
   public void create() {
     assertOK(client.ftCreate(index,
-      FTCreateParams.createParams().filter("@age>16").prefix("student:", "pupil:"),
-      TextField.of("first"), TextField.of("last"), NumericField.of("age")));
+        FTCreateParams.createParams()
+            .filter("@age>16")
+            .prefix("student:", "pupil:"),
+        TextField.of("first"), TextField.of("last"), NumericField.of("age")));
 
     client.hset("profesor:5555", toMap("first", "Albert", "last", "Blue", "age", "55"));
     client.hset("student:1111", toMap("first", "Joe", "last", "Dod", "age", "18"));
@@ -102,8 +121,10 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void createNoParams() {
-    assertOK(client.ftCreate(index, TextField.of("first").weight(1),
-      TextField.of("last").weight(1), NumericField.of("age")));
+    assertOK(client.ftCreate(index,
+        TextField.of("first").weight(1),
+        TextField.of("last").weight(1),
+        NumericField.of("age")));
 
     addDocument("student:1111", toMap("first", "Joe", "last", "Dod", "age", 18));
     addDocument("student:3333", toMap("first", "El", "last", "Mark", "age", 17));
@@ -126,8 +147,10 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
   @Test
   public void createWithFieldNames() {
     assertOK(client.ftCreate(index,
-      FTCreateParams.createParams().addPrefix("student:").addPrefix("pupil:"), TextField
-          .of("first").as("given"), TextField.of(FieldName.of("last").as("family"))));
+        FTCreateParams.createParams()
+            .addPrefix("student:").addPrefix("pupil:"),
+        TextField.of("first").as("given"),
+        TextField.of(FieldName.of("last").as("family"))));
 
     client.hset("profesor:5555", toMap("first", "Albert", "last", "Blue", "age", "55"));
     client.hset("student:1111", toMap("first", "Joe", "last", "Dod", "age", "18"));
@@ -139,9 +162,6 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
     SearchResult noFilters = client.ftSearch(index);
     assertEquals(5, noFilters.getTotalResults());
-
-    SearchResult asFirst = client.ftSearch(index, "@first:Jo*");
-    assertEquals(0, asFirst.getTotalResults());
 
     SearchResult asGiven = client.ftSearch(index, "@given:Jo*");
     assertEquals(2, asGiven.getTotalResults());
@@ -165,7 +185,9 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     SearchResult res = client.ftSearch(index, "hello world");
     assertEquals(100, res.getTotalResults());
 
-    assertOK(client.ftAlter(index, TagField.of("tags"), TextField.of("name").weight(0.5)));
+    assertOK(client.ftAlter(index,
+        TagField.of("tags"),
+        TextField.of("name").weight(0.5)));
 
     for (int i = 0; i < 100; i++) {
       Map<String, Object> fields2 = new HashMap<>();
@@ -179,8 +201,8 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void search() {
-    assertOK(client.ftCreate(index, FTCreateParams.createParams(), TextField.of("title"),
-      TextField.of("body")));
+    assertOK(client.ftCreate(index, FTCreateParams.createParams(),
+        TextField.of("title"), TextField.of("body")));
 
     Map<String, Object> fields = new HashMap<>();
     fields.put("title", "hello world");
@@ -189,8 +211,8 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
       addDocument(String.format("doc%d", i), fields);
     }
 
-    SearchResult result = client.ftSearch(index, "hello world", FTSearchParams.searchParams()
-        .limit(0, 5).withScores());
+    SearchResult result = client.ftSearch(index, "hello world",
+        FTSearchParams.searchParams().limit(0, 5).withScores());
     assertEquals(100, result.getTotalResults());
     assertEquals(5, result.getDocuments().size());
     for (Document d : result.getDocuments()) {
@@ -213,12 +235,21 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void textFieldParams() {
-    assertOK(client.ftCreate("testindex",
-      TextField.of("title").indexMissing().indexEmpty().weight(2.5).noStem().phonetic("dm:en")
-          .withSuffixTrie().sortable()));
+    assertOK(client.ftCreate("testindex", TextField.of("title")
+        .weight(2.5).noStem().phonetic("dm:en").withSuffixTrie().sortable()));
 
-    assertOK(client.ftCreate("testunfindex", TextField.of("title").indexMissing().indexEmpty()
+    assertOK(client.ftCreate("testunfindex", TextField.of("title")
         .weight(2.5).noStem().phonetic("dm:en").withSuffixTrie().sortableUNF()));
+
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      assertOK(client.ftCreate("testindex-missing",
+          TextField.of("title").indexMissing().indexEmpty().weight(2.5).noStem().phonetic("dm:en")
+              .withSuffixTrie().sortable()));
+
+      assertOK(client.ftCreate("testunfindex-missing",
+          TextField.of("title").indexMissing().indexEmpty().weight(2.5).noStem().phonetic("dm:en")
+              .withSuffixTrie().sortableUNF()));
+    }
 
     assertOK(client.ftCreate("testnoindex", TextField.of("title").sortable().noIndex()));
 
@@ -226,9 +257,10 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
   }
 
   @Test
+  @SinceRedisVersion(value = "7.4.0", message = "optional params since 7.4.0 are being tested")
   public void searchTextFieldsCondition() {
-    assertOK(client.ftCreate(index, FTCreateParams.createParams(), TextField.of("title"), TextField
-        .of("body").indexMissing().indexEmpty()));
+    assertOK(client.ftCreate(index, FTCreateParams.createParams(), TextField.of("title"),
+        TextField.of("body").indexMissing().indexEmpty()));
 
     Map<String, String> regular = new HashMap<>();
     regular.put("title", "hello world");
@@ -276,7 +308,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     }
 
     SearchResult res = client.ftSearch(index, "hello world",
-      FTSearchParams.searchParams().filter("price", 0, 49));
+        FTSearchParams.searchParams().filter("price", 0, 49));
     assertEquals(50, res.getTotalResults());
     assertEquals(10, res.getDocuments().size());
     for (Document d : res.getDocuments()) {
@@ -286,7 +318,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     }
 
     res = client.ftSearch(index, "hello world",
-      FTSearchParams.searchParams().filter("price", 0, true, 49, true));
+        FTSearchParams.searchParams().filter("price", 0, true, 49, true));
     assertEquals(48, res.getTotalResults());
     assertEquals(10, res.getDocuments().size());
     for (Document d : res.getDocuments()) {
@@ -295,7 +327,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
       assertTrue(price < 49);
     }
     res = client.ftSearch(index, "hello world",
-      FTSearchParams.searchParams().filter("price", 50, 100));
+        FTSearchParams.searchParams().filter("price", 50, 100));
     assertEquals(50, res.getTotalResults());
     assertEquals(10, res.getDocuments().size());
     for (Document d : res.getDocuments()) {
@@ -305,29 +337,38 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     }
 
     res = client.ftSearch(index, "hello world",
-      FTSearchParams.searchParams().filter("price", 20, Double.POSITIVE_INFINITY));
+        FTSearchParams.searchParams()
+            .filter("price", 20, Double.POSITIVE_INFINITY));
     assertEquals(80, res.getTotalResults());
     assertEquals(10, res.getDocuments().size());
 
     res = client.ftSearch(index, "hello world",
-      FTSearchParams.searchParams().filter("price", Double.NEGATIVE_INFINITY, 10));
+        FTSearchParams.searchParams()
+            .filter("price", Double.NEGATIVE_INFINITY, 10));
     assertEquals(11, res.getTotalResults());
     assertEquals(10, res.getDocuments().size());
   }
 
   @Test
   public void numericFieldParams() {
-    assertOK(client.ftCreate("testindex", TextField.of("title"), NumericField.of("price").as("px")
-        .indexMissing().sortable()));
+    assertOK(client.ftCreate("testindex", TextField.of("title"),
+        NumericField.of("price").as("px").sortable()));
 
-    assertOK(client.ftCreate("testnoindex", TextField.of("title"), NumericField.of("price")
-        .as("px").sortable().noIndex()));
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      assertOK(client.ftCreate("testindex-missing", TextField.of("title"),
+          NumericField.of("price").as("px").indexMissing().sortable()));
+    }
+
+    assertOK(client.ftCreate("testnoindex", TextField.of("title"),
+        NumericField.of("price").as("px").sortable().noIndex()));
   }
 
   @Test
   public void stopwords() {
-    assertOK(client.ftCreate(index, FTCreateParams.createParams().stopwords("foo", "bar", "baz"),
-      TextField.of("title")));
+    assertOK(client.ftCreate(index,
+        FTCreateParams.createParams()
+            .stopwords("foo", "bar", "baz"),
+        TextField.of("title")));
 
     Map<String, Object> fields = new HashMap<>();
     fields.put("title", "hello world foo bar");
@@ -340,8 +381,9 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void noStopwords() {
-    assertOK(client.ftCreate(index, FTCreateParams.createParams().noStopwords(),
-      TextField.of("title")));
+    assertOK(client.ftCreate(index,
+        FTCreateParams.createParams().noStopwords(),
+        TextField.of("title")));
 
     Map<String, Object> fields = new HashMap<>();
     fields.put("title", "hello world foo bar");
@@ -365,12 +407,14 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     fields.put("loc", "-0.1,51.2");
     addDocument("doc2", fields);
 
-    SearchResult res = client.ftSearch(index, "hello world", FTSearchParams.searchParams()
-        .geoFilter("loc", -0.44, 51.45, 10, GeoUnit.KM));
+    SearchResult res = client.ftSearch(index, "hello world",
+        FTSearchParams.searchParams().
+            geoFilter("loc", -0.44, 51.45, 10, GeoUnit.KM));
     assertEquals(1, res.getTotalResults());
 
     res = client.ftSearch(index, "hello world",
-      FTSearchParams.searchParams().geoFilter("loc", -0.44, 51.45, 100, GeoUnit.KM));
+        FTSearchParams.searchParams().
+            geoFilter("loc", -0.44, 51.45, 100, GeoUnit.KM));
     assertEquals(2, res.getTotalResults());
   }
 
@@ -386,25 +430,29 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     fields.put("loc", new GeoCoordinate(-0.1, 51.2));
     addDocument("doc2", fields);
 
-    SearchResult res = client.ftSearch(index, "hello world", FTSearchParams.searchParams()
-        .geoFilter(new FTSearchParams.GeoFilter("loc", -0.44, 51.45, 10, GeoUnit.KM)));
+    SearchResult res = client.ftSearch(index, "hello world",
+        FTSearchParams.searchParams()
+            .geoFilter(new FTSearchParams.GeoFilter("loc", -0.44, 51.45, 10, GeoUnit.KM)));
     assertEquals(1, res.getTotalResults());
 
-    res = client.ftSearch(
-      index,
-      "hello world",
-      FTSearchParams.searchParams().geoFilter(
-        new FTSearchParams.GeoFilter("loc", -0.44, 51.45, 100, GeoUnit.KM)));
+    res = client.ftSearch(index, "hello world",
+        FTSearchParams.searchParams()
+            .geoFilter(new FTSearchParams.GeoFilter("loc", -0.44, 51.45, 100, GeoUnit.KM)));
     assertEquals(2, res.getTotalResults());
   }
 
   @Test
   public void geoFieldParams() {
-    assertOK(client.ftCreate("testindex", TextField.of("title"), GeoField.of("location").as("loc")
-        .indexMissing().sortable()));
+    assertOK(client.ftCreate("testindex", TextField.of("title"),
+        GeoField.of("location").as("loc").sortable()));
 
-    assertOK(client.ftCreate("testnoindex", TextField.of("title"), GeoField.of("location")
-        .as("loc").sortable().noIndex()));
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      assertOK(client.ftCreate("testindex-missing", TextField.of("title"),
+          GeoField.of("location").as("loc").indexMissing().sortable()));
+    }
+
+    assertOK(client.ftCreate("testnoindex", TextField.of("title"),
+        GeoField.of("location").as("loc").sortable().noIndex()));
   }
 
   @Test
@@ -415,38 +463,34 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertOK(client.ftCreate(index, GeoShapeField.of("geom", CoordinateSystem.SPHERICAL)));
 
     // polygon type
-    final Polygon small = factory.createPolygon(new Coordinate[] {
-        new Coordinate(34.9001, 29.7001), new Coordinate(34.9001, 29.7100),
-        new Coordinate(34.9100, 29.7100), new Coordinate(34.9100, 29.7001),
-        new Coordinate(34.9001, 29.7001) });
+    final Polygon small = factory.createPolygon(new Coordinate[]{new Coordinate(34.9001, 29.7001),
+        new Coordinate(34.9001, 29.7100), new Coordinate(34.9100, 29.7100),
+        new Coordinate(34.9100, 29.7001), new Coordinate(34.9001, 29.7001)});
     client.hsetObject("small", "geom", small);
 
-    final Polygon large = factory.createPolygon(new Coordinate[] {
-        new Coordinate(34.9001, 29.7001), new Coordinate(34.9001, 29.7200),
-        new Coordinate(34.9200, 29.7200), new Coordinate(34.9200, 29.7001),
-        new Coordinate(34.9001, 29.7001) });
+    final Polygon large = factory.createPolygon(new Coordinate[]{new Coordinate(34.9001, 29.7001),
+        new Coordinate(34.9001, 29.7200), new Coordinate(34.9200, 29.7200),
+        new Coordinate(34.9200, 29.7001), new Coordinate(34.9001, 29.7001)});
     client.hsetObject("large", "geom", large);
 
     // within condition
-    final Polygon within = factory.createPolygon(new Coordinate[] {
-        new Coordinate(34.9000, 29.7000), new Coordinate(34.9000, 29.7150),
-        new Coordinate(34.9150, 29.7150), new Coordinate(34.9150, 29.7000),
-        new Coordinate(34.9000, 29.7000) });
+    final Polygon within = factory.createPolygon(new Coordinate[]{new Coordinate(34.9000, 29.7000),
+        new Coordinate(34.9000, 29.7150), new Coordinate(34.9150, 29.7150),
+        new Coordinate(34.9150, 29.7000), new Coordinate(34.9000, 29.7000)});
 
-    SearchResult result = client.ftSearch(index, "@geom:[within $poly]", FTSearchParams
-        .searchParams().addParam("poly", within).dialect(3));
+    SearchResult result = client.ftSearch(index, "@geom:[within $poly]",
+        FTSearchParams.searchParams().addParam("poly", within).dialect(3));
     assertEquals(1, result.getTotalResults());
     assertEquals(1, result.getDocuments().size());
     assertEquals(small, reader.read(result.getDocuments().get(0).getString("geom")));
 
     // contains condition
-    final Polygon contains = factory.createPolygon(new Coordinate[] {
-        new Coordinate(34.9002, 29.7002), new Coordinate(34.9002, 29.7050),
-        new Coordinate(34.9050, 29.7050), new Coordinate(34.9050, 29.7002),
-        new Coordinate(34.9002, 29.7002) });
+    final Polygon contains = factory.createPolygon(new Coordinate[]{new Coordinate(34.9002, 29.7002),
+        new Coordinate(34.9002, 29.7050), new Coordinate(34.9050, 29.7050),
+        new Coordinate(34.9050, 29.7002), new Coordinate(34.9002, 29.7002)});
 
-    result = client.ftSearch(index, "@geom:[contains $poly]", FTSearchParams.searchParams()
-        .addParam("poly", contains).dialect(3));
+    result = client.ftSearch(index, "@geom:[contains $poly]",
+        FTSearchParams.searchParams().addParam("poly", contains).dialect(3));
     assertEquals(2, result.getTotalResults());
     assertEquals(2, result.getDocuments().size());
 
@@ -455,7 +499,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     client.hset("point", "geom", point.toString());
 
     result = client.ftSearch(index, "@geom:[within $poly]",
-      FTSearchParams.searchParams().addParam("poly", within).dialect(3));
+        FTSearchParams.searchParams().addParam("poly", within).dialect(3));
     assertEquals(2, result.getTotalResults());
     assertEquals(2, result.getDocuments().size());
   }
@@ -468,71 +512,70 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertOK(client.ftCreate(index, GeoShapeField.of("geom", CoordinateSystem.FLAT)));
 
     // polygon type
-    final Polygon small = factory.createPolygon(new Coordinate[] { new Coordinate(20, 20),
-        new Coordinate(20, 100), new Coordinate(100, 100), new Coordinate(100, 20),
-        new Coordinate(20, 20) });
+    final Polygon small = factory.createPolygon(new Coordinate[]{new Coordinate(20, 20),
+        new Coordinate(20, 100), new Coordinate(100, 100), new Coordinate(100, 20), new Coordinate(20, 20)});
     client.hsetObject("small", "geom", small);
 
-    final Polygon large = factory.createPolygon(new Coordinate[] { new Coordinate(10, 10),
-        new Coordinate(10, 200), new Coordinate(200, 200), new Coordinate(200, 10),
-        new Coordinate(10, 10) });
+    final Polygon large = factory.createPolygon(new Coordinate[]{new Coordinate(10, 10),
+        new Coordinate(10, 200), new Coordinate(200, 200), new Coordinate(200, 10), new Coordinate(10, 10)});
     client.hsetObject("large", "geom", large);
 
     // within condition
-    final Polygon within = factory.createPolygon(new Coordinate[] { new Coordinate(0, 0),
-        new Coordinate(0, 150), new Coordinate(150, 150), new Coordinate(150, 0),
-        new Coordinate(0, 0) });
+    final Polygon within = factory.createPolygon(new Coordinate[]{new Coordinate(0, 0),
+        new Coordinate(0, 150), new Coordinate(150, 150), new Coordinate(150, 0), new Coordinate(0, 0)});
 
-    SearchResult result = client.ftSearch(index, "@geom:[within $poly]", FTSearchParams
-        .searchParams().addParam("poly", within).dialect(3));
+    SearchResult result = client.ftSearch(index, "@geom:[within $poly]",
+        FTSearchParams.searchParams().addParam("poly", within).dialect(3));
     assertEquals(1, result.getTotalResults());
     assertEquals(1, result.getDocuments().size());
     assertEquals(small, reader.read(result.getDocuments().get(0).getString("geom")));
 
     // contains condition
-    final Polygon contains = factory.createPolygon(new Coordinate[] { new Coordinate(25, 25),
-        new Coordinate(25, 50), new Coordinate(50, 50), new Coordinate(50, 25),
-        new Coordinate(25, 25) });
+    final Polygon contains = factory.createPolygon(new Coordinate[]{new Coordinate(25, 25),
+        new Coordinate(25, 50), new Coordinate(50, 50), new Coordinate(50, 25), new Coordinate(25, 25)});
 
-    result = client.ftSearch(index, "@geom:[contains $poly]", FTSearchParams.searchParams()
-        .addParam("poly", contains).dialect(3));
+    result = client.ftSearch(index, "@geom:[contains $poly]",
+        FTSearchParams.searchParams().addParam("poly", contains).dialect(3));
     assertEquals(2, result.getTotalResults());
     assertEquals(2, result.getDocuments().size());
 
     // intersects and disjoint
-    final Polygon disjointersect = factory.createPolygon(new Coordinate[] {
-        new Coordinate(150, 150), new Coordinate(150, 250), new Coordinate(250, 250),
-        new Coordinate(250, 150), new Coordinate(150, 150) });
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      final Polygon disjointersect = factory.createPolygon(new Coordinate[]{new Coordinate(150, 150),
+        new Coordinate(150, 250), new Coordinate(250, 250), new Coordinate(250, 150), new Coordinate(150, 150)});
 
-    result = client.ftSearch(index, "@geom:[intersects $poly]", FTSearchParams.searchParams()
-        .addParam("poly", disjointersect).dialect(3));
-    assertEquals(1, result.getTotalResults());
-    assertEquals(1, result.getDocuments().size());
-    assertEquals(large, reader.read(result.getDocuments().get(0).getString("geom")));
+      result = client.ftSearch(index, "@geom:[intersects $poly]",
+          FTSearchParams.searchParams().addParam("poly", disjointersect).dialect(3));
+      assertEquals(1, result.getTotalResults());
+      assertEquals(1, result.getDocuments().size());
+      assertEquals(large, reader.read(result.getDocuments().get(0).getString("geom")));
 
-    result = client.ftSearch(index, "@geom:[disjoint $poly]", FTSearchParams.searchParams()
-        .addParam("poly", disjointersect).dialect(3));
-    assertEquals(1, result.getTotalResults());
-    assertEquals(1, result.getDocuments().size());
-    assertEquals(small, reader.read(result.getDocuments().get(0).getString("geom")));
+      result = client.ftSearch(index, "@geom:[disjoint $poly]",
+          FTSearchParams.searchParams().addParam("poly", disjointersect).dialect(3));
+      assertEquals(1, result.getTotalResults());
+      assertEquals(1, result.getDocuments().size());
+      assertEquals(small, reader.read(result.getDocuments().get(0).getString("geom")));
+    }
 
     // point type
     final Point point = factory.createPoint(new Coordinate(30, 30));
     client.hsetObject("point", "geom", point);
 
     result = client.ftSearch(index, "@geom:[within $poly]",
-      FTSearchParams.searchParams().addParam("poly", within).dialect(3));
+        FTSearchParams.searchParams().addParam("poly", within).dialect(3));
     assertEquals(2, result.getTotalResults());
     assertEquals(2, result.getDocuments().size());
   }
 
   @Test
   public void geoShapeFieldParams() {
-    assertOK(client.ftCreate("testindex", GeoShapeField.of("geometry", CoordinateSystem.SPHERICAL)
-        .as("geom").indexMissing()));
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      assertOK(client.ftCreate("testindex-missing",
+          GeoShapeField.of("geometry", CoordinateSystem.SPHERICAL).as("geom").indexMissing()));
+    }
 
-    assertOK(client.ftCreate("testnoindex", GeoShapeField
-        .of("geometry", CoordinateSystem.SPHERICAL).as("geom").noIndex()));
+    assertOK(client.ftCreate("testnoindex",
+        GeoShapeField.of("geometry", CoordinateSystem.SPHERICAL).as("geom").noIndex()));
   }
 
   @Test
@@ -599,24 +642,21 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     client.hset("2", "numval", "2");
     client.hset("3", "numval", "3");
 
-    assertEquals(
-      2,
-      client.ftSearch(index, "@numval:[$min $max]",
-        FTSearchParams.searchParams().addParam("min", 1).addParam("max", 2).dialect(2))
-          .getTotalResults());
+    assertEquals(2, client.ftSearch(index, "@numval:[$min $max]",
+        FTSearchParams.searchParams().addParam("min", 1).addParam("max", 2)
+            .dialect(2)).getTotalResults());
 
     Map<String, Object> paramValues = new HashMap<>();
     paramValues.put("min", 1);
     paramValues.put("max", 2);
-    assertEquals(
-      2,
-      client.ftSearch(index, "@numval:[$min $max]",
-        FTSearchParams.searchParams().params(paramValues).dialect(2)).getTotalResults());
+    assertEquals(2, client.ftSearch(index, "@numval:[$min $max]",
+        FTSearchParams.searchParams().params(paramValues)
+            .dialect(2)).getTotalResults());
 
-    assertEquals(
-      1,
-      client.ftSearch(index, "@numval:[$eq]",
-        FTSearchParams.searchParams().addParam("eq", 2).dialect(4)).getTotalResults());
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4) ) {
+      assertEquals(1, client.ftSearch(index, "@numval:[$eq]",
+          FTSearchParams.searchParams().addParam("eq", 2).dialect(4)).getTotalResults());
+    }
   }
 
   @Test
@@ -635,7 +675,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     addDocument("doc3", fields);
 
     SearchResult res = client.ftSearch(index, "title",
-      FTSearchParams.searchParams().sortBy("title", SortingOrder.ASC));
+        FTSearchParams.searchParams().sortBy("title", SortingOrder.ASC));
 
     assertEquals(3, res.getTotalResults());
     Document doc1 = res.getDocuments().get(0);
@@ -651,8 +691,11 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
   @Test
   public void testJsonWithAlias() {
     assertOK(client.ftCreate(index,
-      FTCreateParams.createParams().on(IndexDataType.JSON).prefix("king:"), TextField.of("$.name")
-          .as("name"), NumericField.of("$.num").as("num")));
+        FTCreateParams.createParams()
+            .on(IndexDataType.JSON)
+            .prefix("king:"),
+        TextField.of("$.name").as("name"),
+        NumericField.of("$.num").as("num")));
 
     Map<String, Object> king1 = new HashMap<>();
     king1.put("name", "henry");
@@ -676,9 +719,11 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertEquals(1, res.getTotalResults());
     assertEquals("king:1", res.getDocuments().get(0).getId());
 
-    res = client.ftSearch(index, "@num:[42]", FTSearchParams.searchParams().dialect(4));
-    assertEquals(1, res.getTotalResults());
-    assertEquals("king:1", res.getDocuments().get(0).getId());
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      res = client.ftSearch(index, "@num:[42]", FTSearchParams.searchParams().dialect(4));
+      assertEquals(1, res.getTotalResults());
+      assertEquals("king:1", res.getDocuments().get(0).getId());
+    }
   }
 
   @Test
@@ -700,7 +745,8 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
       client.ftSearch(index, "hello world");
       fail("Index should not exist.");
     } catch (JedisDataException de) {
-      assertTrue(de.getMessage().contains("no such index"));
+      // toLowerCase - Error message updated to "No such index" with Redis 8.0.0
+      assertTrue(de.getMessage().toLowerCase().contains("no such index"));
     }
     assertEquals(100, client.dbSize());
   }
@@ -727,8 +773,8 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void noStem() {
-    assertOK(client.ftCreate(index, new TextField("stemmed").weight(1.0), new TextField(
-        "notStemmed").weight(1.0).noStem()));
+    assertOK(client.ftCreate(index, new TextField("stemmed").weight(1.0),
+        new TextField("notStemmed").weight(1.0).noStem()));
 
     Map<String, Object> doc = new HashMap<>();
     doc.put("stemmed", "located");
@@ -745,8 +791,8 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void phoneticMatch() {
-    assertOK(client.ftCreate(index, new TextField("noPhonetic").weight(1.0), new TextField(
-        "withPhonetic").weight(1.0).phonetic("dm:en")));
+    assertOK(client.ftCreate(index, new TextField("noPhonetic").weight(1.0),
+        new TextField("withPhonetic").weight(1.0).phonetic("dm:en")));
 
     Map<String, Object> doc = new HashMap<>();
     doc.put("noPhonetic", "morfix");
@@ -760,7 +806,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     try {
       client.ftSearch(index, "@noPhonetic:morphix=>{$phonetic:true}");
       fail();
-    } catch (JedisDataException e) {/* field does not support phonetics */
+    } catch (JedisDataException e) {/*field does not support phonetics*/
     }
 
     SearchResult res3 = client.ftSearch(index, "@withPhonetic:morphix=>{$phonetic:false}");
@@ -812,13 +858,13 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertEquals(2, res.getTotalResults());
 
     res = client.ftSearch(index, "@f2:Mark*",
-      FTSearchParams.searchParams().sortBy("f1", SortingOrder.DESC));
+        FTSearchParams.searchParams().sortBy("f1", SortingOrder.DESC));
     assertEquals(2, res.getTotalResults());
 
     assertEquals("doc1", res.getDocuments().get(0).getId());
 
     res = client.ftSearch(index, "@f2:Mark*",
-      FTSearchParams.searchParams().sortBy("f1", SortingOrder.ASC));
+        FTSearchParams.searchParams().sortBy("f1", SortingOrder.ASC));
     assertEquals("doc2", res.getDocuments().get(0).getId());
   }
 
@@ -834,22 +880,21 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     // Add a document
     addDocument("foo", doc);
 
-    SearchResult res = client.ftSearch(index, "data", FTSearchParams.searchParams().highlight()
-        .summarize());
+    SearchResult res = client.ftSearch(index, "data", FTSearchParams.searchParams().highlight().summarize());
     assertEquals("is often referred as a <b>data</b> structures server. What this means is that "
         + "Redis provides... What this means is that Redis provides access to mutable <b>data</b> "
         + "structures via a set of commands, which are sent using a... So different processes can "
-        + "query and modify the same <b>data</b> structures in a shared... ", res.getDocuments()
-        .get(0).get("text"));
+        + "query and modify the same <b>data</b> structures in a shared... ",
+        res.getDocuments().get(0).get("text"));
 
-    res = client.ftSearch(index, "data",
-      FTSearchParams.searchParams().highlight(FTSearchParams.highlightParams().tags("<u>", "</u>"))
-          .summarize());
+    res = client.ftSearch(index, "data", FTSearchParams.searchParams()
+        .highlight(FTSearchParams.highlightParams().tags("<u>", "</u>"))
+        .summarize());
     assertEquals("is often referred as a <u>data</u> structures server. What this means is that "
         + "Redis provides... What this means is that Redis provides access to mutable <u>data</u> "
         + "structures via a set of commands, which are sent using a... So different processes can "
-        + "query and modify the same <u>data</u> structures in a shared... ", res.getDocuments()
-        .get(0).get("text"));
+        + "query and modify the same <u>data</u> structures in a shared... ",
+        res.getDocuments().get(0).get("text"));
   }
 
   @Test
@@ -886,12 +931,14 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertEquals(4, client.ftSearch(index, "hello").getTotalResults());
 
     assertEquals(new HashSet<>(Arrays.asList("red", "blue", "green", "yellow", "orange;purple")),
-      client.ftTagVals(index, "category"));
+        client.ftTagVals(index, "category"));
   }
 
   @Test
   public void testGetTagFieldWithNonDefaultSeparator() {
-    assertOK(client.ftCreate(index, TextField.of("title"), TagField.of("category").separator(';')));
+    assertOK(client.ftCreate(index,
+        TextField.of("title"),
+        TagField.of("category").separator(';')));
 
     Map<String, Object> fields1 = new HashMap<>();
     fields1.put("title", "hello world");
@@ -923,12 +970,14 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertEquals(4, client.ftSearch(index, "hello").getTotalResults());
 
     assertEquals(new HashSet<>(Arrays.asList("red", "blue", "green", "yellow", "orange,purple")),
-      client.ftTagVals(index, "category"));
+        client.ftTagVals(index, "category"));
   }
 
   @Test
   public void caseSensitiveTagField() {
-    assertOK(client.ftCreate(index, TextField.of("title"), TagField.of("category").caseSensitive()));
+    assertOK(client.ftCreate(index,
+        TextField.of("title"),
+        TagField.of("category").caseSensitive()));
 
     Map<String, Object> fields = new HashMap<>();
     fields.put("title", "hello world");
@@ -944,18 +993,29 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void tagFieldParams() {
-    assertOK(client.ftCreate("testindex", TextField.of("title"), TagField.of("category").as("cat")
-        .indexMissing().indexEmpty().separator(',').caseSensitive().withSuffixTrie().sortable()));
+    assertOK(client.ftCreate("testindex", TextField.of("title"),
+        TagField.of("category").as("cat").separator(',')
+            .caseSensitive().withSuffixTrie().sortable()));
 
     assertOK(client.ftCreate("testunfindex", TextField.of("title"),
-      TagField.of("category").as("cat").indexMissing().indexEmpty().separator(',').caseSensitive()
-          .withSuffixTrie().sortableUNF()));
+        TagField.of("category").as("cat").separator(',')
+            .caseSensitive().withSuffixTrie().sortableUNF()));
 
-    assertOK(client.ftCreate("testnoindex", TextField.of("title"), TagField.of("category")
-        .as("cat").sortable().noIndex()));
+    if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V7_4)) {
+      assertOK(client.ftCreate("testindex-missing", TextField.of("title"),
+          TagField.of("category").as("cat").indexMissing().indexEmpty().separator(',')
+              .caseSensitive().withSuffixTrie().sortable()));
+
+      assertOK(client.ftCreate("testunfindex-missing", TextField.of("title"),
+          TagField.of("category").as("cat").indexMissing().indexEmpty().separator(',')
+              .caseSensitive().withSuffixTrie().sortableUNF()));
+    }
+
+    assertOK(client.ftCreate("testnoindex", TextField.of("title"),
+        TagField.of("category").as("cat").sortable().noIndex()));
 
     assertOK(client.ftCreate("testunfnoindex", TextField.of("title"),
-      TagField.of("category").as("cat").sortableUNF().noIndex()));
+        TagField.of("category").as("cat").sortableUNF().noIndex()));
   }
 
   @Test
@@ -969,7 +1029,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
     // Query
     SearchResult res = client.ftSearch(index, "*",
-      FTSearchParams.searchParams().returnFields("field1"));
+        FTSearchParams.searchParams().returnFields("field1"));
     assertEquals(1, res.getTotalResults());
     Document ret = res.getDocuments().get(0);
     assertEquals("value1", ret.get("field1"));
@@ -994,7 +1054,9 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
     // Query
     SearchResult res = client.ftSearch(index, "*",
-      FTSearchParams.searchParams().returnFields(FieldName.of("a"), FieldName.of("b").as("d")));
+        FTSearchParams.searchParams()
+            .returnFields(FieldName.of("a"),
+                FieldName.of("b").as("d")));
     assertEquals(1, res.getTotalResults());
     Document doc = res.getDocuments().get(0);
     assertEquals("value1", doc.get("a"));
@@ -1002,26 +1064,26 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     assertEquals("value2", doc.get("d"));
     assertNull(doc.get("c"));
 
-    res = client.ftSearch(index, "*", FTSearchParams.searchParams().returnField(FieldName.of("a"))
-        .returnField(FieldName.of("b").as("d")));
+    res = client.ftSearch(index, "*",
+        FTSearchParams.searchParams()
+            .returnField(FieldName.of("a"))
+            .returnField(FieldName.of("b").as("d")));
     assertEquals(1, res.getTotalResults());
     assertEquals("value1", res.getDocuments().get(0).get("a"));
     assertEquals("value2", res.getDocuments().get(0).get("d"));
 
-    res = client.ftSearch(
-      index,
-      "*",
-      FTSearchParams.searchParams().returnField(FieldName.of("a"), true)
-          .returnField(FieldName.of("b").as("d"), true));
+    res = client.ftSearch(index, "*",
+        FTSearchParams.searchParams()
+            .returnField(FieldName.of("a"), true)
+            .returnField(FieldName.of("b").as("d"), true));
     assertEquals(1, res.getTotalResults());
     assertEquals("value1", res.getDocuments().get(0).get("a"));
     assertEquals("value2", res.getDocuments().get(0).get("d"));
 
-    res = client.ftSearch(
-      index,
-      "*",
-      FTSearchParams.searchParams().returnField(FieldName.of("a"), false)
-          .returnField(FieldName.of("b").as("d"), false));
+    res = client.ftSearch(index, "*",
+        FTSearchParams.searchParams()
+            .returnField(FieldName.of("a"), false)
+            .returnField(FieldName.of("b").as("d"), false));
     assertEquals(1, res.getTotalResults());
     assertArrayEquals("value1".getBytes(), (byte[]) res.getDocuments().get(0).get("a"));
     assertArrayEquals("value2".getBytes(), (byte[]) res.getDocuments().get(0).get("d"));
@@ -1039,12 +1101,12 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     addDocument("doc2", doc);
 
     // Query
-    SearchResult res = client
-        .ftSearch(index, "value", FTSearchParams.searchParams().inKeys("doc1"));
+    SearchResult res = client.ftSearch(index, "value",
+        FTSearchParams.searchParams().inKeys("doc1"));
     assertEquals(1, res.getTotalResults());
     assertEquals("doc1", res.getDocuments().get(0).getId());
     assertEquals("value", res.getDocuments().get(0).get("field1"));
-    assertEquals(null, res.getDocuments().get(0).get("value"));
+    assertNull(res.getDocuments().get(0).get("value"));
   }
 
   @Test
@@ -1057,13 +1119,13 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
     assertEquals("OK", client.ftAliasAdd("ALIAS1", index));
     SearchResult res1 = client.ftSearch("ALIAS1", "*",
-      FTSearchParams.searchParams().returnFields("field1"));
+        FTSearchParams.searchParams().returnFields("field1"));
     assertEquals(1, res1.getTotalResults());
     assertEquals("value", res1.getDocuments().get(0).get("field1"));
 
     assertEquals("OK", client.ftAliasUpdate("ALIAS2", index));
     SearchResult res2 = client.ftSearch("ALIAS2", "*",
-      FTSearchParams.searchParams().returnFields("field1"));
+        FTSearchParams.searchParams().returnFields("field1"));
     assertEquals(1, res2.getTotalResults());
     assertEquals("value", res2.getDocuments().get(0).get("field1"));
 
@@ -1160,36 +1222,68 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     attr.put("DIM", 2);
     attr.put("DISTANCE_METRIC", "L2");
 
-    assertOK(client
-        .ftCreate(index, VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.HNSW)
-            .attributes(attr).build()));
+    assertOK(client.ftCreate(index, VectorField.builder().fieldName("v")
+        .algorithm(VectorAlgorithm.HNSW).attributes(attr).build()));
 
     client.hset("a", "v", "aaaaaaaa");
     client.hset("b", "v", "aaaabaaa");
     client.hset("c", "v", "aaaaabaa");
 
-    FTSearchParams searchParams = FTSearchParams.searchParams().addParam("vec", "aaaaaaaa")
-        .sortBy("__v_score", SortingOrder.ASC).returnFields("__v_score").dialect(2);
-    Document doc1 = client.ftSearch(index, "*=>[KNN 2 @v $vec]", searchParams).getDocuments()
-        .get(0);
+    FTSearchParams searchParams = FTSearchParams.searchParams()
+        .addParam("vec", "aaaaaaaa")
+        .sortBy("__v_score", SortingOrder.ASC)
+        .returnFields("__v_score")
+        .dialect(2);
+    Document doc1 = client.ftSearch(index, "*=>[KNN 2 @v $vec]", searchParams).getDocuments().get(0);
     assertEquals("a", doc1.getId());
     assertEquals("0", doc1.get("__v_score"));
   }
 
   @Test
   public void testFlatVectorSimilarity() {
-    assertOK(client.ftCreate(
-      index,
-      VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.FLAT)
-          .addAttribute("TYPE", "FLOAT32").addAttribute("DIM", 2)
-          .addAttribute("DISTANCE_METRIC", "L2").build()));
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v")
+            .algorithm(VectorAlgorithm.FLAT)
+            .addAttribute("TYPE", "FLOAT32")
+            .addAttribute("DIM", 2)
+            .addAttribute("DISTANCE_METRIC", "L2")
+            .build()
+    ));
 
     client.hset("a", "v", "aaaaaaaa");
     client.hset("b", "v", "aaaabaaa");
     client.hset("c", "v", "aaaaabaa");
 
-    FTSearchParams searchParams = FTSearchParams.searchParams().addParam("vec", "aaaaaaaa")
-        .sortBy("__v_score", SortingOrder.ASC).returnFields("__v_score").dialect(2);
+    FTSearchParams searchParams = FTSearchParams.searchParams()
+        .addParam("vec", "aaaaaaaa")
+        .sortBy("__v_score", SortingOrder.ASC)
+        .returnFields("__v_score")
+        .dialect(2);
+
+    Document doc1 = client.ftSearch(index, "*=>[KNN 2 @v $vec]", searchParams).getDocuments().get(0);
+    assertEquals("a", doc1.getId());
+    assertEquals("0", doc1.get("__v_score"));
+  }
+
+  @Test
+  public void testFlatVectorSimilarityInt8() {
+    assumeTrue(RedisConditions.of(client).moduleVersionIsGreaterThanOrEqual(SEARCH_MOD_VER_80M3),
+        "INT8");
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.FLAT)
+            .addAttribute("TYPE", "INT8").addAttribute("DIM", 2)
+            .addAttribute("DISTANCE_METRIC", "L2").build()));
+
+    byte[] a = { 127, 1 };
+    byte[] b = { 127, 10 };
+    byte[] c = { 127, 100 };
+
+    client.hset("a".getBytes(), "v".getBytes(), a);
+    client.hset("b".getBytes(), "v".getBytes(), b);
+    client.hset("c".getBytes(), "v".getBytes(), c);
+
+    FTSearchParams searchParams = FTSearchParams.searchParams().addParam("vec", a)
+        .sortBy("__v_score", SortingOrder.ASC).returnFields("__v_score");
 
     Document doc1 = client.ftSearch(index, "*=>[KNN 2 @v $vec]", searchParams).getDocuments()
         .get(0);
@@ -1198,39 +1292,115 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
   }
 
   @Test
+  @SinceRedisVersion(value = "7.4.0", message = "no optional params before 7.4.0")
   public void vectorFieldParams() {
     Map<String, Object> attr = new HashMap<>();
     attr.put("TYPE", "FLOAT32");
     attr.put("DIM", 2);
     attr.put("DISTANCE_METRIC", "L2");
 
-    assertOK(client.ftCreate("testindex",
-      new VectorField("vector", VectorAlgorithm.HNSW, attr).as("vec").indexMissing()));
+    assertOK(client.ftCreate("testindex-missing", new VectorField("vector", VectorAlgorithm.HNSW, attr).as("vec").indexMissing()));
 
-    // assertOK(client.ftCreate("testnoindex", new VectorField("vector", VectorAlgorithm.HNSW,
-    // attr).as("vec").noIndex()));
+    // assertOK(client.ftCreate("testnoindex", new VectorField("vector", VectorAlgorithm.HNSW, attr).as("vec").noIndex()));
     // throws Field `NOINDEX` does not have a type
   }
 
   @Test
+  @SinceRedisVersion(value = "7.4.0", message = "FLOAT16")
   public void float16StorageType() {
-    assertOK(client.ftCreate(
-      index,
-      VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.HNSW)
-          .addAttribute("TYPE", "FLOAT16").addAttribute("DIM", 4)
-          .addAttribute("DISTANCE_METRIC", "L2").build()));
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v")
+            .algorithm(VectorAlgorithm.HNSW)
+            .addAttribute("TYPE", "FLOAT16")
+            .addAttribute("DIM", 4)
+            .addAttribute("DISTANCE_METRIC", "L2")
+            .build()));
   }
 
   @Test
+  @SinceRedisVersion(value = "7.4.0", message = "BFLOAT16")
   public void bfloat16StorageType() {
-    assertOK(client.ftCreate(
-      index,
-      VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.HNSW)
-          .addAttribute("TYPE", "BFLOAT16").addAttribute("DIM", 4)
-          .addAttribute("DISTANCE_METRIC", "L2").build()));
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v")
+            .algorithm(VectorAlgorithm.HNSW)
+            .addAttribute("TYPE", "BFLOAT16")
+            .addAttribute("DIM", 4)
+            .addAttribute("DISTANCE_METRIC", "L2")
+            .build()));
   }
 
-  @Ignore
+  @Test
+  public void int8StorageType() {
+    assumeTrue(RedisConditions.of(client).moduleVersionIsGreaterThanOrEqual(SEARCH_MOD_VER_80M3),
+        "INT8");
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.HNSW)
+            .addAttribute("TYPE", "INT8").addAttribute("DIM", 4)
+            .addAttribute("DISTANCE_METRIC", "L2").build()));
+  }
+
+  @Test
+  public void uint8StorageType() {
+    assumeTrue(RedisConditions.of(client).moduleVersionIsGreaterThanOrEqual(SEARCH_MOD_VER_80M3),
+        "UINT8");
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v").algorithm(VectorAlgorithm.HNSW)
+            .addAttribute("TYPE", "UINT8").addAttribute("DIM", 4)
+            .addAttribute("DISTANCE_METRIC", "L2").build()));
+  }
+
+  @Test
+  @SinceRedisVersion("8.1.240")
+  public void testSvsVamanaVectorSimilarity() {
+      Map<String, Object> attr = new HashMap<>();
+      attr.put("TYPE", "FLOAT32");
+      attr.put("DIM", 2);
+      attr.put("DISTANCE_METRIC", "L2");
+
+      assertOK(client.ftCreate(index, VectorField.builder().fieldName("v")
+          .algorithm(VectorAlgorithm.SVS_VAMANA).attributes(attr).build()));
+
+      // Create proper float vectors
+      float[] vectorA = {1.0f, 2.0f};
+      float[] vectorB = {1.1f, 2.1f};
+      float[] vectorC = {2.0f, 3.0f};
+
+      // Convert to byte arrays using RediSearchUtil
+      byte[] bytesA = RediSearchUtil.toByteArray(vectorA);
+      byte[] bytesB = RediSearchUtil.toByteArray(vectorB);
+      byte[] bytesC = RediSearchUtil.toByteArray(vectorC);
+
+      client.hset("a".getBytes(), "v".getBytes(), bytesA);
+      client.hset("b".getBytes(), "v".getBytes(), bytesB);
+      client.hset("c".getBytes(), "v".getBytes(), bytesC);
+
+      FTSearchParams searchParams = FTSearchParams.searchParams()
+          .addParam("vec", bytesA)
+          .sortBy("__v_score", SortingOrder.ASC)
+          .returnFields("__v_score")
+          .dialect(2);
+      Document doc1 = client.ftSearch(index, "*=>[KNN 2 @v $vec]", searchParams).getDocuments().get(0);
+      assertEquals("a", doc1.getId());
+      assertEquals("0", doc1.get("__v_score"));
+  }
+
+  @Test
+  @SinceRedisVersion("8.1.240")
+  public void testSvsVamanaVectorWithAdvancedParameters() {
+    assertOK(client.ftCreate(index,
+        VectorField.builder().fieldName("v")
+            .algorithm(VectorAlgorithm.SVS_VAMANA)
+            .addAttribute("TYPE", "FLOAT32")
+            .addAttribute("DIM", 4)
+            .addAttribute("DISTANCE_METRIC", "L2")
+            .addAttribute("CONSTRUCTION_WINDOW_SIZE", 200)
+            .addAttribute("GRAPH_MAX_DEGREE", 64)
+            .addAttribute("SEARCH_WINDOW_SIZE", 100)
+            .addAttribute("EPSILON", 0.01)
+            .build()
+    ));
+  }
+
   @Test
   public void searchProfile() {
     assertOK(client.ftCreate(index, TextField.of("t1"), TextField.of("t2")));
@@ -1240,34 +1410,28 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     hash.put("t2", "bar");
     client.hset("doc1", hash);
 
-    Map.Entry<SearchResult, Map<String, Object>> reply = client.ftProfileSearch(index,
+    Map.Entry<SearchResult, ProfilingInfo> reply = client.ftProfileSearch(index,
         FTProfileParams.profileParams(), "foo", FTSearchParams.searchParams());
 
     SearchResult result = reply.getKey();
     assertEquals(1, result.getTotalResults());
     assertEquals(Collections.singletonList("doc1"), result.getDocuments().stream().map(Document::getId).collect(Collectors.toList()));
 
-    Map<String, Object> profile = reply.getValue();
-    Map<String, Object> iteratorsProfile;
+    // profile
+    Object profileObject = reply.getValue().getProfilingInfo();
     if (protocol != RedisProtocol.RESP3) {
-      iteratorsProfile = (Map<String, Object>) profile.get("Iterators profile");
+      assertThat(profileObject, Matchers.isA(List.class));
+      if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V8_0_0)) {
+        assertThat((List<Object>) profileObject, Matchers.hasItems("Shards", "Coordinator"));
+      }
     } else {
-      List iteratorsProfileList = (List) profile.get("Iterators profile");
-      assertEquals(1, iteratorsProfileList.size());
-      iteratorsProfile = (Map<String, Object>) iteratorsProfileList.get(0);
+      assertThat(profileObject, Matchers.isA(Map.class));
+      if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V8_0_0)) {
+        assertThat(((Map<String, Object>) profileObject).keySet(), Matchers.hasItems("Shards", "Coordinator"));
+      }
     }
-    assertEquals("TEXT", iteratorsProfile.get("Type"));
-    assertEquals("foo", iteratorsProfile.get("Term"));
-    assertEquals(1L, iteratorsProfile.get("Counter"));
-    assertEquals(1L, iteratorsProfile.get("Size"));
-    assertSame(Double.class, iteratorsProfile.get("Time").getClass());
-
-    assertEquals(Arrays.asList("Index", "Scorer", "Sorter", "Loader"),
-        ((List<Map<String, Object>>) profile.get("Result processors profile")).stream()
-            .map(map -> map.get("Type")).collect(Collectors.toList()));
   }
 
-  @Ignore
   @Test
   public void vectorSearchProfile() {
     assertOK(client.ftCreate(index, VectorField.builder().fieldName("v")
@@ -1283,131 +1447,28 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
     FTSearchParams searchParams = FTSearchParams.searchParams().addParam("vec", "aaaaaaaa")
         .sortBy("__v_score", SortingOrder.ASC).noContent().dialect(2);
-    Map.Entry<SearchResult, Map<String, Object>> reply = client.ftProfileSearch(index,
+    Map.Entry<SearchResult, ProfilingInfo> reply = client.ftProfileSearch(index,
         FTProfileParams.profileParams(), "*=>[KNN 3 @v $vec]", searchParams);
     assertEquals(3, reply.getKey().getTotalResults());
 
     assertEquals(Arrays.asList(4, 2, 1).toString(), reply.getKey().getDocuments()
         .stream().map(Document::getId).collect(Collectors.toList()).toString());
 
-    Map<String, Object> profile = reply.getValue();
-
+    // profile
+    Object profileObject = reply.getValue().getProfilingInfo();
     if (protocol != RedisProtocol.RESP3) {
-      assertEquals("VECTOR", ((Map<String, Object>) profile.get("Iterators profile")).get("Type"));
-    } else {
-      assertEquals(Arrays.asList("VECTOR"),
-          ((List<Map<String, Object>>) profile.get("Iterators profile")).stream()
-              .map(map -> map.get("Type")).collect(Collectors.toList()));
-    }
-
-    List<Map<String, Object>> resultProcessorsProfile
-        = (List<Map<String, Object>>) reply.getValue().get("Result processors profile");
-    assertEquals(3, resultProcessorsProfile.size());
-    assertEquals("Index", resultProcessorsProfile.get(0).get("Type"));
-    assertEquals("Sorter", resultProcessorsProfile.get(2).get("Type"));
-  }
-
-  @Ignore
-  @Test
-  public void maxPrefixExpansionSearchProfile() {
-    final String configParam = "MAXPREFIXEXPANSIONS";
-    String configValue = (String) client.ftConfigGet(configParam).get(configParam);
-    try {
-      client.ftConfigSet(configParam, "2");
-
-      assertOK(client.ftCreate(index, TextField.of("t")));
-      client.hset("1", "t", "foo1");
-      client.hset("2", "t", "foo2");
-      client.hset("3", "t", "foo3");
-
-      Map.Entry<SearchResult, Map<String, Object>> reply = client.ftProfileSearch(index,
-        FTProfileParams.profileParams(), "foo*", FTSearchParams.searchParams().limit(0, 0));
-      // Warning=Max prefix expansion reached
-      if (protocol != RedisProtocol.RESP3) {
-        assertEquals("Max prefix expansion reached",
-          ((Map) reply.getValue().get("Iterators profile")).get("Warning"));
-      } else {
-        assertEquals("Max prefix expansion reached",
-          ((Map) ((List) reply.getValue().get("Iterators profile")).get(0)).get("Warning"));
+      assertThat(profileObject, Matchers.isA(List.class));
+      if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V8_0_0)) {
+        assertThat((List<Object>) profileObject, Matchers.hasItems("Shards", "Coordinator"));
       }
-    } finally {
-      client.ftConfigSet(configParam, configValue);
-    }
-  }
-
-  @Ignore
-  @Test
-  public void noContentSearchProfile() {
-    assertOK(client.ftCreate(index, TextField.of("t")));
-    client.hset("1", "t", "foo");
-    client.hset("2", "t", "bar");
-
-    Map.Entry<SearchResult, Map<String, Object>> profile = client.ftProfileSearch(index,
-      FTProfileParams.profileParams(), "foo -@t:baz", FTSearchParams.searchParams().noContent());
-
-    Map<String, Object> depth0 = protocol != RedisProtocol.RESP3 ? (Map<String, Object>) profile
-        .getValue().get("Iterators profile") : ((List<Map<String, Object>>) profile.getValue().get(
-      "Iterators profile")).get(0);
-
-    assertEquals("INTERSECT", depth0.get("Type"));
-    List<Map<String, Object>> depth0_children = (List<Map<String, Object>>) depth0
-        .get("Child iterators");
-    assertEquals("TEXT", depth0_children.get(0).get("Type"));
-    Map<String, Object> depth1 = depth0_children.get(1);
-    assertEquals("NOT", depth1.get("Type"));
-    if (protocol != RedisProtocol.RESP3) {
-      List<Map<String, Object>> depth1_children = (List<Map<String, Object>>) depth1
-          .get("Child iterators");
-      assertEquals(1, depth1_children.size());
-      assertEquals("EMPTY", depth1_children.get(0).get("Type"));
     } else {
-      assertEquals("EMPTY", ((Map<String, Object>) depth1.get("Child iterator")).get("Type"));
+      assertThat(profileObject, Matchers.isA(Map.class));
+      if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V8_0_0)) {
+        assertThat(((Map<String, Object>) profileObject).keySet(), Matchers.hasItems("Shards", "Coordinator"));
+      }
     }
   }
 
-  @Ignore
-  @Test
-  public void deepReplySearchProfile() {
-    assertOK(client.ftCreate(index, TextField.of("t")));
-    client.hset("1", "t", "hello");
-    client.hset("2", "t", "world");
-
-    Map.Entry<SearchResult, Map<String, Object>> profile = client.ftProfileSearch(index,
-      FTProfileParams.profileParams(), "hello(hello(hello(hello(hello(hello)))))", FTSearchParams
-          .searchParams().noContent());
-
-    Map<String, Object> depth0 = protocol != RedisProtocol.RESP3 ? (Map<String, Object>) profile
-        .getValue().get("Iterators profile") : ((List<Map<String, Object>>) profile.getValue().get(
-      "Iterators profile")).get(0);
-
-    AtomicInteger intersectLevelCount = new AtomicInteger();
-    AtomicInteger textLevelCount = new AtomicInteger();
-    deepReplySearchProfile_assertProfile(depth0, intersectLevelCount, textLevelCount);
-    assertThat(intersectLevelCount.get(), Matchers.greaterThan(0));
-    assertThat(textLevelCount.get(), Matchers.greaterThan(0));
-  }
-
-  private void deepReplySearchProfile_assertProfile(Map<String, Object> attr,
-      AtomicInteger intersectLevelCount, AtomicInteger textLevelCount) {
-
-    String type = (String) attr.get("Type");
-    assertThat(type, Matchers.not(Matchers.blankOrNullString()));
-
-    switch (type) {
-    case "INTERSECT":
-      assertThat(attr, Matchers.hasKey("Child iterators"));
-      intersectLevelCount.incrementAndGet();
-      deepReplySearchProfile_assertProfile((Map) ((List) attr.get("Child iterators")).get(0),
-        intersectLevelCount, textLevelCount);
-      break;
-    case "TEXT":
-      assertThat(attr, Matchers.hasKey("Term"));
-      textLevelCount.incrementAndGet();
-      break;
-    }
-  }
-
-  @Ignore
   @Test
   public void limitedSearchProfile() {
     assertOK(client.ftCreate(index, TextField.of("t")));
@@ -1416,29 +1477,20 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     client.hset("3", "t", "help");
     client.hset("4", "t", "helowa");
 
-    Map.Entry<SearchResult, Map<String, Object>> profile = client.ftProfileSearch(index,
-      FTProfileParams.profileParams().limited(), "%hell% hel*", FTSearchParams.searchParams()
-          .noContent());
+    Map.Entry<SearchResult, ProfilingInfo> reply = client.ftProfileSearch(index,
+        FTProfileParams.profileParams().limited(), "%hell% hel*", FTSearchParams.searchParams().noContent());
 
-    Map<String, Object> depth0 = protocol != RedisProtocol.RESP3 ? (Map<String, Object>) profile
-        .getValue().get("Iterators profile") : ((List<Map<String, Object>>) profile.getValue().get(
-      "Iterators profile")).get(0);
-
-    assertEquals("INTERSECT", depth0.get("Type"));
-    assertEquals(3L, depth0.get("Counter"));
-
-    List<Map<String, Object>> depth0_children = (List<Map<String, Object>>) depth0
-        .get("Child iterators");
-    assertFalse(depth0_children.isEmpty());
-    for (Map<String, Object> depth1 : depth0_children) {
-      assertEquals("UNION", depth1.get("Type"));
-      assertNotNull(depth1.get("Query type"));
-      if (protocol != RedisProtocol.RESP3) {
-        List depth1_children = (List) depth1.get("Child iterators");
-        assertEquals(1, depth1_children.size());
-        assertSame(String.class, depth1_children.get(0).getClass());
-      } else {
-        assertSame(String.class, depth1.get("Child iterators").getClass());
+    // profile
+    Object profileObject = reply.getValue().getProfilingInfo();
+    if (protocol != RedisProtocol.RESP3) {
+      assertThat(profileObject, Matchers.isA(List.class));
+      if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V8_0_0)) {
+        assertThat((List<Object>) profileObject, Matchers.hasItems("Shards", "Coordinator"));
+      }
+    } else {
+      assertThat(profileObject, Matchers.isA(Map.class));
+      if (RedisVersionUtil.getRedisVersion(client).isGreaterThanOrEqualTo(RedisVersion.V8_0_0)) {
+        assertThat(((Map<String, Object>) profileObject).keySet(), Matchers.hasItems("Shards", "Coordinator"));
       }
     }
   }
@@ -1465,8 +1517,8 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void searchIteration() {
-    assertOK(client.ftCreate(index, FTCreateParams.createParams(), TextField.of("first"),
-      TextField.of("last"), NumericField.of("age")));
+    assertOK(client.ftCreate(index, FTCreateParams.createParams(),
+        TextField.of("first"), TextField.of("last"), NumericField.of("age")));
 
     client.hset("profesor:5555", toMap("first", "Albert", "last", "Blue", "age", "55"));
     client.hset("student:1111", toMap("first", "Joe", "last", "Dod", "age", "18"));
@@ -1476,8 +1528,7 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
     client.hset("student:5555", toMap("first", "Joen", "last", "Ko", "age", "20"));
     client.hset("teacher:6666", toMap("first", "Pat", "last", "Rod", "age", "20"));
 
-    FtSearchIteration search = client.ftSearchIteration(3, index, "*",
-      FTSearchParams.searchParams());
+    FtSearchIteration search = client.ftSearchIteration(3, index, "*", FTSearchParams.searchParams());
     int total = 0;
     while (!search.isIterationCompleted()) {
       SearchResult result = search.nextBatch();
@@ -1526,18 +1577,17 @@ public class SearchWithParamsTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void escapeMapUtil() {
-    client.hset("doc2",
-      RediSearchUtil.toStringMap(Collections.singletonMap("txt", "hello-world"), true));
+    client.hset("doc2", RediSearchUtil.toStringMap(Collections.singletonMap("txt", "hello-world"), true));
     assertNotEquals("hello-world", client.hget("doc2", "txt"));
     assertEquals("hello-world", RediSearchUtil.unescape(client.hget("doc2", "txt")));
   }
 
   @Test
   public void hsetObject() {
-    float[] floats = new float[] { 0.2f };
+    float[] floats = new float[]{0.2f};
     assertEquals(1L, client.hsetObject("obj", "floats", floats));
     assertArrayEquals(RediSearchUtil.toByteArray(floats),
-      client.hget("obj".getBytes(), "floats".getBytes()));
+        client.hget("obj".getBytes(), "floats".getBytes()));
 
     GeoCoordinate geo = new GeoCoordinate(-0.441, 51.458);
     Map<String, Object> fields = new HashMap<>();

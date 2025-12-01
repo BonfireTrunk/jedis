@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import redis.clients.jedis.CommandArguments;
+import redis.clients.jedis.args.Rawable;
 import redis.clients.jedis.params.IParams;
+import redis.clients.jedis.util.SafeEncoder;
 
 /**
  * Schema abstracts the schema definition when creating an index. Documents can contain fields not
@@ -14,7 +16,11 @@ import redis.clients.jedis.params.IParams;
 public class Schema {
 
   public enum FieldType {
-    TAG, TEXT, GEO, NUMERIC, VECTOR
+    TAG,
+    TEXT,
+    GEO,
+    NUMERIC,
+    VECTOR
   }
 
   // public for CommandObjects
@@ -34,6 +40,7 @@ public class Schema {
 
   /**
    * Add a text field to the schema with a given weight
+   *
    * @param name the field's name
    * @param weight its weight, a positive floating point number
    * @return the schema object
@@ -45,6 +52,7 @@ public class Schema {
 
   /**
    * Add a text field that can be sorted on
+   *
    * @param name the field's name
    * @param weight its weight, a positive floating point number
    * @return the schema object
@@ -56,6 +64,7 @@ public class Schema {
 
   /**
    * Add a geo filtering field to the schema.
+   *
    * @param name the field's name
    * @return the schema object
    */
@@ -66,6 +75,7 @@ public class Schema {
 
   /**
    * Add a numeric field to the schema
+   *
    * @param name the fields's nam e
    * @return the schema object
    */
@@ -115,8 +125,7 @@ public class Schema {
     return this;
   }
 
-  public Schema addVectorField(String name, VectorField.VectorAlgo algorithm,
-      Map<String, Object> attributes) {
+  public Schema addVectorField(String name, VectorField.VectorAlgo algorithm, Map<String, Object> attributes) {
     fields.add(new VectorField(name, algorithm, attributes));
     return this;
   }
@@ -128,6 +137,21 @@ public class Schema {
 
   public Schema addHNSWVectorField(String name, Map<String, Object> attributes) {
     fields.add(new VectorField(name, VectorField.VectorAlgo.HNSW, attributes));
+    return this;
+  }
+
+  /**
+   * Add a Vamana vector field to the schema using the SVS-VAMANA algorithm.
+   * This method provides a convenient way to add SVS-VAMANA vector fields.
+   *
+   * @param name the field's name
+   * @param attributes the SVS-Vamana algorithm configuration attributes
+   * @return the schema object
+   */
+  public Schema addSvsVamanaVectorField(String name, Map<String, Object> attributes) {
+    // Use the existing VectorField with SVS_VAMANA algorithm
+    Map<String, Object> vamanaAttributes = new java.util.HashMap<>(attributes);
+    fields.add(new VectorField(name, VectorField.VectorAlgo.SVS_VAMANA, vamanaAttributes));
     return this;
   }
 
@@ -181,7 +205,7 @@ public class Schema {
       this.noIndex = noIndex;
     }
 
-    public void as(String attribute) {
+    public void as(String attribute){
       this.fieldName.as(attribute);
     }
 
@@ -200,15 +224,14 @@ public class Schema {
 
     /**
      * Subclasses should override this method.
+     *
      * @param args
      */
-    protected void addTypeArgs(CommandArguments args) {
-    }
+    protected void addTypeArgs(CommandArguments args) { }
 
     @Override
     public String toString() {
-      return "Field{name='" + fieldName + "', type=" + type + ", sortable=" + sortable
-          + ", noindex=" + noIndex + "}";
+      return "Field{name='" + fieldName + "', type=" + type + ", sortable=" + sortable + ", noindex=" + noIndex + "}";
     }
   }
 
@@ -245,16 +268,14 @@ public class Schema {
       this(name, weight, sortable, nostem, noindex, null);
     }
 
-    public TextField(String name, double weight, boolean sortable, boolean nostem, boolean noindex,
-        String phonetic) {
+    public TextField(String name, double weight, boolean sortable, boolean nostem, boolean noindex, String phonetic) {
       super(name, FieldType.TEXT, sortable, noindex);
       this.weight = weight;
       this.nostem = nostem;
       this.phonetic = phonetic;
     }
 
-    public TextField(FieldName name, double weight, boolean sortable, boolean nostem,
-        boolean noindex, String phonetic) {
+    public TextField(FieldName name, double weight, boolean sortable, boolean nostem, boolean noindex, String phonetic) {
       super(name, FieldType.TEXT, sortable, noindex);
       this.weight = weight;
       this.nostem = nostem;
@@ -278,9 +299,8 @@ public class Schema {
 
     @Override
     public String toString() {
-      return "TextField{name='" + fieldName + "', type=" + type + ", sortable=" + sortable
-          + ", noindex=" + noIndex + ", weight=" + weight + ", nostem=" + nostem + ", phonetic='"
-          + phonetic + "'}";
+      return "TextField{name='" + fieldName + "', type=" + type + ", sortable=" + sortable + ", noindex=" + noIndex
+          + ", weight=" + weight + ", nostem=" + nostem + ", phonetic='" + phonetic + "'}";
     }
   }
 
@@ -338,16 +358,72 @@ public class Schema {
 
     @Override
     public String toString() {
-      return "TagField{name='" + fieldName + "', type=" + type + ", sortable=" + sortable
-          + ", noindex=" + noIndex + ", separator='" + separator + ", caseSensitive='"
-          + caseSensitive + "'}";
+      return "TagField{name='" + fieldName + "', type=" + type + ", sortable=" + sortable + ", noindex=" + noIndex
+          + ", separator='" + separator + ", caseSensitive='" + caseSensitive + "'}";
     }
   }
 
   public static class VectorField extends Field {
 
-    public enum VectorAlgo {
-      FLAT, HNSW
+
+    /**
+     * Enumeration of supported vector indexing algorithms in Redis.
+     * Each algorithm has different performance characteristics and use cases.
+     */
+    public enum VectorAlgo implements Rawable {
+
+      /**
+       * FLAT algorithm provides exact vector search with perfect accuracy.
+       * Best suited for smaller datasets (&lt; 1M vectors) where search accuracy
+       * is more important than search latency.
+       */
+      FLAT("FLAT"),
+
+      /**
+       * HNSW (Hierarchical Navigable Small World) algorithm provides approximate
+       * vector search with configurable accuracy-performance trade-offs.
+       * Best suited for larger datasets (&gt; 1M vectors) where search performance
+       * and scalability are more important than perfect accuracy.
+       */
+      HNSW("HNSW"),
+
+      /**
+       * SVS_VAMANA algorithm provides high-performance approximate vector search
+       * optimized for specific use cases with advanced compression and optimization features.
+       *
+       * <p>Characteristics:
+       * <ul>
+       *   <li>High-performance approximate search</li>
+       *   <li>Support for vector compression (LVQ, LeanVec)</li>
+       *   <li>Configurable graph construction and search parameters</li>
+       *   <li>Optimized for Intel platforms with fallback support</li>
+       * </ul>
+       *
+       * <p>Note: This algorithm may have specific requirements and limitations.
+       * Consult the Redis documentation for detailed usage guidelines.
+       */
+      SVS_VAMANA("SVS-VAMANA");
+
+      private final byte[] raw;
+
+      /**
+       * Creates a VectorAlgorithm enum value.
+       *
+       * @param redisParamName the Redis parameter name for this algorithm
+       */
+      VectorAlgo(String redisParamName) {
+        raw = SafeEncoder.encode(redisParamName);
+      }
+
+      /**
+       * Returns the raw byte representation of the algorithm name for Redis commands.
+       *
+       * @return the raw bytes of the algorithm name
+       */
+      @Override
+      public byte[] getRaw() {
+        return raw;
+      }
     }
 
     private final VectorAlgo algorithm;
@@ -361,7 +437,9 @@ public class Schema {
 
     @Override
     public void addTypeArgs(CommandArguments args) {
+
       args.add(algorithm);
+
       args.add(attributes.size() << 1);
       for (Map.Entry<String, Object> entry : attributes.entrySet()) {
         args.add(entry.getKey());
@@ -371,8 +449,7 @@ public class Schema {
 
     @Override
     public String toString() {
-      return "VectorField{name='" + fieldName + "', type=" + type + ", algorithm=" + algorithm
-          + ", attributes=" + attributes + "}";
+      return "VectorField{name='" + fieldName + "', type=" + type + ", algorithm=" + algorithm + ", attributes=" + attributes + "}";
     }
   }
 }

@@ -1,18 +1,20 @@
 package redis.clients.jedis.modules.bloom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.bloom.CFInsertParams;
@@ -23,19 +25,14 @@ import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 /**
  * Tests for the Cuckoo Filter Implementation
  */
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
 public class CuckooTest extends RedisModuleCommandsTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
-
-  //
-  // @AfterClass
-  // public static void tearDown() {
-  // // RedisModuleCommandsTestBase.tearDown();
-  // }
 
   public CuckooTest(RedisProtocol protocol) {
     super(protocol);
@@ -74,8 +71,8 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void testReservationCapacityAndBucketSizeAndMaxIterations() {
-    client.cfReserve("cuckoo3", 200,
-      CFReserveParams.reserveParams().bucketSize(10).maxIterations(20));
+    client.cfReserve("cuckoo3", 200, CFReserveParams.reserveParams()
+        .bucketSize(10).maxIterations(20));
 
     Map<String, Object> info = client.cfInfo("cuckoo3");
 
@@ -91,8 +88,8 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void testReservationAllParams() {
-    client.cfReserve("cuckoo4", 200, CFReserveParams.reserveParams().bucketSize(10).expansion(4)
-        .maxIterations(20));
+    client.cfReserve("cuckoo4", 200, CFReserveParams.reserveParams()
+        .bucketSize(10).expansion(4).maxIterations(20));
 
     Map<String, Object> info = client.cfInfo("cuckoo4");
 
@@ -135,8 +132,8 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
 
   @Test
   public void testInsertWithCapacity() {
-    assertEquals(Arrays.asList(true),
-      client.cfInsert("cuckoo9", CFInsertParams.insertParams().capacity(1000), "foo"));
+    assertEquals(Arrays.asList(true), client.cfInsert("cuckoo9",
+        CFInsertParams.insertParams().capacity(1000), "foo"));
   }
 
   @Test
@@ -152,8 +149,8 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
   @Test
   public void testInsertNoCreateFilterExists() {
     client.cfInsert("cuckoo11", "bar");
-    assertEquals(Arrays.asList(true, true),
-      client.cfInsert("cuckoo11", CFInsertParams.insertParams().noCreate(), "foo", "bar"));
+    assertEquals(Arrays.asList(true, true), client.cfInsert("cuckoo11",
+        CFInsertParams.insertParams().noCreate(), "foo", "bar"));
   }
 
   @Test
@@ -164,8 +161,8 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
   @Test
   public void testInsertNxWithCapacity() {
     client.cfInsertNx("cuckoo13", "bar");
-    assertEquals(Arrays.asList(false),
-      client.cfInsertNx("cuckoo13", CFInsertParams.insertParams().capacity(1000), "bar"));
+    assertEquals(Arrays.asList(false), client.cfInsertNx("cuckoo13",
+        CFInsertParams.insertParams().capacity(1000), "bar"));
   }
 
   @Test
@@ -173,7 +170,7 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
     client.cfInsertNx("cuckoo14", "foo");
     client.cfInsertNx("cuckoo14", "bar");
     assertEquals(Arrays.asList(false, false, true),
-      client.cfInsertNx("cuckoo14", "foo", "bar", "baz"));
+        client.cfInsertNx("cuckoo14", "foo", "bar", "baz"));
   }
 
   @Test
@@ -251,10 +248,10 @@ public class CuckooTest extends RedisModuleCommandsTestBase {
     assertTrue(ex.getMessage().contains("ERR not found"));
   }
 
-  @Test(timeout = 2000L)
+  @Test
+  @Timeout(2)
   public void testScanDumpAndLoadChunk() {
-    client.cfReserve("cuckoo24", 100L /* capacity */, CFReserveParams.reserveParams()
-        .bucketSize(50));
+    client.cfReserve("cuckoo24", 100L /*capacity*/, CFReserveParams.reserveParams().bucketSize(50));
     client.cfAdd("cuckoo24-dump", "a");
 
     long iterator = 0;
