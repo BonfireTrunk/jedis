@@ -29,7 +29,7 @@ public class PoolBenchmark {
   }
 
   private static void withPool() throws Exception {
-    final JedisPool pool = new JedisPool(new JedisPoolConfig(), endpoint.getHost(),
+    final JedisPool pool = new JedisPool(new JedisPoolConfig().toBuilder().testOnBorrow(false).build(), endpoint.getHost(),
         endpoint.getPort(), 2000, endpoint.getPassword());
     List<Thread> tds = new ArrayList<Thread>();
 

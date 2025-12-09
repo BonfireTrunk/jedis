@@ -8,8 +8,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -64,7 +64,7 @@ public class JedisPooledConstructorReflectionTest {
         } else if (t == URI.class) {
           paramCovered[i] = true;
           paramCoverageBy[i] = "JedisPooled.builder().fromURI(URI)";
-        } else if (t == GenericObjectPoolConfig.class) {
+        } else if (t == SimpleObjectPoolConfig.class) {
           paramCovered[i] = true;
           paramCoverageBy[i] = "JedisPooled.builder().poolConfig(...)";
         } else if (t == JedisClientConfig.class) {
@@ -148,8 +148,7 @@ public class JedisPooledConstructorReflectionTest {
                 paramCovered[i] = true;
                 paramCoverageBy[i] = "DefaultJedisClientConfig.builder().connectionTimeoutMillis(...)+socketTimeoutMillis(...)";
               } else {
-                // Generic: map the first int after host to port if not yet paired, else treat as
-                // timeout
+                // Generic: map the first int after host to port if not yet paired, else treat as timeout
                 paramCoverageBy[i] = "DefaultJedisClientConfig.builder().connectionTimeoutMillis/socketTimeoutMillis(...)";
               }
           } else if (t == boolean.class || t == Boolean.class) {
@@ -240,8 +239,8 @@ public class JedisPooledConstructorReflectionTest {
         if (n.contains("host")) return i;
       }
     }
-    // fallback: if there is an int parameter and exactly one String among (String,int,...), treat
-    // that String as host
+    // fallback: if there is an int parameter and exactly one String among
+    // (String,int,...), treat that String as host
     boolean hasInt = false;
     int stringCount = 0;
     int stringIdx = -1;

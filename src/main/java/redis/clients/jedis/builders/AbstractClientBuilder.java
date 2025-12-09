@@ -1,6 +1,5 @@
 package redis.clients.jedis.builders;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import redis.clients.jedis.*;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConfig;
@@ -10,6 +9,7 @@ import redis.clients.jedis.executors.DefaultCommandExecutor;
 import redis.clients.jedis.json.JsonObjectMapper;
 import redis.clients.jedis.providers.ConnectionProvider;
 import redis.clients.jedis.search.SearchProtocol;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 /**
  * Abstract base class for Redis client builders that provides common configuration options.
@@ -33,7 +33,7 @@ import redis.clients.jedis.search.SearchProtocol;
 public abstract class AbstractClientBuilder<T extends AbstractClientBuilder<T, C>, C> {
 
   // Common configuration fields
-  protected GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+  protected SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
   protected Cache cache = null;
   protected CacheConfig cacheConfig = null;
   protected CommandExecutor commandExecutor = null;
@@ -172,7 +172,7 @@ public abstract class AbstractClientBuilder<T extends AbstractClientBuilder<T, C
    * @param poolConfig the pool configuration
    * @return this builder
    */
-  public T poolConfig(GenericObjectPoolConfig<Connection> poolConfig) {
+  public T poolConfig(SimpleObjectPoolConfig poolConfig) {
     this.poolConfig = poolConfig;
     return self();
   }

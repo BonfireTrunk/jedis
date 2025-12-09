@@ -8,15 +8,7 @@ import java.util.Set;
 import org.json.JSONArray;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.annots.VisibleForTesting;
-import redis.clients.jedis.args.BitCountOption;
-import redis.clients.jedis.args.BitOP;
-import redis.clients.jedis.args.ExpiryOption;
-import redis.clients.jedis.args.FlushMode;
-import redis.clients.jedis.args.FunctionRestorePolicy;
-import redis.clients.jedis.args.GeoUnit;
-import redis.clients.jedis.args.ListDirection;
-import redis.clients.jedis.args.ListPosition;
-import redis.clients.jedis.args.SortedSetOption;
+import redis.clients.jedis.args.*;
 import redis.clients.jedis.bloom.BFInsertParams;
 import redis.clients.jedis.bloom.BFReserveParams;
 import redis.clients.jedis.bloom.CFInsertParams;
@@ -49,9 +41,7 @@ import redis.clients.jedis.mcf.MultiDbTransaction;
 import redis.clients.jedis.params.*;
 import redis.clients.jedis.providers.ClusterConnectionProvider;
 import redis.clients.jedis.providers.ConnectionProvider;
-import redis.clients.jedis.providers.MultiClusterPooledConnectionProvider;
 import redis.clients.jedis.providers.PooledConnectionProvider;
-import redis.clients.jedis.providers.ShardedConnectionProvider;
 import redis.clients.jedis.resps.*;
 import redis.clients.jedis.search.*;
 import redis.clients.jedis.search.aggr.AggregationBuilder;
@@ -63,12 +53,6 @@ import redis.clients.jedis.util.IOUtils;
 import redis.clients.jedis.util.JedisURIHelper;
 import redis.clients.jedis.util.KeyValue;
 
-import java.net.URI;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 public class UnifiedJedis implements JedisCommands, JedisBinaryCommands, SampleKeyedCommands,
     SampleBinaryKeyedCommands, RedisModuleCommands, AutoCloseable {

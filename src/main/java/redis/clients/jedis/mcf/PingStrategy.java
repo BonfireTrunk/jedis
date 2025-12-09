@@ -1,13 +1,6 @@
 package redis.clients.jedis.mcf;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-
-import redis.clients.jedis.Connection;
-import redis.clients.jedis.Endpoint;
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.JedisClientConfig;
-import redis.clients.jedis.JedisPooled;
-import redis.clients.jedis.UnifiedJedis;
+import redis.clients.jedis.*;
 import redis.clients.jedis.MultiDbConfig.StrategySupplier;
 
 public class PingStrategy implements HealthCheckStrategy {
@@ -22,9 +15,9 @@ public class PingStrategy implements HealthCheckStrategy {
 
   public PingStrategy(HostAndPort hostAndPort, JedisClientConfig jedisClientConfig,
       HealthCheckStrategy.Config config) {
-    GenericObjectPoolConfig<Connection> poolConfig = new GenericObjectPoolConfig<>();
-    poolConfig.setMaxTotal(MAX_HEALTH_CHECK_POOL_SIZE);
-    this.jedis = new JedisPooled(hostAndPort, jedisClientConfig, poolConfig);
+    var poolConfig = JedisPoolConfig.builder();
+    poolConfig.maxPoolSize(MAX_HEALTH_CHECK_POOL_SIZE);
+    this.jedis = new JedisPooled(hostAndPort, jedisClientConfig, poolConfig.build());
     this.config = config;
   }
 

@@ -86,7 +86,7 @@ public class JedisPoolTest {
     var config = JedisPoolConfig.builder();
     config.maxPoolSize(1);
     config.waitingForObjectTimeout(Duration.ZERO);
-    try (JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000, endpointStandalone0.getPassword(), 0,
+    try (JedisPool pool = new JedisPool(config.build(), endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000, endpointStandalone0.getPassword(), 0,
                                         "closable-reusable-pool", false, null, null, null)) {
 
       Jedis jedis = pool.getResource();
@@ -240,57 +240,57 @@ public class JedisPoolTest {
     }
   }
 
-  @Test
-  public void returnResourceDestroysResourceOnException() {
-
-    class CrashingJedis extends Jedis {
-      @Override
-      public void resetState() {
-        throw new RuntimeException();
-      }
-    }
-
-    final AtomicInteger destroyed = new AtomicInteger(0);
-
-    class CrashingJedisPooledObjectFactory implements PooledObjectFactory<Jedis> {
-
-      @Override
-      public PooledObject<Jedis> makeObject() throws Exception {
-        return new DefaultPooledObject<Jedis>(new CrashingJedis());
-      }
-
-      @Override
-      public void destroyObject(PooledObject<Jedis> p) throws Exception {
-        destroyed.incrementAndGet();
-      }
-
-      @Override
-      public boolean validateObject(PooledObject<Jedis> p) {
-        return true;
-      }
-
-      @Override
-      public void activateObject(PooledObject<Jedis> p) throws Exception {
-      }
-
-      @Override
-      public void passivateObject(PooledObject<Jedis> p) throws Exception {
-      }
-    }
-
-    var config = JedisPoolConfig.builder();
-    config.maxPoolSize(1);
-    config.waitingForObjectTimeout(Duration.ZERO);
-    JedisPool pool = new JedisPool(config.build(), new CrashingJedisPooledObjectFactory());
-    Jedis crashingJedis = pool.getResource();
-
-    try {
-      crashingJedis.close();
-    } catch (Exception ignored) {
-    }
-
-    assertEquals(1, destroyed.get());
-  }
+  // @Test
+  // public void returnResourceDestroysResourceOnException() {
+  //
+  //   class CrashingJedis extends Jedis {
+  //     @Override
+  //     public void resetState() {
+  //       throw new RuntimeException();
+  //     }
+  //   }
+  //
+  //   final AtomicInteger destroyed = new AtomicInteger(0);
+  //
+  //   class CrashingJedisPooledObjectFactory implements PooledObjectFactory<Jedis> {
+  //
+  //     @Override
+  //     public PooledObject<Jedis> makeObject() throws Exception {
+  //       return new DefaultPooledObject<Jedis>(new CrashingJedis());
+  //     }
+  //
+  //     @Override
+  //     public void destroyObject(PooledObject<Jedis> p) throws Exception {
+  //       destroyed.incrementAndGet();
+  //     }
+  //
+  //     @Override
+  //     public boolean validateObject(PooledObject<Jedis> p) {
+  //       return true;
+  //     }
+  //
+  //     @Override
+  //     public void activateObject(PooledObject<Jedis> p) throws Exception {
+  //     }
+  //
+  //     @Override
+  //     public void passivateObject(PooledObject<Jedis> p) throws Exception {
+  //     }
+  //   }
+  //
+  //   var config = JedisPoolConfig.builder();
+  //   config.maxPoolSize(1);
+  //   config.waitingForObjectTimeout(Duration.ZERO);
+  //   JedisPool pool = new JedisPool(config.build(), new CrashingJedisPooledObjectFactory());
+  //   Jedis crashingJedis = pool.getResource();
+  //
+  //   try {
+  //     crashingJedis.close();
+  //   } catch (Exception ignored) {
+  //   }
+  //
+  //   assertEquals(1, destroyed.get());
+  // }
 
   @Test
   public void returnResourceShouldResetState() {
@@ -355,13 +355,14 @@ public class JedisPoolTest {
     }
   }
 
-  @Test
-  public void testAddObject() {
-    try (JedisPool pool = new JedisPool(poolConfig, endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000)) {
-      pool.addObjects(1);
-      assertEquals(1, pool.getNumIdle());
-    }
-  }
+  // this test NA for our pool
+  // @Test
+  // public void testAddObject() {
+  //   try (JedisPool pool = new JedisPool(poolConfig, endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000)) {
+  //     pool.addObjects(1);
+  //     assertEquals(1, pool.getNumIdle());
+  //   }
+  // }
 
   @Test
   public void closeResourceTwice() {

@@ -1,5 +1,6 @@
 package redis.clients.jedis;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -65,11 +66,12 @@ public class SentineledConnectionProviderTest {
   @Timeout( value = 1)
   public void getConnectionMapDoesNotCauseConnectionLeak() {
 
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    var config = JedisPoolConfig.builder();
+    config.maxPoolSize(1);
+    config.waitingForObjectTimeout(Duration.ZERO);
 
     try (SentineledConnectionProvider sut = new SentineledConnectionProvider(MASTER_NAME,
-            primary.getClientConfigBuilder().build(), config, sentinels,
+            primary.getClientConfigBuilder().build(), config.build(), sentinels,
             DefaultJedisClientConfig.builder().build())) {
 
       HostAndPort resolvedPrimary = sut.getCurrentMaster();
@@ -95,11 +97,12 @@ public class SentineledConnectionProviderTest {
   @Timeout( value = 1)
   public void getPrimaryNodesConnectionMapDoesNotCauseConnectionLeak() {
 
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    var config = JedisPoolConfig.builder();
+    config.maxPoolSize(1);
+    config.waitingForObjectTimeout(Duration.ZERO);
 
     try (SentineledConnectionProvider sut = new SentineledConnectionProvider(MASTER_NAME,
-            primary.getClientConfigBuilder().build(), config, sentinels,
+            primary.getClientConfigBuilder().build(), config.build(), sentinels,
             DefaultJedisClientConfig.builder().build())) {
 
       HostAndPort resolvedPrimary = sut.getCurrentMaster();

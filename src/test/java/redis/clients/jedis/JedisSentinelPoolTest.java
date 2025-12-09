@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -60,7 +60,7 @@ public class JedisSentinelPoolTest {
   @Test
   public void initializeWithNotMonitoredMasterNameShouldThrowException() {
     final String wrongMasterName = "wrongMasterName";
-    assertThrows(JedisException.class, ()-> new JedisSentinelPool(wrongMasterName, sentinels).close());
+    assertThrows(JedisException.class, () -> new JedisSentinelPool(wrongMasterName, sentinels).close());
   }
 
   @Test

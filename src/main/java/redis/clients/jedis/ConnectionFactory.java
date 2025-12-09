@@ -12,6 +12,7 @@ import redis.clients.jedis.authentication.AuthXEventListener;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConnection;
 import redis.clients.jedis.exceptions.JedisException;
+import today.bonfire.oss.sop.PooledObject;
 import today.bonfire.oss.sop.PooledObjectFactory;
 
 /**
@@ -157,7 +158,6 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
     // no-op
   }
 
-  @Override
   public void activateObject(PooledObject<Connection> pooledConnection) throws Exception {
     // what to do ??
   }
@@ -186,7 +186,7 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
   @Override
   public void passivateObject(Connection obj) {
     // TODO maybe should select db 0? Not sure right now.
-    reAuthenticate(jedis);
+      reAuthenticate(obj);
   }
 
   @Override
@@ -216,7 +216,7 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
     }
   }
 
-  private void reAuthenticate(Connection jedis) throws Exception {
+  private void reAuthenticate(Connection jedis) {
     try {
       String result = jedis.reAuthenticate();
       if (result != null && !result.equals("OK")) {
