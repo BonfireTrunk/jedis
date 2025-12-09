@@ -1,27 +1,31 @@
 package redis.clients.jedis;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.util.RedisVersionUtil;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import io.redis.test.annotations.SinceRedisVersion;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.util.RedisVersionCondition;
 
 /**
  * This test class is mostly a copy of {@link JedisSentinelPoolTest}.
  * <p>
  * This tests are only executed when the server/cluster is Redis 6 or more.
  */
+@SinceRedisVersion("6.0.0")
+@Tag("integration")
 public class ACLJedisSentinelPoolTest {
 
   private static final String MASTER_NAME = "aclmaster";
@@ -30,25 +34,17 @@ public class ACLJedisSentinelPoolTest {
 
   protected Set<HostAndPort> sentinels = new HashSet<>();
 
-  @BeforeClass
-  public static void prepare() throws Exception {
-    EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone2-primary");
-    org.junit.Assume.assumeTrue("Not running ACL test on this version of Redis",
-      RedisVersionUtil.checkRedisMajorVersionNumber(6, endpoint));
-  }
+  @RegisterExtension
+  public static RedisVersionCondition versionCondition = new RedisVersionCondition(HostAndPorts.getRedisEndpoint("standalone2-primary"));
 
-  private static Set<String> toStrings(Set<HostAndPort> hostAndPorts) {
-    return hostAndPorts.stream().map(hap -> hap.toString()).collect(Collectors.toSet());
-  }
-
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     sentinels.clear();
     sentinels.add(sentinel1);
   }
 
-  @After
-  public void tearDown() throws Exception {
+  private static Set<String> toStrings(Set<HostAndPort> hostAndPorts) {
+    return hostAndPorts.stream().map(HostAndPort::toString).collect(Collectors.toSet());
   }
 
   @Test
@@ -73,21 +69,20 @@ public class ACLJedisSentinelPoolTest {
       var poolConfig = JedisPoolConfig.builder();
 
       JedisClientConfig masterConfig = DefaultJedisClientConfig.builder()
-          .connectionTimeoutMillis(1000).socketTimeoutMillis(1000).database(2).user("acljedis")
-          .password("fizzbuzz").build();
+          .connectionTimeoutMillis(1000).socketTimeoutMillis(1000).database(2)
+          .user("acljedis").password("fizzbuzz").build();
 
       JedisClientConfig sentinelConfig = DefaultJedisClientConfig.builder()
-          .connectionTimeoutMillis(1000).socketTimeoutMillis(1000).user("sentinel")
-          .password("foobared").build();
+          .connectionTimeoutMillis(1000).socketTimeoutMillis(1000)
+          .user("sentinel").password("foobared").build();
 
-      JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, poolConfig.build(),
-          masterConfig, sentinelConfig);
+      JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, poolConfig.build(), masterConfig, sentinelConfig);
       pool.getResource().close();
       pool.destroy();
     }
   }
 
-  @Test(expected = JedisConnectionException.class)
+  @Test
   public void initializeWithNotAvailableSentinelsShouldThrowException() {
 
     var poolConfig = JedisPoolConfig.builder();
@@ -99,14 +94,15 @@ public class ACLJedisSentinelPoolTest {
     JedisClientConfig sentinelConfig = DefaultJedisClientConfig.builder()
         .connectionTimeoutMillis(1000).socketTimeoutMillis(1000).user("default")
         .password("foobared").build();
-
-    JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, poolConfig.build(),
-        masterConfig, sentinelConfig);
-    pool.getResource().close();
-    pool.destroy();
+    assertThrows(JedisConnectionException.class, () -> {
+      try (JedisSentinelPool ignored = new JedisSentinelPool(MASTER_NAME, sentinels, poolConfig,
+          masterConfig, sentinelConfig)) {
+        // do nothing
+      }
+    });
   }
 
-  @Test(expected = JedisException.class)
+  @Test
   public void initializeWithNotMonitoredMasterNameShouldThrowException() {
 
     var poolConfig = JedisPoolConfig.builder();
@@ -119,10 +115,12 @@ public class ACLJedisSentinelPoolTest {
         .connectionTimeoutMillis(1000).socketTimeoutMillis(1000).user("sentinel")
         .password("foobared").build();
 
-    JedisSentinelPool pool = new JedisSentinelPool("wrongMasterName", sentinels,
-        poolConfig.build(), masterConfig, sentinelConfig);
-    pool.getResource().close();
-    pool.destroy();
+    assertThrows(JedisException.class, () -> {
+      try (JedisSentinelPool ignored = new JedisSentinelPool("wrongMasterName", sentinels, poolConfig,
+          masterConfig, sentinelConfig)) {
+        // do nothing
+      }
+    });
   }
 
   @Test
@@ -191,8 +189,8 @@ public class ACLJedisSentinelPoolTest {
     var config = JedisPoolConfig.builder();
     config.maxPoolSize(1);
     config.waitingForObjectTimeout(Duration.ZERO);
-    JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, toStrings(sentinels),
-        config.build(), 1000, 1000, "acljedis", "fizzbuzz", 0, "my_shiny_master_client", 1000,
+    JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, toStrings(sentinels), config.build(),
+        1000, 1000, "acljedis", "fizzbuzz", 0, "my_shiny_master_client", 1000,
         1000, "sentinel", "foobared", "my_shiny_sentinel_client");
 
     try (Jedis jedis = pool.getResource()) {

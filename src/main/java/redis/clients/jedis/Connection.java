@@ -1,19 +1,6 @@
 package redis.clients.jedis;
 
-import redis.clients.jedis.Protocol.Command;
-import redis.clients.jedis.Protocol.Keyword;
-import redis.clients.jedis.annots.Experimental;
-import redis.clients.jedis.args.ClientAttributeOption;
-import redis.clients.jedis.args.Rawable;
-import redis.clients.jedis.commands.ProtocolCommand;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.exceptions.JedisValidationException;
-import redis.clients.jedis.util.IOUtils;
-import redis.clients.jedis.util.RedisInputStream;
-import redis.clients.jedis.util.RedisOutputStream;
-import today.bonfire.oss.sop.PoolObject;
+import static redis.clients.jedis.util.SafeEncoder.encode;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,10 +14,59 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static redis.clients.jedis.util.SafeEncoder.encode;
+import redis.clients.jedis.Protocol.Command;
+import redis.clients.jedis.Protocol.Keyword;
+import redis.clients.jedis.annots.Experimental;
+import redis.clients.jedis.args.ClientAttributeOption;
+import redis.clients.jedis.args.Rawable;
+import redis.clients.jedis.authentication.AuthXManager;
+import redis.clients.jedis.commands.ProtocolCommand;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.exceptions.JedisValidationException;
+import redis.clients.jedis.util.IOUtils;
+import redis.clients.jedis.util.RedisInputStream;
+import redis.clients.jedis.util.RedisOutputStream;
+
+import today.bonfire.oss.sop.PoolObject;
 
 public class Connection implements Closeable, PoolObject {
+
+  public static class Builder {
+    private JedisSocketFactory socketFactory;
+    private JedisClientConfig clientConfig;
+
+    public Builder socketFactory(JedisSocketFactory socketFactory) {
+      this.socketFactory = socketFactory;
+      return this;
+    }
+
+    public Builder clientConfig(JedisClientConfig clientConfig) {
+      this.clientConfig = clientConfig;
+      return this;
+    }
+
+    public JedisSocketFactory getSocketFactory() {
+      return socketFactory;
+    }
+
+    public JedisClientConfig getClientConfig() {
+      return clientConfig;
+    }
+
+    public Connection build() {
+      Connection conn = new Connection(this);
+      conn.initializeFromClientConfig();
+      return conn;
+    }
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
 
   private ConnectionPool memberOf;
   protected RedisProtocol protocol;
@@ -46,6 +82,9 @@ public class Connection implements Closeable, PoolObject {
   protected String server;
   protected String version;
   private Long entityId;
+  private AtomicReference<RedisCredentials> currentCredentials = new AtomicReference<>(null);
+  private AuthXManager authXManager;
+  private JedisClientConfig clientConfig;
 
   public Connection() {
     this(Protocol.DEFAULT_HOST, Protocol.DEFAULT_PORT);
@@ -69,9 +108,13 @@ public class Connection implements Closeable, PoolObject {
 
   public Connection(final JedisSocketFactory socketFactory, JedisClientConfig clientConfig) {
     this.socketFactory = socketFactory;
-    this.soTimeout = clientConfig.getSocketTimeoutMillis();
-    this.infiniteSoTimeout = clientConfig.getBlockingSocketTimeoutMillis();
+    this.clientConfig = clientConfig;
     initializeFromClientConfig(clientConfig);
+  }
+
+  protected Connection(Builder builder) {
+    this.socketFactory = builder.getSocketFactory();
+    this.clientConfig = builder.getClientConfig();
   }
 
   @Override
@@ -95,8 +138,8 @@ public class Connection implements Closeable, PoolObject {
     SocketAddress remoteAddr = socket.getRemoteSocketAddress();
     SocketAddress localAddr = socket.getLocalSocketAddress();
     if (remoteAddr != null) {
-      strVal = String.format("%s{id: 0x%X, L:%s %c R:%s}", className, id, localAddr, (broken ? '!'
-          : '-'), remoteAddr);
+      strVal = String.format("%s{id: 0x%X, L:%s %c R:%s}", className, id, localAddr,
+        (broken ? '!' : '-'), remoteAddr);
     } else if (localAddr != null) {
       strVal = String.format("%s{id: 0x%X, L:%s}", className, id, localAddr);
     } else {
@@ -285,6 +328,15 @@ public class Connection implements Closeable, PoolObject {
     }
   }
 
+  public void forceDisconnect() throws IOException {
+    // setBroken() must be called first here,
+    // otherwise a concurrent close attempt would call 'returnResource' (instead of
+    // 'returnBrokenResource'),
+    // assuming it's an open/healthy connection whereas this individual socket is already closed.
+    setBroken();
+    IOUtils.closeQuietly(socket);
+  }
+
   public boolean isConnected() {
     return socket != null && socket.isBound() && !socket.isClosed() && socket.isConnected()
         && !socket.isInputShutdown() && !socket.isOutputShutdown();
@@ -439,20 +491,33 @@ public class Connection implements Closeable, PoolObject {
     for (int i = 0; i < info.length(); i++) {
       char c = info.charAt(i);
       if (c < '!' || c > '~') {
-        throw new JedisValidationException("client info cannot contain spaces, "
-            + "newlines or special characters.");
+        throw new JedisValidationException(
+            "client info cannot contain spaces, " + "newlines or special characters.");
       }
     }
     return true;
   }
 
+  public void initializeFromClientConfig() {
+    this.initializeFromClientConfig(clientConfig);
+  }
+
   protected void initializeFromClientConfig(final JedisClientConfig config) {
     try {
+      this.soTimeout = config.getSocketTimeoutMillis();
+      this.infiniteSoTimeout = config.getBlockingSocketTimeoutMillis();
+
       connect();
 
       protocol = config.getRedisProtocol();
 
-      final Supplier<RedisCredentials> credentialsProvider = config.getCredentialsProvider();
+      Supplier<RedisCredentials> credentialsProvider = config.getCredentialsProvider();
+
+      authXManager = config.getAuthXManager();
+      if (authXManager != null) {
+        credentialsProvider = authXManager;
+      }
+
       if (credentialsProvider instanceof RedisCredentialsProvider) {
         final RedisCredentialsProvider redisCredentialsProvider = (RedisCredentialsProvider) credentialsProvider;
         try {
@@ -470,8 +535,8 @@ public class Connection implements Closeable, PoolObject {
 
       String clientName = config.getClientName();
       if (clientName != null && validateClientInfo(clientName)) {
-        fireAndForgetMsg.add(new CommandArguments(Command.CLIENT).add(Keyword.SETNAME).add(
-          clientName));
+        fireAndForgetMsg
+            .add(new CommandArguments(Command.CLIENT).add(Keyword.SETNAME).add(clientName));
       }
 
       ClientSetInfoConfig setInfoConfig = config.getClientSetInfoConfig();
@@ -533,7 +598,7 @@ public class Connection implements Closeable, PoolObject {
         Arrays.fill(rawPass, (byte) 0); // clear sensitive data
       }
     } else {
-      auth(credentials);
+      authenticate(credentials);
       helloResult = protocol == null ? null : hello(encode(protocol.version()));
     }
     if (helloResult != null) {
@@ -545,9 +610,13 @@ public class Connection implements Closeable, PoolObject {
     // handled in RedisCredentialsProvider.cleanUp()
   }
 
-  private void auth(RedisCredentials credentials) {
+  public void setCredentials(RedisCredentials credentials) {
+    currentCredentials.set(credentials);
+  }
+
+  private String authenticate(RedisCredentials credentials) {
     if (credentials == null || credentials.getPassword() == null) {
-      return;
+      return null;
     }
     byte[] rawPass = encodeToBytes(credentials.getPassword());
     try {
@@ -559,7 +628,11 @@ public class Connection implements Closeable, PoolObject {
     } finally {
       Arrays.fill(rawPass, (byte) 0); // clear sensitive data
     }
-    getStatusCodeReply();
+    return getStatusCodeReply();
+  }
+
+  public String reAuthenticate() {
+    return authenticate(currentCredentials.getAndSet(null));
   }
 
   protected Map<String, Object> hello(byte[]... args) {
@@ -587,6 +660,14 @@ public class Connection implements Closeable, PoolObject {
       throw new JedisException(status);
     }
     return true;
+  }
+
+  protected boolean isTokenBasedAuthenticationEnabled() {
+    return authXManager != null;
+  }
+
+  protected AuthXManager getAuthXManager() {
+    return authXManager;
   }
 
   @Override

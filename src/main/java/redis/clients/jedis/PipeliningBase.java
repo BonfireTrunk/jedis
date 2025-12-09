@@ -11,8 +11,6 @@ import redis.clients.jedis.commands.PipelineBinaryCommands;
 import redis.clients.jedis.commands.PipelineCommands;
 import redis.clients.jedis.commands.ProtocolCommand;
 import redis.clients.jedis.commands.RedisModulePipelineCommands;
-import redis.clients.jedis.graph.GraphCommandObjects;
-import redis.clients.jedis.graph.ResultSet;
 import redis.clients.jedis.json.JsonSetParams;
 import redis.clients.jedis.json.Path;
 import redis.clients.jedis.json.Path2;
@@ -26,21 +24,13 @@ import redis.clients.jedis.search.schemafields.SchemaField;
 import redis.clients.jedis.timeseries.*;
 import redis.clients.jedis.util.KeyValue;
 
-public abstract class PipeliningBase implements PipelineCommands, PipelineBinaryCommands,
-    RedisModulePipelineCommands {
+public abstract class PipeliningBase
+    implements PipelineCommands, PipelineBinaryCommands, RedisModulePipelineCommands {
 
   protected final CommandObjects commandObjects;
-  private GraphCommandObjects graphCommandObjects;
 
   protected PipeliningBase(CommandObjects commandObjects) {
     this.commandObjects = commandObjects;
-  }
-
-  /**
-   * Sub-classes must call this method, if graph commands are going to be used.
-   */
-  protected final void setGraphCommands(GraphCommandObjects graphCommandObjects) {
-    this.graphCommandObjects = graphCommandObjects;
   }
 
   protected abstract <T> Response<T> appendCommand(CommandObject<T> commandObject);
@@ -246,8 +236,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> migrate(String host, int port, int timeout, MigrateParams params,
-      String... keys) {
+  public Response<String> migrate(String host, int port, int timeout, MigrateParams params, String... keys) {
     return appendCommand(commandObjects.migrate(host, port, timeout, params, keys));
   }
 
@@ -358,6 +347,11 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   @Override
   public Response<Long> msetnx(String... keysvalues) {
     return appendCommand(commandObjects.msetnx(keysvalues));
+  }
+
+  @Override
+  public Response<Boolean> msetex(MSetExParams params, String... keysvalues) {
+    return appendCommand(commandObjects.msetex(params, keysvalues));
   }
 
   @Override
@@ -602,8 +596,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> blmove(String srcKey, String dstKey, ListDirection from,
-      ListDirection to, double timeout) {
+  public Response<String> blmove(String srcKey, String dstKey, ListDirection from, ListDirection to, double timeout) {
     return appendCommand(commandObjects.blmove(srcKey, dstKey, from, to, timeout));
   }
 
@@ -613,20 +606,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<KeyValue<String, List<String>>> lmpop(ListDirection direction, int count,
-      String... keys) {
+  public Response<KeyValue<String, List<String>>> lmpop(ListDirection direction, int count, String... keys) {
     return appendCommand(commandObjects.lmpop(direction, count, keys));
   }
 
   @Override
-  public Response<KeyValue<String, List<String>>> blmpop(double timeout, ListDirection direction,
-      String... keys) {
+  public Response<KeyValue<String, List<String>>> blmpop(double timeout, ListDirection direction, String... keys) {
     return appendCommand(commandObjects.blmpop(timeout, direction, keys));
   }
 
   @Override
-  public Response<KeyValue<String, List<String>>> blmpop(double timeout, ListDirection direction,
-      int count, String... keys) {
+  public Response<KeyValue<String, List<String>>> blmpop(double timeout, ListDirection direction, int count, String... keys) {
     return appendCommand(commandObjects.blmpop(timeout, direction, count, keys));
   }
 
@@ -640,9 +630,75 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
     return appendCommand(commandObjects.hset(key, hash));
   }
 
+  /**
+   * Sets the specified field in the hash stored at key to the specified value with additional parameters,
+   * and optionally set their expiration. Use `HSetExParams` object to specify expiration parameters.
+   * This command can overwrite any existing fields in the hash.
+   * If key does not exist, a new key holding a hash is created.
+   *
+   * @param key the key of the hash
+   * @param params additional parameters for the HSETEX command
+   * @param field the field in the hash to set
+   * @param value the value to set in the specified field
+   * @return 0 if no fields were set, 1 if all the fields were set
+   *
+   * @see HSetExParams
+   */
+  @Override
+  public Response<Long> hsetex(String key, HSetExParams params, String field, String value) {
+    return appendCommand(commandObjects.hsetex(key, params, field, value));
+  }
+
+  /**
+   * Sets the specified fields in the hash stored at key to the specified values with additional parameters,
+   * and optionally set their expiration. Use `HSetExParams` object to specify expiration parameters.
+   * This command can overwrite any existing fields in the hash.
+   * If key does not exist, a new key holding a hash is created.
+   *
+   * @param key the key of the hash
+   * @param params the parameters for the HSetEx command
+   * @param hash the map containing field-value pairs to set in the hash
+   * @return 0 if no fields were set, 1 if all the fields were set
+   *
+   * @see HSetExParams
+   */
+  @Override
+  public Response<Long> hsetex(String key, HSetExParams params, Map<String, String> hash) {
+    return appendCommand(commandObjects.hsetex(key, params, hash));
+  }
+
   @Override
   public Response<String> hget(String key, String field) {
     return appendCommand(commandObjects.hget(key, field));
+  }
+
+  /**
+   * Retrieves the values associated with the specified fields in a hash stored at the given key
+   * and optionally sets their expiration. Use `HGetExParams` object to specify expiration parameters.
+   *
+   * @param key the key of the hash
+   * @param params additional parameters for the HGETEX command
+   * @param fields the fields whose values are to be retrieved
+   * @return a list of the value associated with each field or nil if the field doesn’t exist.
+   *
+   * @see HGetExParams
+   */
+  @Override
+  public Response<List<String>> hgetex(String key, HGetExParams params, String... fields) {
+    return appendCommand(commandObjects.hgetex(key, params, fields));
+  }
+
+  /**
+   * Retrieves the values associated with the specified fields in the hash stored at the given key
+   * and then deletes those fields from the hash.
+   *
+   * @param key the key of the hash
+   * @param fields the fields whose values are to be retrieved and then deleted
+   * @return a list of values associated with the specified fields before they were deleted
+   */
+  @Override
+  public Response<List<String>> hgetdel(String key, String... fields) {
+    return appendCommand(commandObjects.hgetdel(key, fields));
   }
 
   @Override
@@ -716,8 +772,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<ScanResult<Map.Entry<String, String>>> hscan(String key, String cursor,
-      ScanParams params) {
+  public Response<ScanResult<Map.Entry<String, String>>> hscan(String key, String cursor, ScanParams params) {
     return appendCommand(commandObjects.hscan(key, cursor, params));
   }
 
@@ -737,8 +792,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hexpire(String key, long seconds, ExpiryOption condition,
-      String... fields) {
+  public Response<List<Long>> hexpire(String key, long seconds, ExpiryOption condition, String... fields) {
     return appendCommand(commandObjects.hexpire(key, seconds, condition, fields));
   }
 
@@ -748,8 +802,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hpexpire(String key, long milliseconds, ExpiryOption condition,
-      String... fields) {
+  public Response<List<Long>> hpexpire(String key, long milliseconds, ExpiryOption condition, String... fields) {
     return appendCommand(commandObjects.hpexpire(key, milliseconds, condition, fields));
   }
 
@@ -759,8 +812,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hexpireAt(String key, long unixTimeSeconds, ExpiryOption condition,
-      String... fields) {
+  public Response<List<Long>> hexpireAt(String key, long unixTimeSeconds, ExpiryOption condition, String... fields) {
     return appendCommand(commandObjects.hexpireAt(key, unixTimeSeconds, condition, fields));
   }
 
@@ -770,8 +822,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hpexpireAt(String key, long unixTimeMillis, ExpiryOption condition,
-      String... fields) {
+  public Response<List<Long>> hpexpireAt(String key, long unixTimeMillis, ExpiryOption condition, String... fields) {
     return appendCommand(commandObjects.hpexpireAt(key, unixTimeMillis, condition, fields));
   }
 
@@ -1056,8 +1107,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<String>> zrangeByScore(String key, double min, double max, int offset,
-      int count) {
+  public Response<List<String>> zrangeByScore(String key, double min, double max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScore(key, min, max, offset, count));
   }
 
@@ -1067,14 +1117,12 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<String>> zrangeByScore(String key, String min, String max, int offset,
-      int count) {
+  public Response<List<String>> zrangeByScore(String key, String min, String max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScore(key, min, max, offset, count));
   }
 
   @Override
-  public Response<List<String>> zrevrangeByScore(String key, double max, double min, int offset,
-      int count) {
+  public Response<List<String>> zrevrangeByScore(String key, double max, double min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScore(key, max, min, offset, count));
   }
 
@@ -1089,14 +1137,12 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Tuple>> zrangeByScoreWithScores(String key, double min, double max,
-      int offset, int count) {
+  public Response<List<Tuple>> zrangeByScoreWithScores(String key, double min, double max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count));
   }
 
   @Override
-  public Response<List<String>> zrevrangeByScore(String key, String max, String min, int offset,
-      int count) {
+  public Response<List<String>> zrevrangeByScore(String key, String max, String min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScore(key, max, min, offset, count));
   }
 
@@ -1111,20 +1157,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Tuple>> zrangeByScoreWithScores(String key, String min, String max,
-      int offset, int count) {
+  public Response<List<Tuple>> zrangeByScoreWithScores(String key, String min, String max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count));
   }
 
   @Override
-  public Response<List<Tuple>> zrevrangeByScoreWithScores(String key, double max, double min,
-      int offset, int count) {
+  public Response<List<Tuple>> zrevrangeByScoreWithScores(String key, double max, double min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count));
   }
 
   @Override
-  public Response<List<Tuple>> zrevrangeByScoreWithScores(String key, String max, String min,
-      int offset, int count) {
+  public Response<List<Tuple>> zrevrangeByScoreWithScores(String key, String max, String min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count));
   }
 
@@ -1169,8 +1212,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<String>> zrangeByLex(String key, String min, String max, int offset,
-      int count) {
+  public Response<List<String>> zrangeByLex(String key, String min, String max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByLex(key, min, max, offset, count));
   }
 
@@ -1180,8 +1222,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<String>> zrevrangeByLex(String key, String max, String min, int offset,
-      int count) {
+  public Response<List<String>> zrevrangeByLex(String key, String max, String min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByLex(key, max, min, offset, count));
   }
 
@@ -1211,20 +1252,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<KeyValue<String, List<Tuple>>> zmpop(SortedSetOption option, int count,
-      String... keys) {
+  public Response<KeyValue<String, List<Tuple>>> zmpop(SortedSetOption option, int count, String... keys) {
     return appendCommand(commandObjects.zmpop(option, count, keys));
   }
 
   @Override
-  public Response<KeyValue<String, List<Tuple>>> bzmpop(double timeout, SortedSetOption option,
-      String... keys) {
+  public Response<KeyValue<String, List<Tuple>>> bzmpop(double timeout, SortedSetOption option, String... keys) {
     return appendCommand(commandObjects.bzmpop(timeout, option, keys));
   }
 
   @Override
-  public Response<KeyValue<String, List<Tuple>>> bzmpop(double timeout, SortedSetOption option,
-      int count, String... keys) {
+  public Response<KeyValue<String, List<Tuple>>> bzmpop(double timeout, SortedSetOption option, int count, String... keys) {
     return appendCommand(commandObjects.bzmpop(timeout, option, count, keys));
   }
 
@@ -1310,8 +1348,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Long> geoadd(String key, GeoAddParams params,
-      Map<String, GeoCoordinate> memberCoordinateMap) {
+  public Response<Long> geoadd(String key, GeoAddParams params, Map<String, GeoCoordinate> memberCoordinateMap) {
     return appendCommand(commandObjects.geoadd(key, params, memberCoordinateMap));
   }
 
@@ -1336,89 +1373,72 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadius(String key, double longitude, double latitude,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadius(String key, double longitude, double latitude, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadius(key, longitude, latitude, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusReadonly(String key, double longitude,
-      double latitude, double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadiusReadonly(String key, double longitude, double latitude, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadius(String key, double longitude, double latitude,
-      double radius, GeoUnit unit, GeoRadiusParam param) {
+  public Response<List<GeoRadiusResponse>> georadius(String key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
     return appendCommand(commandObjects.georadius(key, longitude, latitude, radius, unit, param));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusReadonly(String key, double longitude,
-      double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
-    return appendCommand(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit,
-      param));
+  public Response<List<GeoRadiusResponse>> georadiusReadonly(String key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
+    return appendCommand(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit, param));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMember(String key, String member,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadiusByMember(String key, String member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadiusByMember(key, member, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(String key, String member,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(String key, String member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadiusByMemberReadonly(key, member, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMember(String key, String member,
-      double radius, GeoUnit unit, GeoRadiusParam param) {
+  public Response<List<GeoRadiusResponse>> georadiusByMember(String key, String member, double radius, GeoUnit unit, GeoRadiusParam param) {
     return appendCommand(commandObjects.georadiusByMember(key, member, radius, unit, param));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(String key, String member,
-      double radius, GeoUnit unit, GeoRadiusParam param) {
+  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(String key, String member, double radius, GeoUnit unit, GeoRadiusParam param) {
     return appendCommand(commandObjects.georadiusByMemberReadonly(key, member, radius, unit, param));
   }
 
   @Override
-  public Response<Long> georadiusStore(String key, double longitude, double latitude,
-      double radius, GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
-    return appendCommand(commandObjects.georadiusStore(key, longitude, latitude, radius, unit,
-      param, storeParam));
+  public Response<Long> georadiusStore(String key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
+    return appendCommand(commandObjects.georadiusStore(key, longitude, latitude, radius, unit, param, storeParam));
   }
 
   @Override
-  public Response<Long> georadiusByMemberStore(String key, String member, double radius,
-      GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
-    return appendCommand(commandObjects.georadiusByMemberStore(key, member, radius, unit, param,
-      storeParam));
+  public Response<Long> georadiusByMemberStore(String key, String member, double radius, GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
+    return appendCommand(commandObjects.georadiusByMemberStore(key, member, radius, unit, param, storeParam));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(String key, String member, double radius,
-      GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(String key, String member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, member, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(String key, GeoCoordinate coord,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(String key, GeoCoordinate coord, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, coord, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(String key, String member, double width,
-      double height, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(String key, String member, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, member, width, height, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(String key, GeoCoordinate coord, double width,
-      double height, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(String key, GeoCoordinate coord, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, coord, width, height, unit));
   }
 
@@ -1428,26 +1448,22 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Long> geosearchStore(String dest, String src, String member, double radius,
-      GeoUnit unit) {
+  public Response<Long> geosearchStore(String dest, String src, String member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, member, radius, unit));
   }
 
   @Override
-  public Response<Long> geosearchStore(String dest, String src, GeoCoordinate coord, double radius,
-      GeoUnit unit) {
+  public Response<Long> geosearchStore(String dest, String src, GeoCoordinate coord, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, coord, radius, unit));
   }
 
   @Override
-  public Response<Long> geosearchStore(String dest, String src, String member, double width,
-      double height, GeoUnit unit) {
+  public Response<Long> geosearchStore(String dest, String src, String member, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, member, width, height, unit));
   }
 
   @Override
-  public Response<Long> geosearchStore(String dest, String src, GeoCoordinate coord, double width,
-      double height, GeoUnit unit) {
+  public Response<Long> geosearchStore(String dest, String src, GeoCoordinate coord, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, coord, width, height, unit));
   }
 
@@ -1502,8 +1518,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<StreamEntry>> xrange(String key, StreamEntryID start, StreamEntryID end,
-      int count) {
+  public Response<List<StreamEntry>> xrange(String key, StreamEntryID start, StreamEntryID end, int count) {
     return appendCommand(commandObjects.xrange(key, start, end, count));
   }
 
@@ -1513,8 +1528,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<StreamEntry>> xrevrange(String key, StreamEntryID end, StreamEntryID start,
-      int count) {
+  public Response<List<StreamEntry>> xrevrange(String key, StreamEntryID end, StreamEntryID start, int count) {
     return appendCommand(commandObjects.xrevrange(key, end, start, count));
   }
 
@@ -1544,8 +1558,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> xgroupCreate(String key, String groupName, StreamEntryID id,
-      boolean makeStream) {
+  public Response<List<StreamEntryDeletionResult>> xackdel(String key, String group, StreamEntryID... ids) {
+    return appendCommand(commandObjects.xackdel(key, group, ids));
+  }
+
+  @Override
+  public Response<List<StreamEntryDeletionResult>> xackdel(String key, String group, StreamDeletionPolicy trimMode, StreamEntryID... ids) {
+    return appendCommand(commandObjects.xackdel(key, group, trimMode, ids));
+  }
+
+  @Override
+  public Response<String> xgroupCreate(String key, String groupName, StreamEntryID id, boolean makeStream) {
     return appendCommand(commandObjects.xgroupCreate(key, groupName, id, makeStream));
   }
 
@@ -1575,14 +1598,23 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<StreamPendingEntry>> xpending(String key, String groupName,
-      XPendingParams params) {
+  public Response<List<StreamPendingEntry>> xpending(String key, String groupName, XPendingParams params) {
     return appendCommand(commandObjects.xpending(key, groupName, params));
   }
 
   @Override
   public Response<Long> xdel(String key, StreamEntryID... ids) {
     return appendCommand(commandObjects.xdel(key, ids));
+  }
+
+  @Override
+  public Response<List<StreamEntryDeletionResult>> xdelex(String key, StreamEntryID... ids) {
+    return appendCommand(commandObjects.xdelex(key, ids));
+  }
+
+  @Override
+  public Response<List<StreamEntryDeletionResult>> xdelex(String key, StreamDeletionPolicy trimMode, StreamEntryID... ids) {
+    return appendCommand(commandObjects.xdelex(key, trimMode, ids));
   }
 
   @Override
@@ -1596,31 +1628,23 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<StreamEntry>> xclaim(String key, String group, String consumerName,
-      long minIdleTime, XClaimParams params, StreamEntryID... ids) {
+  public Response<List<StreamEntry>> xclaim(String key, String group, String consumerName, long minIdleTime, XClaimParams params, StreamEntryID... ids) {
     return appendCommand(commandObjects.xclaim(key, group, consumerName, minIdleTime, params, ids));
   }
 
   @Override
-  public Response<List<StreamEntryID>> xclaimJustId(String key, String group, String consumerName,
-      long minIdleTime, XClaimParams params, StreamEntryID... ids) {
-    return appendCommand(commandObjects.xclaimJustId(key, group, consumerName, minIdleTime, params,
-      ids));
+  public Response<List<StreamEntryID>> xclaimJustId(String key, String group, String consumerName, long minIdleTime, XClaimParams params, StreamEntryID... ids) {
+    return appendCommand(commandObjects.xclaimJustId(key, group, consumerName, minIdleTime, params, ids));
   }
 
   @Override
-  public Response<Map.Entry<StreamEntryID, List<StreamEntry>>> xautoclaim(String key, String group,
-      String consumerName, long minIdleTime, StreamEntryID start, XAutoClaimParams params) {
-    return appendCommand(commandObjects.xautoclaim(key, group, consumerName, minIdleTime, start,
-      params));
+  public Response<Map.Entry<StreamEntryID, List<StreamEntry>>> xautoclaim(String key, String group, String consumerName, long minIdleTime, StreamEntryID start, XAutoClaimParams params) {
+    return appendCommand(commandObjects.xautoclaim(key, group, consumerName, minIdleTime, start, params));
   }
 
   @Override
-  public Response<Map.Entry<StreamEntryID, List<StreamEntryID>>> xautoclaimJustId(String key,
-      String group, String consumerName, long minIdleTime, StreamEntryID start,
-      XAutoClaimParams params) {
-    return appendCommand(commandObjects.xautoclaimJustId(key, group, consumerName, minIdleTime,
-      start, params));
+  public Response<Map.Entry<StreamEntryID, List<StreamEntryID>>> xautoclaimJustId(String key, String group, String consumerName, long minIdleTime, StreamEntryID start, XAutoClaimParams params) {
+    return appendCommand(commandObjects.xautoclaimJustId(key, group, consumerName, minIdleTime, start, params));
   }
 
   @Override
@@ -1654,28 +1678,23 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Map.Entry<String, List<StreamEntry>>>> xread(XReadParams xReadParams,
-      Map<String, StreamEntryID> streams) {
+  public Response<List<Map.Entry<String, List<StreamEntry>>>> xread(XReadParams xReadParams, Map<String, StreamEntryID> streams) {
     return appendCommand(commandObjects.xread(xReadParams, streams));
   }
 
   @Override
-  public Response<Map<String, List<StreamEntry>>> xreadAsMap(XReadParams xReadParams,
-      Map<String, StreamEntryID> streams) {
+  public Response<Map<String, List<StreamEntry>>> xreadAsMap(XReadParams xReadParams, Map<String, StreamEntryID> streams) {
     return appendCommand(commandObjects.xreadAsMap(xReadParams, streams));
   }
 
   @Override
-  public Response<List<Map.Entry<String, List<StreamEntry>>>> xreadGroup(String groupName,
-      String consumer, XReadGroupParams xReadGroupParams, Map<String, StreamEntryID> streams) {
+  public Response<List<Map.Entry<String, List<StreamEntry>>>> xreadGroup(String groupName, String consumer, XReadGroupParams xReadGroupParams, Map<String, StreamEntryID> streams) {
     return appendCommand(commandObjects.xreadGroup(groupName, consumer, xReadGroupParams, streams));
   }
 
   @Override
-  public Response<Map<String, List<StreamEntry>>> xreadGroupAsMap(String groupName,
-      String consumer, XReadGroupParams xReadGroupParams, Map<String, StreamEntryID> streams) {
-    return appendCommand(commandObjects.xreadGroupAsMap(groupName, consumer, xReadGroupParams,
-      streams));
+  public Response<Map<String, List<StreamEntry>>> xreadGroupAsMap(String groupName, String consumer, XReadGroupParams xReadGroupParams, Map<String, StreamEntryID> streams) {
+    return appendCommand(commandObjects.xreadGroupAsMap(groupName, consumer, xReadGroupParams, streams));
   }
 
   @Override
@@ -1724,8 +1743,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<KeyValue<Long, Long>> waitAOF(String sampleKey, long numLocal, long numReplicas,
-      long timeout) {
+  public Response<KeyValue<Long, Long>> waitAOF(String sampleKey, long numLocal, long numReplicas, long timeout) {
     return appendCommand(commandObjects.waitAOF(sampleKey, numLocal, numReplicas, timeout));
   }
 
@@ -1905,8 +1923,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Long> geoadd(byte[] key, GeoAddParams params,
-      Map<byte[], GeoCoordinate> memberCoordinateMap) {
+  public Response<Long> geoadd(byte[] key, GeoAddParams params, Map<byte[], GeoCoordinate> memberCoordinateMap) {
     return appendCommand(commandObjects.geoadd(key, params, memberCoordinateMap));
   }
 
@@ -1931,89 +1948,72 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadius(byte[] key, double longitude, double latitude,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadius(byte[] key, double longitude, double latitude, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadius(key, longitude, latitude, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusReadonly(byte[] key, double longitude,
-      double latitude, double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadiusReadonly(byte[] key, double longitude, double latitude, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadius(byte[] key, double longitude, double latitude,
-      double radius, GeoUnit unit, GeoRadiusParam param) {
+  public Response<List<GeoRadiusResponse>> georadius(byte[] key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
     return appendCommand(commandObjects.georadius(key, longitude, latitude, radius, unit, param));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusReadonly(byte[] key, double longitude,
-      double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
-    return appendCommand(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit,
-      param));
+  public Response<List<GeoRadiusResponse>> georadiusReadonly(byte[] key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param) {
+    return appendCommand(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit, param));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMember(byte[] key, byte[] member,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadiusByMember(byte[] key, byte[] member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadiusByMember(key, member, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(byte[] key, byte[] member,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(byte[] key, byte[] member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.georadiusByMemberReadonly(key, member, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMember(byte[] key, byte[] member,
-      double radius, GeoUnit unit, GeoRadiusParam param) {
+  public Response<List<GeoRadiusResponse>> georadiusByMember(byte[] key, byte[] member, double radius, GeoUnit unit, GeoRadiusParam param) {
     return appendCommand(commandObjects.georadiusByMember(key, member, radius, unit, param));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(byte[] key, byte[] member,
-      double radius, GeoUnit unit, GeoRadiusParam param) {
+  public Response<List<GeoRadiusResponse>> georadiusByMemberReadonly(byte[] key, byte[] member, double radius, GeoUnit unit, GeoRadiusParam param) {
     return appendCommand(commandObjects.georadiusByMemberReadonly(key, member, radius, unit, param));
   }
 
   @Override
-  public Response<Long> georadiusStore(byte[] key, double longitude, double latitude,
-      double radius, GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
-    return appendCommand(commandObjects.georadiusStore(key, longitude, latitude, radius, unit,
-      param, storeParam));
+  public Response<Long> georadiusStore(byte[] key, double longitude, double latitude, double radius, GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
+    return appendCommand(commandObjects.georadiusStore(key, longitude, latitude, radius, unit, param, storeParam));
   }
 
   @Override
-  public Response<Long> georadiusByMemberStore(byte[] key, byte[] member, double radius,
-      GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
-    return appendCommand(commandObjects.georadiusByMemberStore(key, member, radius, unit, param,
-      storeParam));
+  public Response<Long> georadiusByMemberStore(byte[] key, byte[] member, double radius, GeoUnit unit, GeoRadiusParam param, GeoRadiusStoreParam storeParam) {
+    return appendCommand(commandObjects.georadiusByMemberStore(key, member, radius, unit, param, storeParam));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, byte[] member, double radius,
-      GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, byte[] member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, member, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, GeoCoordinate coord,
-      double radius, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, GeoCoordinate coord, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, coord, radius, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, byte[] member, double width,
-      double height, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, byte[] member, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, member, width, height, unit));
   }
 
   @Override
-  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, GeoCoordinate coord, double width,
-      double height, GeoUnit unit) {
+  public Response<List<GeoRadiusResponse>> geosearch(byte[] key, GeoCoordinate coord, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearch(key, coord, width, height, unit));
   }
 
@@ -2023,26 +2023,22 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Long> geosearchStore(byte[] dest, byte[] src, byte[] member, double radius,
-      GeoUnit unit) {
+  public Response<Long> geosearchStore(byte[] dest, byte[] src, byte[] member, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, member, radius, unit));
   }
 
   @Override
-  public Response<Long> geosearchStore(byte[] dest, byte[] src, GeoCoordinate coord, double radius,
-      GeoUnit unit) {
+  public Response<Long> geosearchStore(byte[] dest, byte[] src, GeoCoordinate coord, double radius, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, coord, radius, unit));
   }
 
   @Override
-  public Response<Long> geosearchStore(byte[] dest, byte[] src, byte[] member, double width,
-      double height, GeoUnit unit) {
+  public Response<Long> geosearchStore(byte[] dest, byte[] src, byte[] member, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, member, width, height, unit));
   }
 
   @Override
-  public Response<Long> geosearchStore(byte[] dest, byte[] src, GeoCoordinate coord, double width,
-      double height, GeoUnit unit) {
+  public Response<Long> geosearchStore(byte[] dest, byte[] src, GeoCoordinate coord, double width, double height, GeoUnit unit) {
     return appendCommand(commandObjects.geosearchStore(dest, src, coord, width, height, unit));
   }
 
@@ -2066,9 +2062,75 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
     return appendCommand(commandObjects.hset(key, hash));
   }
 
+  /**
+   * Sets the specified field in the hash stored at key to the specified value with additional parameters,
+   * and optionally set their expiration. Use `HSetExParams` object to specify expiration parameters.
+   * This command can overwrite any existing fields in the hash.
+   * If key does not exist, a new key holding a hash is created.
+   *
+   * @param key the key of the hash
+   * @param params the parameters for the HSetEx command
+   * @param field the field in the hash to set
+   * @param value the value to set in the specified field
+   * @return 0 if no fields were set, 1 if all the fields were set
+   *
+   * @see HSetExParams
+   */
+  @Override
+  public Response<Long> hsetex(byte[] key, HSetExParams params, byte[] field, byte[] value) {
+    return appendCommand(commandObjects.hsetex(key, params, field, value));
+  }
+
+  /**
+   * Sets the specified fields in the hash stored at key to the specified values with additional parameters,
+   * and optionally set their expiration. Use `HSetExParams` object to specify expiration parameters.
+   * This command can overwrite any existing fields in the hash.
+   * If key does not exist, a new key holding a hash is created.
+   *
+   * @param key the key of the hash
+   * @param params the parameters for the HSetEx command
+   * @param hash the map containing field-value pairs to set in the hash
+   * @return 0 if no fields were set, 1 if all the fields were set
+   *
+   * @see HSetExParams
+   */
+  @Override
+  public Response<Long> hsetex(byte[] key, HSetExParams params, Map<byte[], byte[]> hash) {
+    return appendCommand(commandObjects.hsetex(key, params, hash));
+  }
+
   @Override
   public Response<byte[]> hget(byte[] key, byte[] field) {
     return appendCommand(commandObjects.hget(key, field));
+  }
+
+  /**
+   * Retrieves the values associated with the specified fields in a hash stored at the given key
+   * and optionally sets their expiration. Use `HGetExParams` object to specify expiration parameters.
+   *
+   * @param key the key of the hash
+   * @param params additional parameters for the HGETEX command
+   * @param fields the fields whose values are to be retrieved
+   * @return a list of the value associated with each field or nil if the field doesn’t exist.
+   *
+   * @see HGetExParams
+   */
+  @Override
+  public Response<List<byte[]>> hgetex(byte[] key, HGetExParams params, byte[]... fields) {
+    return appendCommand(commandObjects.hgetex(key, params, fields));
+  }
+
+  /**
+   * Retrieves the values associated with the specified fields in the hash stored at the given key
+   * and then deletes those fields from the hash.
+   *
+   * @param key the key of the hash
+   * @param fields the fields whose values are to be retrieved and then deleted
+   * @return a list of values associated with the specified fields before they were deleted
+   */
+  @Override
+  public Response<List<byte[]>> hgetdel(byte[] key, byte[]... fields) {
+    return appendCommand(commandObjects.hgetdel(key, fields));
   }
 
   @Override
@@ -2142,8 +2204,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<ScanResult<Map.Entry<byte[], byte[]>>> hscan(byte[] key, byte[] cursor,
-      ScanParams params) {
+  public Response<ScanResult<Map.Entry<byte[], byte[]>>> hscan(byte[] key, byte[] cursor, ScanParams params) {
     return appendCommand(commandObjects.hscan(key, cursor, params));
   }
 
@@ -2163,8 +2224,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hexpire(byte[] key, long seconds, ExpiryOption condition,
-      byte[]... fields) {
+  public Response<List<Long>> hexpire(byte[] key, long seconds, ExpiryOption condition, byte[]... fields) {
     return appendCommand(commandObjects.hexpire(key, seconds, condition, fields));
   }
 
@@ -2174,8 +2234,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hpexpire(byte[] key, long milliseconds, ExpiryOption condition,
-      byte[]... fields) {
+  public Response<List<Long>> hpexpire(byte[] key, long milliseconds, ExpiryOption condition, byte[]... fields) {
     return appendCommand(commandObjects.hpexpire(key, milliseconds, condition, fields));
   }
 
@@ -2185,8 +2244,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hexpireAt(byte[] key, long unixTimeSeconds, ExpiryOption condition,
-      byte[]... fields) {
+  public Response<List<Long>> hexpireAt(byte[] key, long unixTimeSeconds, ExpiryOption condition, byte[]... fields) {
     return appendCommand(commandObjects.hexpireAt(key, unixTimeSeconds, condition, fields));
   }
 
@@ -2196,8 +2254,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> hpexpireAt(byte[] key, long unixTimeMillis, ExpiryOption condition,
-      byte[]... fields) {
+  public Response<List<Long>> hpexpireAt(byte[] key, long unixTimeMillis, ExpiryOption condition, byte[]... fields) {
     return appendCommand(commandObjects.hpexpireAt(key, unixTimeMillis, condition, fields));
   }
 
@@ -2447,8 +2504,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> migrate(String host, int port, int timeout, MigrateParams params,
-      byte[]... keys) {
+  public Response<String> migrate(String host, int port, int timeout, MigrateParams params, byte[]... keys) {
     return appendCommand(commandObjects.migrate(host, port, timeout, params, keys));
   }
 
@@ -2603,8 +2659,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<byte[]> blmove(byte[] srcKey, byte[] dstKey, ListDirection from,
-      ListDirection to, double timeout) {
+  public Response<byte[]> blmove(byte[] srcKey, byte[] dstKey, ListDirection from, ListDirection to, double timeout) {
     return appendCommand(commandObjects.blmove(srcKey, dstKey, from, to, timeout));
   }
 
@@ -2614,20 +2669,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<KeyValue<byte[], List<byte[]>>> lmpop(ListDirection direction, int count,
-      byte[]... keys) {
+  public Response<KeyValue<byte[], List<byte[]>>> lmpop(ListDirection direction, int count, byte[]... keys) {
     return appendCommand(commandObjects.lmpop(direction, count, keys));
   }
 
   @Override
-  public Response<KeyValue<byte[], List<byte[]>>> blmpop(double timeout, ListDirection direction,
-      byte[]... keys) {
+  public Response<KeyValue<byte[], List<byte[]>>> blmpop(double timeout, ListDirection direction, byte[]... keys) {
     return appendCommand(commandObjects.blmpop(timeout, direction, keys));
   }
 
   @Override
-  public Response<KeyValue<byte[], List<byte[]>>> blmpop(double timeout, ListDirection direction,
-      int count, byte[]... keys) {
+  public Response<KeyValue<byte[], List<byte[]>>> blmpop(double timeout, ListDirection direction, int count, byte[]... keys) {
     return appendCommand(commandObjects.blmpop(timeout, direction, count, keys));
   }
 
@@ -2637,8 +2689,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<KeyValue<Long, Long>> waitAOF(byte[] sampleKey, long numLocal, long numReplicas,
-      long timeout) {
+  public Response<KeyValue<Long, Long>> waitAOF(byte[] sampleKey, long numLocal, long numReplicas, long timeout) {
     return appendCommand(commandObjects.waitAOF(sampleKey, numLocal, numReplicas, timeout));
   }
 
@@ -2973,8 +3024,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<byte[]>> zrangeByScore(byte[] key, double min, double max, int offset,
-      int count) {
+  public Response<List<byte[]>> zrangeByScore(byte[] key, double min, double max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScore(key, min, max, offset, count));
   }
 
@@ -2984,14 +3034,12 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<byte[]>> zrangeByScore(byte[] key, byte[] min, byte[] max, int offset,
-      int count) {
+  public Response<List<byte[]>> zrangeByScore(byte[] key, byte[] min, byte[] max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScore(key, min, max, offset, count));
   }
 
   @Override
-  public Response<List<byte[]>> zrevrangeByScore(byte[] key, double max, double min, int offset,
-      int count) {
+  public Response<List<byte[]>> zrevrangeByScore(byte[] key, double max, double min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScore(key, max, min, offset, count));
   }
 
@@ -3006,14 +3054,12 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Tuple>> zrangeByScoreWithScores(byte[] key, double min, double max,
-      int offset, int count) {
+  public Response<List<Tuple>> zrangeByScoreWithScores(byte[] key, double min, double max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count));
   }
 
   @Override
-  public Response<List<byte[]>> zrevrangeByScore(byte[] key, byte[] max, byte[] min, int offset,
-      int count) {
+  public Response<List<byte[]>> zrevrangeByScore(byte[] key, byte[] max, byte[] min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScore(key, max, min, offset, count));
   }
 
@@ -3028,20 +3074,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Tuple>> zrangeByScoreWithScores(byte[] key, byte[] min, byte[] max,
-      int offset, int count) {
+  public Response<List<Tuple>> zrangeByScoreWithScores(byte[] key, byte[] min, byte[] max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count));
   }
 
   @Override
-  public Response<List<Tuple>> zrevrangeByScoreWithScores(byte[] key, double max, double min,
-      int offset, int count) {
+  public Response<List<Tuple>> zrevrangeByScoreWithScores(byte[] key, double max, double min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count));
   }
 
   @Override
-  public Response<List<Tuple>> zrevrangeByScoreWithScores(byte[] key, byte[] max, byte[] min,
-      int offset, int count) {
+  public Response<List<Tuple>> zrevrangeByScoreWithScores(byte[] key, byte[] max, byte[] min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count));
   }
 
@@ -3071,8 +3114,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<byte[]>> zrangeByLex(byte[] key, byte[] min, byte[] max, int offset,
-      int count) {
+  public Response<List<byte[]>> zrangeByLex(byte[] key, byte[] min, byte[] max, int offset, int count) {
     return appendCommand(commandObjects.zrangeByLex(key, min, max, offset, count));
   }
 
@@ -3082,8 +3124,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<byte[]>> zrevrangeByLex(byte[] key, byte[] max, byte[] min, int offset,
-      int count) {
+  public Response<List<byte[]>> zrevrangeByLex(byte[] key, byte[] max, byte[] min, int offset, int count) {
     return appendCommand(commandObjects.zrevrangeByLex(key, max, min, offset, count));
   }
 
@@ -3128,20 +3169,17 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<KeyValue<byte[], List<Tuple>>> zmpop(SortedSetOption option, int count,
-      byte[]... keys) {
+  public Response<KeyValue<byte[], List<Tuple>>> zmpop(SortedSetOption option, int count, byte[]... keys) {
     return appendCommand(commandObjects.zmpop(option, count, keys));
   }
 
   @Override
-  public Response<KeyValue<byte[], List<Tuple>>> bzmpop(double timeout, SortedSetOption option,
-      byte[]... keys) {
+  public Response<KeyValue<byte[], List<Tuple>>> bzmpop(double timeout, SortedSetOption option, byte[]... keys) {
     return appendCommand(commandObjects.bzmpop(timeout, option, keys));
   }
 
   @Override
-  public Response<KeyValue<byte[], List<Tuple>>> bzmpop(double timeout, SortedSetOption option,
-      int count, byte[]... keys) {
+  public Response<KeyValue<byte[], List<Tuple>>> bzmpop(double timeout, SortedSetOption option, int count, byte[]... keys) {
     return appendCommand(commandObjects.bzmpop(timeout, option, count, keys));
   }
 
@@ -3252,6 +3290,16 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
+  public Response<List<StreamEntryDeletionResult>> xackdel(byte[] key, byte[] group, byte[]... ids) {
+    return appendCommand(commandObjects.xackdel(key, group, ids));
+  }
+
+  @Override
+  public Response<List<StreamEntryDeletionResult>> xackdel(byte[] key, byte[] group, StreamDeletionPolicy trimMode, byte[]... ids) {
+    return appendCommand(commandObjects.xackdel(key, group, trimMode, ids));
+  }
+
+  @Override
   public Response<String> xgroupCreate(byte[] key, byte[] groupName, byte[] id, boolean makeStream) {
     return appendCommand(commandObjects.xgroupCreate(key, groupName, id, makeStream));
   }
@@ -3282,6 +3330,16 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
+  public Response<List<StreamEntryDeletionResult>> xdelex(byte[] key, byte[]... ids) {
+    return appendCommand(commandObjects.xdelex(key, ids));
+  }
+
+  @Override
+  public Response<List<StreamEntryDeletionResult>> xdelex(byte[] key, StreamDeletionPolicy trimMode, byte[]... ids) {
+    return appendCommand(commandObjects.xdelex(key, trimMode, ids));
+  }
+
+  @Override
   public Response<Long> xtrim(byte[] key, long maxLen, boolean approximateLength) {
     return appendCommand(commandObjects.xtrim(key, maxLen, approximateLength));
   }
@@ -3302,30 +3360,23 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<byte[]>> xclaim(byte[] key, byte[] group, byte[] consumerName,
-      long minIdleTime, XClaimParams params, byte[]... ids) {
+  public Response<List<byte[]>> xclaim(byte[] key, byte[] group, byte[] consumerName, long minIdleTime, XClaimParams params, byte[]... ids) {
     return appendCommand(commandObjects.xclaim(key, group, consumerName, minIdleTime, params, ids));
   }
 
   @Override
-  public Response<List<byte[]>> xclaimJustId(byte[] key, byte[] group, byte[] consumerName,
-      long minIdleTime, XClaimParams params, byte[]... ids) {
-    return appendCommand(commandObjects.xclaimJustId(key, group, consumerName, minIdleTime, params,
-      ids));
+  public Response<List<byte[]>> xclaimJustId(byte[] key, byte[] group, byte[] consumerName, long minIdleTime, XClaimParams params, byte[]... ids) {
+    return appendCommand(commandObjects.xclaimJustId(key, group, consumerName, minIdleTime, params, ids));
   }
 
   @Override
-  public Response<List<Object>> xautoclaim(byte[] key, byte[] groupName, byte[] consumerName,
-      long minIdleTime, byte[] start, XAutoClaimParams params) {
-    return appendCommand(commandObjects.xautoclaim(key, groupName, consumerName, minIdleTime,
-      start, params));
+  public Response<List<Object>> xautoclaim(byte[] key, byte[] groupName, byte[] consumerName, long minIdleTime, byte[] start, XAutoClaimParams params) {
+    return appendCommand(commandObjects.xautoclaim(key, groupName, consumerName, minIdleTime, start, params));
   }
 
   @Override
-  public Response<List<Object>> xautoclaimJustId(byte[] key, byte[] groupName, byte[] consumerName,
-      long minIdleTime, byte[] start, XAutoClaimParams params) {
-    return appendCommand(commandObjects.xautoclaimJustId(key, groupName, consumerName, minIdleTime,
-      start, params));
+  public Response<List<Object>> xautoclaimJustId(byte[] key, byte[] groupName, byte[] consumerName, long minIdleTime, byte[] start, XAutoClaimParams params) {
+    return appendCommand(commandObjects.xautoclaimJustId(key, groupName, consumerName, minIdleTime, start, params));
   }
 
   @Override
@@ -3353,15 +3404,54 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
     return appendCommand(commandObjects.xinfoConsumers(key, group));
   }
 
+  /**
+   * @deprecated As of Jedis 6.1.0, use {@link #xreadBinary(XReadParams, Map)} or
+   *     {@link #xreadBinaryAsMap(XReadParams, Map)} for type safety and better stream entry
+   *     parsing.
+   */
+  @Deprecated
   @Override
-  public Response<List<Object>> xread(XReadParams xReadParams, Map.Entry<byte[], byte[]>... streams) {
+  public Response<List<Object>> xread(XReadParams xReadParams,
+      Map.Entry<byte[], byte[]>... streams) {
     return appendCommand(commandObjects.xread(xReadParams, streams));
   }
 
+  /**
+   * @deprecated As of Jedis 6.1.0, use
+   *     {@link #xreadGroupBinary(byte[], byte[], XReadGroupParams, Map)} or
+   *     {@link #xreadGroupBinaryAsMap(byte[], byte[], XReadGroupParams, Map)} instead.
+   */
+  @Deprecated
   @Override
   public Response<List<Object>> xreadGroup(byte[] groupName, byte[] consumer,
       XReadGroupParams xReadGroupParams, Map.Entry<byte[], byte[]>... streams) {
     return appendCommand(commandObjects.xreadGroup(groupName, consumer, xReadGroupParams, streams));
+  }
+
+  @Override
+  public Response<List<Map.Entry<byte[], List<StreamEntryBinary>>>> xreadBinary(XReadParams xReadParams,
+      Map<byte[], StreamEntryID> streams) {
+    return appendCommand(commandObjects.xreadBinary(xReadParams, streams));
+  }
+
+  @Override
+  public Response<Map<byte[], List<StreamEntryBinary>>> xreadBinaryAsMap(XReadParams xReadParams,
+      Map<byte[], StreamEntryID> streams) {
+    return appendCommand(commandObjects.xreadBinaryAsMap(xReadParams, streams));
+  }
+
+  @Override
+  public Response<List<Map.Entry<byte[], List<StreamEntryBinary>>>> xreadGroupBinary(byte[] groupName,
+      byte[] consumer, XReadGroupParams xReadGroupParams, Map<byte[], StreamEntryID> streams) {
+    return appendCommand(
+        commandObjects.xreadGroupBinary(groupName, consumer, xReadGroupParams, streams));
+  }
+
+  @Override
+  public Response<Map<byte[], List<StreamEntryBinary>>> xreadGroupBinaryAsMap(byte[] groupName,
+      byte[] consumer, XReadGroupParams xReadGroupParams, Map<byte[], StreamEntryID> streams) {
+    return appendCommand(
+        commandObjects.xreadGroupBinaryAsMap(groupName, consumer, xReadGroupParams, streams));
   }
 
   @Override
@@ -3451,6 +3541,11 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   @Override
   public Response<String> mset(byte[]... keysvalues) {
     return appendCommand(commandObjects.mset(keysvalues));
+  }
+
+  @Override
+  public Response<Boolean> msetex(MSetExParams params, byte[]... keysvalues) {
+    return appendCommand(commandObjects.msetex(params, keysvalues));
   }
 
   @Override
@@ -3545,8 +3640,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> ftCreate(String indexName, FTCreateParams createParams,
-      Iterable<SchemaField> schemaFields) {
+  public Response<String> ftCreate(String indexName, FTCreateParams createParams, Iterable<SchemaField> schemaFields) {
     return appendCommand(commandObjects.ftCreate(indexName, createParams, schemaFields));
   }
 
@@ -3667,8 +3761,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Map<String, Map<String, Double>>> ftSpellCheck(String index, String query,
-      FTSpellCheckParams spellCheckParams) {
+  public Response<Map<String, Map<String, Double>>> ftSpellCheck(String index, String query, FTSpellCheckParams spellCheckParams) {
     return appendCommand(commandObjects.ftSpellCheck(index, query, spellCheckParams));
   }
 
@@ -3683,21 +3776,25 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
+  @Deprecated
   public Response<Map<String, Object>> ftConfigGet(String option) {
     return appendCommand(commandObjects.ftConfigGet(option));
   }
 
   @Override
+  @Deprecated
   public Response<Map<String, Object>> ftConfigGet(String indexName, String option) {
     return appendCommand(commandObjects.ftConfigGet(indexName, option));
   }
 
   @Override
+  @Deprecated
   public Response<String> ftConfigSet(String option, String value) {
     return appendCommand(commandObjects.ftConfigSet(option, value));
   }
 
   @Override
+  @Deprecated
   public Response<String> ftConfigSet(String indexName, String option, String value) {
     return appendCommand(commandObjects.ftConfigSet(indexName, option, value));
   }
@@ -3741,7 +3838,6 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   public Response<Long> ftSugLen(String key) {
     return appendCommand(commandObjects.ftSugLen(key));
   }
-
   // RediSearch commands
 
   // RedisJSON commands
@@ -3771,8 +3867,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> jsonSetWithEscape(String key, Path2 path, Object object,
-      JsonSetParams params) {
+  public Response<String> jsonSetWithEscape(String key, Path2 path, Object object, JsonSetParams params) {
     return appendCommand(commandObjects.jsonSetWithEscape(key, path, object, params));
   }
 
@@ -3957,8 +4052,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Long>> jsonArrInsertWithEscape(String key, Path2 path, int index,
-      Object... objects) {
+  public Response<List<Long>> jsonArrInsertWithEscape(String key, Path2 path, int index, Object... objects) {
     return appendCommand(commandObjects.jsonArrInsertWithEscape(key, path, index, objects));
   }
 
@@ -4031,7 +4125,6 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   public Response<Object> jsonArrPop(String key, Path path) {
     return appendCommand(commandObjects.jsonArrPop(key, path));
   }
-
   // RedisJSON commands
 
   // RedisTimeSeries commands
@@ -4131,8 +4224,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Map<String, TSMRangeElements>> tsMRange(long fromTimestamp, long toTimestamp,
-      String... filters) {
+  public Response<Map<String, TSMRangeElements>> tsMRange(long fromTimestamp, long toTimestamp, String... filters) {
     return appendCommand(commandObjects.tsMRange(fromTimestamp, toTimestamp, filters));
   }
 
@@ -4142,8 +4234,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Map<String, TSMRangeElements>> tsMRevRange(long fromTimestamp, long toTimestamp,
-      String... filters) {
+  public Response<Map<String, TSMRangeElements>> tsMRevRange(long fromTimestamp, long toTimestamp, String... filters) {
     return appendCommand(commandObjects.tsMRevRange(fromTimestamp, toTimestamp, filters));
   }
 
@@ -4168,17 +4259,13 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> tsCreateRule(String sourceKey, String destKey,
-      AggregationType aggregationType, long timeBucket) {
-    return appendCommand(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType,
-      timeBucket));
+  public Response<String> tsCreateRule(String sourceKey, String destKey, AggregationType aggregationType, long timeBucket) {
+    return appendCommand(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType, timeBucket));
   }
 
   @Override
-  public Response<String> tsCreateRule(String sourceKey, String destKey,
-      AggregationType aggregationType, long bucketDuration, long alignTimestamp) {
-    return appendCommand(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType,
-      bucketDuration, alignTimestamp));
+  public Response<String> tsCreateRule(String sourceKey, String destKey, AggregationType aggregationType, long bucketDuration, long alignTimestamp) {
+    return appendCommand(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType, bucketDuration, alignTimestamp));
   }
 
   @Override
@@ -4200,7 +4287,6 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   public Response<TSInfo> tsInfoDebug(String key) {
     return appendCommand(commandObjects.tsInfoDebug(key));
   }
-
   // RedisTimeSeries commands
 
   // RedisBloom commands
@@ -4210,8 +4296,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> bfReserve(String key, double errorRate, long capacity,
-      BFReserveParams reserveParams) {
+  public Response<String> bfReserve(String key, double errorRate, long capacity, BFReserveParams reserveParams) {
     return appendCommand(commandObjects.bfReserve(key, errorRate, capacity, reserveParams));
   }
 
@@ -4301,8 +4386,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<List<Boolean>> cfInsertNx(String key, CFInsertParams insertParams,
-      String... items) {
+  public Response<List<Boolean>> cfInsertNx(String key, CFInsertParams insertParams, String... items) {
     return appendCommand(commandObjects.cfInsertNx(key, insertParams, items));
   }
 
@@ -4437,8 +4521,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<String> tdigestMerge(TDigestMergeParams mergeParams, String destinationKey,
-      String... sourceKeys) {
+  public Response<String> tdigestMerge(TDigestMergeParams mergeParams, String destinationKey, String... sourceKeys) {
     return appendCommand(commandObjects.tdigestMerge(mergeParams, destinationKey, sourceKeys));
   }
 
@@ -4473,8 +4556,7 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   }
 
   @Override
-  public Response<Double> tdigestTrimmedMean(String key, double lowCutQuantile,
-      double highCutQuantile) {
+  public Response<Double> tdigestTrimmedMean(String key, double lowCutQuantile, double highCutQuantile) {
     return appendCommand(commandObjects.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
   }
 
@@ -4497,64 +4579,245 @@ public abstract class PipeliningBase implements PipelineCommands, PipelineBinary
   public Response<List<Double>> tdigestByRevRank(String key, long... ranks) {
     return appendCommand(commandObjects.tdigestByRevRank(key, ranks));
   }
-
   // RedisBloom commands
 
-  // RedisGraph commands
+  // Vector Set commands
   @Override
-  public Response<ResultSet> graphQuery(String name, String query) {
-    return appendCommand(graphCommandObjects.graphQuery(name, query));
+  public Response<Boolean> vadd(String key, float[] vector, String element) {
+    return appendCommand(commandObjects.vadd(key, vector, element));
   }
 
   @Override
-  public Response<ResultSet> graphReadonlyQuery(String name, String query) {
-    return appendCommand(graphCommandObjects.graphReadonlyQuery(name, query));
+  public Response<Boolean> vadd(String key, float[] vector, String element, VAddParams params) {
+    return appendCommand(commandObjects.vadd(key, vector, element, params));
   }
 
   @Override
-  public Response<ResultSet> graphQuery(String name, String query, long timeout) {
-    return appendCommand(graphCommandObjects.graphQuery(name, query, timeout));
+  public Response<Boolean> vaddFP32(String key, byte[] vectorBlob, String element) {
+    return appendCommand(commandObjects.vaddFP32(key, vectorBlob, element));
   }
 
   @Override
-  public Response<ResultSet> graphReadonlyQuery(String name, String query, long timeout) {
-    return appendCommand(graphCommandObjects.graphReadonlyQuery(name, query, timeout));
+  public Response<Boolean> vaddFP32(String key, byte[] vectorBlob, String element, VAddParams params) {
+    return appendCommand(commandObjects.vaddFP32(key, vectorBlob, element, params));
   }
 
   @Override
-  public Response<ResultSet> graphQuery(String name, String query, Map<String, Object> params) {
-    return appendCommand(graphCommandObjects.graphQuery(name, query, params));
+  public Response<Boolean> vadd(String key, float[] vector, String element, int reduceDim, VAddParams params) {
+    return appendCommand(commandObjects.vadd(key, vector, element, reduceDim, params));
   }
 
   @Override
-  public Response<ResultSet> graphReadonlyQuery(String name, String query,
-      Map<String, Object> params) {
-    return appendCommand(graphCommandObjects.graphReadonlyQuery(name, query, params));
+  public Response<Boolean> vaddFP32(String key, byte[] vectorBlob, String element, int reduceDim, VAddParams params) {
+    return appendCommand(commandObjects.vaddFP32(key, vectorBlob, element, reduceDim, params));
   }
 
   @Override
-  public Response<ResultSet> graphQuery(String name, String query, Map<String, Object> params,
-      long timeout) {
-    return appendCommand(graphCommandObjects.graphQuery(name, query, params, timeout));
+  public Response<List<String>> vsim(String key, float[] vector) {
+    return appendCommand(commandObjects.vsim(key, vector));
   }
 
   @Override
-  public Response<ResultSet> graphReadonlyQuery(String name, String query,
-      Map<String, Object> params, long timeout) {
-    return appendCommand(graphCommandObjects.graphReadonlyQuery(name, query, params, timeout));
+  public Response<List<String>> vsim(String key, float[] vector, VSimParams params) {
+    return appendCommand(commandObjects.vsim(key, vector, params));
   }
 
   @Override
-  public Response<String> graphDelete(String name) {
-    return appendCommand(graphCommandObjects.graphDelete(name));
+  public Response<Map<String, Double>> vsimWithScores(String key, float[] vector, VSimParams params) {
+    return appendCommand(commandObjects.vsimWithScores(key, vector, params));
   }
 
   @Override
-  public Response<List<String>> graphProfile(String graphName, String query) {
-    return appendCommand(commandObjects.graphProfile(graphName, query));
+  public Response<List<String>> vsimByElement(String key, String element) {
+    return appendCommand(commandObjects.vsimByElement(key, element));
   }
 
-  // RedisGraph commands
+  @Override
+  public Response<List<String>> vsimByElement(String key, String element, VSimParams params) {
+    return appendCommand(commandObjects.vsimByElement(key, element, params));
+  }
+
+  @Override
+  public Response<Map<String, Double>> vsimByElementWithScores(String key, String element, VSimParams params) {
+    return appendCommand(commandObjects.vsimByElementWithScores(key, element, params));
+  }
+
+  @Override
+  public Response<Long> vdim(String key) {
+    return appendCommand(commandObjects.vdim(key));
+  }
+
+  @Override
+  public Response<Long> vcard(String key) {
+    return appendCommand(commandObjects.vcard(key));
+  }
+
+  @Override
+  public Response<List<Double>> vemb(String key, String element) {
+    return appendCommand(commandObjects.vemb(key, element));
+  }
+
+  @Override
+  public Response<RawVector> vembRaw(String key, String element) {
+    return appendCommand(commandObjects.vembRaw(key, element));
+  }
+
+  @Override
+  public Response<Boolean> vrem(String key, String element) {
+    return appendCommand(commandObjects.vrem(key, element));
+  }
+
+  @Override
+  public Response<List<List<String>>> vlinks(String key, String element) {
+    return appendCommand(commandObjects.vlinks(key, element));
+  }
+
+  @Override
+  public Response<List<Map<String, Double>>> vlinksWithScores(String key, String element) {
+    return appendCommand(commandObjects.vlinksWithScores(key, element));
+  }
+
+  @Override
+  public Response<String> vrandmember(String key) {
+    return appendCommand(commandObjects.vrandmember(key));
+  }
+
+  @Override
+  public Response<List<String>> vrandmember(String key, int count) {
+    return appendCommand(commandObjects.vrandmember(key, count));
+  }
+
+  @Override
+  public Response<String> vgetattr(String key, String element) {
+    return appendCommand(commandObjects.vgetattr(key, element));
+  }
+
+  @Override
+  public Response<Boolean> vsetattr(String key, String element, String attributes) {
+    return appendCommand(commandObjects.vsetattr(key, element, attributes));
+  }
+
+  @Override
+  public Response<VectorInfo> vinfo(String key) {
+    return appendCommand(commandObjects.vinfo(key));
+  }
+
+  // Binary vector set pipeline commands
+  @Override
+  public Response<Boolean> vadd(byte[] key, float[] vector, byte[] element) {
+    return appendCommand(commandObjects.vadd(key, vector, element));
+  }
+
+  @Override
+  public Response<Boolean> vadd(byte[] key, float[] vector, byte[] element, VAddParams params) {
+    return appendCommand(commandObjects.vadd(key, vector, element, params));
+  }
+
+  @Override
+  public Response<Boolean> vaddFP32(byte[] key, byte[] vectorBlob, byte[] element) {
+    return appendCommand(commandObjects.vaddFP32(key, vectorBlob, element));
+  }
+
+  @Override
+  public Response<Boolean> vaddFP32(byte[] key, byte[] vectorBlob, byte[] element, VAddParams params) {
+    return appendCommand(commandObjects.vaddFP32(key, vectorBlob, element, params));
+  }
+
+  @Override
+  public Response<Boolean> vadd(byte[] key, float[] vector, byte[] element, int reduceDim, VAddParams params) {
+    return appendCommand(commandObjects.vadd(key, vector, element, reduceDim, params));
+  }
+
+  @Override
+  public Response<Boolean> vaddFP32(byte[] key, byte[] vectorBlob, byte[] element, int reduceDim, VAddParams params) {
+    return appendCommand(commandObjects.vaddFP32(key, vectorBlob, element, reduceDim, params));
+  }
+
+  @Override
+  public Response<List<byte[]>> vsim(byte[] key, float[] vector) {
+    return appendCommand(commandObjects.vsim(key, vector));
+  }
+
+  @Override
+  public Response<List<byte[]>> vsim(byte[] key, float[] vector, VSimParams params) {
+    return appendCommand(commandObjects.vsim(key, vector, params));
+  }
+
+  @Override
+  public Response<Map<byte[], Double>> vsimWithScores(byte[] key, float[] vector, VSimParams params) {
+    return appendCommand(commandObjects.vsimWithScores(key, vector, params));
+  }
+
+  @Override
+  public Response<List<byte[]>> vsimByElement(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vsimByElement(key, element));
+  }
+
+  @Override
+  public Response<List<byte[]>> vsimByElement(byte[] key, byte[] element, VSimParams params) {
+    return appendCommand(commandObjects.vsimByElement(key, element, params));
+  }
+
+  @Override
+  public Response<Map<byte[], Double>> vsimByElementWithScores(byte[] key, byte[] element, VSimParams params) {
+    return appendCommand(commandObjects.vsimByElementWithScores(key, element, params));
+  }
+
+  @Override
+  public Response<Long> vdim(byte[] key) {
+    return appendCommand(commandObjects.vdim(key));
+  }
+
+  @Override
+  public Response<Long> vcard(byte[] key) {
+    return appendCommand(commandObjects.vcard(key));
+  }
+
+  @Override
+  public Response<List<Double>> vemb(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vemb(key, element));
+  }
+
+  @Override
+  public Response<RawVector> vembRaw(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vembRaw(key, element));
+  }
+
+  @Override
+  public Response<Boolean> vrem(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vrem(key, element));
+  }
+
+  @Override
+  public Response<List<List<byte[]>>> vlinks(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vlinks(key, element));
+  }
+
+  @Override
+  public Response<List<Map<byte[], Double>>> vlinksWithScores(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vlinksWithScores(key, element));
+  }
+
+  @Override
+  public Response<byte[]> vrandmember(byte[] key) {
+    return appendCommand(commandObjects.vrandmember(key));
+  }
+
+  @Override
+  public Response<List<byte[]>> vrandmember(byte[] key, int count) {
+    return appendCommand(commandObjects.vrandmember(key, count));
+  }
+
+  @Override
+  public Response<byte[]> vgetattr(byte[] key, byte[] element) {
+    return appendCommand(commandObjects.vgetattr(key, element));
+  }
+
+  @Override
+  public Response<Boolean> vsetattr(byte[] key, byte[] element, byte[] attributes) {
+    return appendCommand(commandObjects.vsetattr(key, element, attributes));
+  }
+  // Vector Set pipeline commands end
 
   public Response<Object> sendCommand(ProtocolCommand cmd, String... args) {
     return sendCommand(new CommandArguments(cmd).addObjects((Object[]) args));

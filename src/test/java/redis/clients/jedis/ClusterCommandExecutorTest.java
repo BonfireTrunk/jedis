@@ -1,8 +1,9 @@
 package redis.clients.jedis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -13,12 +14,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import redis.clients.jedis.exceptions.JedisAskDataException;
 import redis.clients.jedis.exceptions.JedisClusterOperationException;
@@ -37,7 +37,8 @@ public class ClusterCommandExecutorTest {
   @Test
   public void runSuccessfulExecute() {
     ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, Duration.ZERO) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, Duration.ZERO,
+        StaticCommandFlagsRegistry.registry()) {
       @Override
       public <T> T execute(Connection connection, CommandObject<T> commandObject) {
         return (T) "foo";
@@ -54,7 +55,8 @@ public class ClusterCommandExecutorTest {
   @Test
   public void runFailOnFirstExecSuccessOnSecondExec() {
     ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, ONE_SECOND) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, ONE_SECOND,
+        StaticCommandFlagsRegistry.registry()) {
       boolean isFirstCall = true;
 
       @Override
@@ -80,7 +82,8 @@ public class ClusterCommandExecutorTest {
   public void runAlwaysFailing() {
     ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
     final LongConsumer sleep = mock(LongConsumer.class);
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 3, ONE_SECOND) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 3, ONE_SECOND,
+        StaticCommandFlagsRegistry.registry()) {
       @Override
       public <T> T execute(Connection connection, CommandObject<T> commandObject) {
         throw new JedisConnectionException("Connection failed");
@@ -110,7 +113,8 @@ public class ClusterCommandExecutorTest {
   public void runMovedSuccess() {
     ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
     final HostAndPort movedTarget = new HostAndPort(null, 0);
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, ONE_SECOND) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, ONE_SECOND,
+        StaticCommandFlagsRegistry.registry()) {
       boolean isFirstCall = true;
 
       @Override
@@ -147,7 +151,8 @@ public class ClusterCommandExecutorTest {
     final HostAndPort askTarget = new HostAndPort(null, 0);
     when(connectionHandler.getConnection(askTarget)).thenReturn(connection);
 
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, ONE_SECOND) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, ONE_SECOND,
+        StaticCommandFlagsRegistry.registry()) {
       boolean isFirstCall = true;
 
       @Override
@@ -193,14 +198,15 @@ public class ClusterCommandExecutorTest {
 
     final Connection failer = mock(Connection.class);
     when(connectionHandler.getConnection(ArgumentMatchers.any(HostAndPort.class))).thenReturn(failer);
-    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
+    Mockito.doAnswer((InvocationOnMock invocation) -> {
       when(connectionHandler.getConnection(STR_COM_OBJECT.getArguments())).thenReturn(failer);
       return null;
     }).when(connectionHandler).renewSlotCache();
 
     final LongConsumer sleep = mock(LongConsumer.class);
     final HostAndPort movedTarget = new HostAndPort(null, 0);
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 5, ONE_SECOND) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 5, ONE_SECOND,
+        StaticCommandFlagsRegistry.registry()) {
       @Override
       public <T> T execute(Connection connection, CommandObject<T> commandObject) {
         if (redirecter == connection) {
@@ -261,13 +267,14 @@ public class ClusterCommandExecutorTest {
 
     when(connectionHandler.getConnection(STR_COM_OBJECT.getArguments())).thenReturn(master);
 
-    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
+    Mockito.doAnswer((InvocationOnMock invocation) -> {
       when(connectionHandler.getConnection(STR_COM_OBJECT.getArguments())).thenReturn(replica);
       return null;
     }).when(connectionHandler).renewSlotCache();
 
     final AtomicLong totalSleepMs = new AtomicLong();
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 5, ONE_SECOND) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 5, ONE_SECOND,
+        StaticCommandFlagsRegistry.registry()) {
 
       @Override
       public <T> T execute(Connection connection, CommandObject<T> commandObject) {
@@ -298,13 +305,14 @@ public class ClusterCommandExecutorTest {
     MatcherAssert.assertThat(totalSleepMs.get(), Matchers.greaterThan(0L));
   }
 
-  @Test(expected = JedisClusterOperationException.class)
+  @Test
   public void runRethrowsJedisNoReachableClusterNodeException() {
     ClusterConnectionProvider connectionHandler = mock(ClusterConnectionProvider.class);
     when(connectionHandler.getConnection(STR_COM_OBJECT.getArguments())).thenThrow(
-      JedisClusterOperationException.class);
+        JedisClusterOperationException.class);
 
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10, Duration.ZERO) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 10,
+        Duration.ZERO, StaticCommandFlagsRegistry.registry()) {
       @Override
       public <T> T execute(Connection connection, CommandObject<T> commandObject) {
         return null;
@@ -316,7 +324,7 @@ public class ClusterCommandExecutorTest {
       }
     };
 
-    testMe.executeCommand(STR_COM_OBJECT);
+    assertThrows(JedisClusterOperationException.class, () -> testMe.executeCommand(STR_COM_OBJECT));
   }
 
   @Test
@@ -325,7 +333,8 @@ public class ClusterCommandExecutorTest {
 
     // final LongConsumer sleep = mock(LongConsumer.class);
     final AtomicLong totalSleepMs = new AtomicLong();
-    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 3, Duration.ZERO) {
+    ClusterCommandExecutor testMe = new ClusterCommandExecutor(connectionHandler, 3, Duration.ZERO,
+        StaticCommandFlagsRegistry.registry()) {
       @Override
       public <T> T execute(Connection connection, CommandObject<T> commandObject) {
         try {

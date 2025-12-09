@@ -1,12 +1,19 @@
 package redis.clients.jedis.commands.unified;
 
-import java.util.Collection;
 
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import redis.clients.jedis.EndpointConfig;
+import redis.clients.jedis.HostAndPorts;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.commands.CommandsTestsParameters;
+import redis.clients.jedis.util.EnabledOnCommandCondition;
+import redis.clients.jedis.util.RedisVersionCondition;
 
+@Tag("integration")
 public abstract class UnifiedJedisCommandsTestBase {
 
   /**
@@ -14,14 +21,16 @@ public abstract class UnifiedJedisCommandsTestBase {
    * parameterized tests, to run with several versions of RESP.
    * @see CommandsTestsParameters#respVersions()
    */
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return CommandsTestsParameters.respVersions();
-  }
-
   protected final RedisProtocol protocol;
 
   protected UnifiedJedis jedis;
+
+  protected static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0");
+
+  @RegisterExtension
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(endpoint);
+  @RegisterExtension
+  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(endpoint);
 
   /**
    * The RESP protocol is to be injected by the subclasses, usually via JUnit parameterized tests,
@@ -32,5 +41,29 @@ public abstract class UnifiedJedisCommandsTestBase {
    */
   public UnifiedJedisCommandsTestBase(RedisProtocol protocol) {
     this.protocol = protocol;
+  }
+
+  /**
+   * Subclasses provide specific UnifiedJedis setup.
+   */
+  protected abstract UnifiedJedis createTestClient();
+
+  protected void clearData() {
+    if (jedis != null) {
+      jedis.flushAll();
+    }
+  }
+
+  @BeforeEach
+  void setUpBase() {
+    jedis = createTestClient();
+    clearData();
+  }
+
+  @AfterEach
+  void tearDownBase() {
+    if (jedis != null) {
+      jedis.close();
+    }
   }
 }

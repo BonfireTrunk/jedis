@@ -8,10 +8,12 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import redis.clients.jedis.params.GetExParams;
 import redis.clients.jedis.params.LCSParams;
 import redis.clients.jedis.params.SetParams;
+import redis.clients.jedis.params.MSetExParams;
+
 import redis.clients.jedis.resps.LCSMatchResult;
 
 public class UnifiedJedisStringCommandsTest extends UnifiedJedisMockedTestBase {
@@ -517,6 +519,37 @@ public class UnifiedJedisStringCommandsTest extends UnifiedJedisMockedTestBase {
 
     verify(commandExecutor).executeCommand(longCommandObject);
     verify(commandObjects).msetnx(keysvalues);
+  }
+
+
+  @Test
+  public void testMsetexDelegates() {
+    MSetExParams params = new MSetExParams().nx().ex(5);
+    String[] keysvalues = { "k1", "v1", "k2", "v2" };
+
+    when(commandObjects.msetex(params, keysvalues)).thenReturn(booleanCommandObject);
+    when(commandExecutor.executeCommand(booleanCommandObject)).thenReturn(true);
+
+    boolean result = jedis.msetex(params, keysvalues);
+
+    assertThat(result, equalTo(true));
+    verify(commandExecutor).executeCommand(booleanCommandObject);
+    verify(commandObjects).msetex(params, keysvalues);
+  }
+
+  @Test
+  public void testMsetexBinaryDelegates() {
+    MSetExParams params = new MSetExParams().xx().keepTtl();
+    byte[][] keysvalues = { "k1".getBytes(), "v1".getBytes(), "k2".getBytes(), "v2".getBytes() };
+
+    when(commandObjects.msetex(params, keysvalues)).thenReturn(booleanCommandObject);
+    when(commandExecutor.executeCommand(booleanCommandObject)).thenReturn(false);
+
+    boolean result = jedis.msetex(params, keysvalues);
+
+    assertThat(result, equalTo(false));
+    verify(commandExecutor).executeCommand(booleanCommandObject);
+    verify(commandObjects).msetex(params, keysvalues);
   }
 
   @Test

@@ -47,13 +47,6 @@ public class ClusterPipeline extends MultiNodePipelineBase {
     return cco;
   }
 
-  /**
-   * This method must be called after constructor, if graph commands are going to be used.
-   */
-  public void prepareGraphCommands() {
-    super.prepareGraphCommands(provider);
-  }
-
   @Override
   protected HostAndPort getNodeKey(CommandArguments args) {
     return provider.getNode(((ClusterCommandArguments) args).getCommandHashSlot());
