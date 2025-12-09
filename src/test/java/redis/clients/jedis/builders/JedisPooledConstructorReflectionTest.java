@@ -148,7 +148,8 @@ public class JedisPooledConstructorReflectionTest {
                 paramCovered[i] = true;
                 paramCoverageBy[i] = "DefaultJedisClientConfig.builder().connectionTimeoutMillis(...)+socketTimeoutMillis(...)";
               } else {
-                // Generic: map the first int after host to port if not yet paired, else treat as timeout
+                // Generic: map the first int after host to port if not yet paired, else treat as
+                // timeout
                 paramCoverageBy[i] = "DefaultJedisClientConfig.builder().connectionTimeoutMillis/socketTimeoutMillis(...)";
               }
           } else if (t == boolean.class || t == Boolean.class) {
