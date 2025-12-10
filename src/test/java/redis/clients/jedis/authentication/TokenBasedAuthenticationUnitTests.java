@@ -50,10 +50,10 @@ public class TokenBasedAuthenticationUnitTests {
     when(identityProviderConfig.getProvider()).thenReturn(identityProvider);
 
     try (MockedConstruction<TokenManager> mockedConstructor = mockConstruction(TokenManager.class,
-      (mock, context) -> {
-        assertEquals(identityProvider, context.arguments().get(0));
-        assertEquals(tokenManagerConfig, context.arguments().get(1));
-      })) {
+        (mock, context) -> {
+          assertEquals(identityProvider, context.arguments().get(0));
+          assertEquals(tokenManagerConfig, context.arguments().get(1));
+        })) {
 
       new AuthXManager(new TokenAuthConfig(tokenManagerConfig, identityProviderConfig));
     }
@@ -155,7 +155,7 @@ public class TokenBasedAuthenticationUnitTests {
     delay = manager.calculateRenewalDelay(expireDate, issueDate);
 
     assertThat(delay,
-      lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
+        lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
 
     duration = 10000;
     config.lower = 8000;
@@ -166,7 +166,7 @@ public class TokenBasedAuthenticationUnitTests {
     delay = manager.calculateRenewalDelay(expireDate, issueDate);
 
     assertThat(delay,
-      lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
+        lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
 
     duration = 10000;
     config.lower = 10000;

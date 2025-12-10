@@ -5,8 +5,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.builders.StandaloneClientBuilder;
 import redis.clients.jedis.csc.Cache;

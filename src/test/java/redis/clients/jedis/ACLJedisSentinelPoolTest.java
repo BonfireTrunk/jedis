@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -95,7 +96,7 @@ public class ACLJedisSentinelPoolTest {
         .connectionTimeoutMillis(1000).socketTimeoutMillis(1000).user("default")
         .password("foobared").build();
     assertThrows(JedisConnectionException.class, () -> {
-      try (JedisSentinelPool ignored = new JedisSentinelPool(MASTER_NAME, sentinels, poolConfig,
+      try (JedisSentinelPool ignored = new JedisSentinelPool(MASTER_NAME, sentinels, poolConfig.build(),
           masterConfig, sentinelConfig)) {
         // do nothing
       }
@@ -116,7 +117,7 @@ public class ACLJedisSentinelPoolTest {
         .password("foobared").build();
 
     assertThrows(JedisException.class, () -> {
-      try (JedisSentinelPool ignored = new JedisSentinelPool("wrongMasterName", sentinels, poolConfig,
+      try (JedisSentinelPool ignored = new JedisSentinelPool("wrongMasterName", sentinels, poolConfig.build(),
           masterConfig, sentinelConfig)) {
         // do nothing
       }

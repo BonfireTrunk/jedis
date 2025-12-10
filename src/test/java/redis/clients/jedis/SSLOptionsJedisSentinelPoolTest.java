@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
@@ -19,10 +19,10 @@ public class SSLOptionsJedisSentinelPoolTest {
 
   private static Set<HostAndPort> sentinels = new HashSet<>();
 
-  private static final HostAndPortMapper SSL_PORT_MAPPER = (HostAndPort hap)
-      -> new HostAndPort(hap.getHost(), hap.getPort() + 10000);
+  private static final HostAndPortMapper SSL_PORT_MAPPER = (HostAndPort hap) -> new HostAndPort(hap.getHost(),
+      hap.getPort() + 10000);
 
-  private static final GenericObjectPoolConfig<Jedis> POOL_CONFIG = new GenericObjectPoolConfig<>();
+  private static final JedisPoolConfig POOL_CONFIG = new JedisPoolConfig();
 
   private static final String trustStoreName = SSLOptionsJedisSentinelPoolTest.class.getSimpleName();
   private static Path trustStorePath;
@@ -30,7 +30,7 @@ public class SSLOptionsJedisSentinelPoolTest {
   @BeforeAll
   public static void prepare() {
     List<Path> trustedCertLocation = Collections.singletonList(Paths.get("redis9-sentinel/work/tls"));
-    trustStorePath = TlsUtil.createAndSaveTestTruststore(trustStoreName, trustedCertLocation,"changeit");
+    trustStorePath = TlsUtil.createAndSaveTestTruststore(trustStoreName, trustedCertLocation, "changeit");
 
     sentinels.add(HostAndPorts.getSentinelServers().get(4));
   }

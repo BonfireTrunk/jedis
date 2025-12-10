@@ -1,11 +1,13 @@
 package redis.clients.jedis.util;
 
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 import today.bonfire.oss.sop.PoolObject;
 import today.bonfire.oss.sop.PooledObjectFactory;
 import today.bonfire.oss.sop.SimpleObjectPool;
 import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+import today.bonfire.oss.sop.exceptions.PoolException;
 
 public class Pool<T extends PoolObject> extends SimpleObjectPool<T> {
 
@@ -41,6 +43,8 @@ public class Pool<T extends PoolObject> extends SimpleObjectPool<T> {
       return super.borrowObject();
     } catch (JedisException je) {
       throw je;
+    } catch (PoolException pe) {
+      throw new JedisConnectionException("Could not get a resource from the pool", pe);
     } catch (Exception e) {
       throw new JedisException("Could not get a resource from the pool", e);
     }

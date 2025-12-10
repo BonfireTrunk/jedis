@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisValidationException;
 import redis.clients.jedis.mcf.ConnectionFailoverException;
 import redis.clients.jedis.mcf.PingStrategy;
 import redis.clients.jedis.mcf.HealthCheckStrategy;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 /**
  * Configuration class for multi-database Redis deployments with automatic failover and failback
@@ -829,7 +829,7 @@ public final class MultiDbConfig {
     private final JedisClientConfig jedisClientConfig;
 
     /** Optional connection pool configuration for managing connections to this database. */
-    private GenericObjectPoolConfig<Connection> connectionPoolConfig;
+    private SimpleObjectPoolConfig connectionPoolConfig;
 
     /**
      * Weight value for database selection priority. Higher weights indicate higher priority.
@@ -871,7 +871,7 @@ public final class MultiDbConfig {
      * @throws IllegalArgumentException if endpoint or clientConfig is null
      */
     public DatabaseConfig(Endpoint endpoint, JedisClientConfig clientConfig,
-        GenericObjectPoolConfig<Connection> connectionPoolConfig) {
+        SimpleObjectPoolConfig connectionPoolConfig) {
       this.endpoint = endpoint;
       this.jedisClientConfig = clientConfig;
       this.connectionPoolConfig = connectionPoolConfig;
@@ -921,7 +921,7 @@ public final class MultiDbConfig {
      * Returns the connection pool configuration for this database.
      * @return the connection pool configuration, may be null if not specified
      */
-    public GenericObjectPoolConfig<Connection> getConnectionPoolConfig() {
+    public SimpleObjectPoolConfig getConnectionPoolConfig() {
       return connectionPoolConfig;
     }
 
@@ -975,7 +975,7 @@ public final class MultiDbConfig {
       private JedisClientConfig jedisClientConfig;
 
       /** Optional connection pool configuration. */
-      private GenericObjectPoolConfig<Connection> connectionPoolConfig;
+      private SimpleObjectPoolConfig connectionPoolConfig;
 
       /** Weight for database selection priority. Default: 1.0f */
       private float weight = 1.0f;
@@ -1003,8 +1003,7 @@ public final class MultiDbConfig {
        * @param connectionPoolConfig the connection pool configuration
        * @return this builder instance for method chaining
        */
-      public Builder connectionPoolConfig(
-          GenericObjectPoolConfig<Connection> connectionPoolConfig) {
+      public Builder connectionPoolConfig(SimpleObjectPoolConfig connectionPoolConfig) {
         this.connectionPoolConfig = connectionPoolConfig;
         return this;
       }

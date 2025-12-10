@@ -110,7 +110,8 @@ public class MultiDbConnectionProviderTest {
 
     MultiDbConfig.Builder builder = new MultiDbConfig.Builder(databaseConfigs);
 
-    // Configures a single failed command to trigger an open circuit on the next subsequent failure
+    // Configures a single failed command to trigger an open circuit on the next
+    // subsequent failure
     builder.failureDetector(MultiDbConfig.CircuitBreakerConfig.builder().slidingWindowSize(3)
         .minNumOfFailures(1).failureRateThreshold(0).build());
 
@@ -123,7 +124,8 @@ public class MultiDbConnectionProviderTest {
 
     try (MultiDbClient jedis = MultiDbClient.builder().connectionProvider(localProvider).build()) {
 
-      // This will fail due to unable to connect and open the circuit which will trigger the post
+      // This will fail due to unable to connect and open the circuit which will
+      // trigger the post
       // processor
       try {
         jedis.get("foo");
@@ -157,22 +159,21 @@ public class MultiDbConnectionProviderTest {
 
   @Test
   public void testConnectionPoolConfigApplied() {
-    ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-    poolConfig.setMaxTotal(8);
-    poolConfig.setMaxIdle(4);
-    poolConfig.setMinIdle(1);
+    var poolConfig = JedisPoolConfig.builder();
+    poolConfig.maxPoolSize(8);
+    poolConfig.minPoolSize(4);
     DatabaseConfig[] databaseConfigs = new DatabaseConfig[2];
     databaseConfigs[0] = new DatabaseConfig(endpointStandalone0.getHostAndPort(),
-        endpointStandalone0.getClientConfigBuilder().build(), poolConfig);
+        endpointStandalone0.getClientConfigBuilder().build(), poolConfig.build());
     databaseConfigs[1] = new DatabaseConfig(endpointStandalone1.getHostAndPort(),
-        endpointStandalone0.getClientConfigBuilder().build(), poolConfig);
+        endpointStandalone0.getClientConfigBuilder().build(), poolConfig.build());
     try (MultiDbConnectionProvider customProvider = new MultiDbConnectionProvider(
         new MultiDbConfig.Builder(databaseConfigs).build())) {
       MultiDbConnectionProvider.Database activeDatabase = customProvider.getDatabase();
       ConnectionPool connectionPool = activeDatabase.getConnectionPool();
-      assertEquals(8, connectionPool.getMaxTotal());
-      assertEquals(4, connectionPool.getMaxIdle());
-      assertEquals(1, connectionPool.getMinIdle());
+      // SimpleObjectPool populates minPoolSize idle connections asynchronously
+      Awaitility.await().atMost(Durations.ONE_SECOND).until(() -> connectionPool.getNumIdle() >= 4);
+      assertEquals(4, connectionPool.getNumIdle());
     }
   }
 
@@ -190,7 +191,8 @@ public class MultiDbConnectionProviderTest {
           return HealthStatus.HEALTHY;
         });
 
-    // Create new provider with health check strategy (don't use the setUp() provider)
+    // Create new provider with health check strategy (don't use the setUp()
+    // provider)
     DatabaseConfig config = DatabaseConfig
         .builder(endpointStandalone0.getHostAndPort(),
           endpointStandalone0.getClientConfigBuilder().build())
@@ -239,14 +241,16 @@ public class MultiDbConnectionProviderTest {
     try (MultiDbClient jedis = MultiDbClient.builder().connectionProvider(testProvider).build()) {
       jedis.get("foo");
 
-      // Disable both databases so any attempt to switch results in 'no healthy database' path
+      // Disable both databases so any attempt to switch results in 'no healthy
+      // database' path
       testProvider.getDatabase(endpointStandalone0.getHostAndPort()).setDisabled(true);
       testProvider.getDatabase(endpointStandalone1.getHostAndPort()).setDisabled(true);
 
       // Simulate user running a command that fails and triggers failover iteration
       assertThrows(JedisTemporarilyNotAvailableException.class, () -> jedis.get("foo"));
 
-      // Next immediate attempt should exceed max attempts and become permanent (expected to fail
+      // Next immediate attempt should exceed max attempts and become permanent
+      // (expected to fail
       // until feature exists)
       await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
           .until(() -> (assertThrows(JedisFailoverException.class,
@@ -301,7 +305,8 @@ public class MultiDbConnectionProviderTest {
           .until(() -> (assertThrows(JedisFailoverException.class,
             () -> jedis.get("foo")) instanceof JedisPermanentlyNotAvailableException));
 
-      // Fourth get request should continue to throw JedisPermanentlyNotAvailableException
+      // Fourth get request should continue to throw
+      // JedisPermanentlyNotAvailableException
       assertThrows(JedisPermanentlyNotAvailableException.class, () -> jedis.get("foo"));
     }
   }
