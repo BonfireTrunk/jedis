@@ -66,14 +66,15 @@ For more explanations see code comments in the transaction section.
 
 ### Avoiding pool waits with cluster pipelines
 
-A cluster pipeline keeps one connection borrowed from every node it targets until `sync()` or `close()`. Concurrent pipelines that target nodes in different orders can exhaust small per-node pools and wait on one another indefinitely when the pool uses its default unbounded wait.
+A cluster pipeline keeps one connection borrowed from every node it targets until `sync()` or `close()`. Concurrent pipelines that target nodes in different orders can exhaust small per-node pools and wait on one another until the pool wait timeout (`waitingForObjectTimeout`, 10 seconds by default) runs out, or indefinitely when it is negative.
 
-For workloads with concurrent multi-node pipelines, use a dedicated cluster client. Size each node pool for the expected number of concurrent pipelines and configure a finite `maxWait` so pool exhaustion fails within a known interval instead of waiting indefinitely:
+For workloads with concurrent multi-node pipelines, use a dedicated cluster client. Size each node pool for the expected number of concurrent pipelines and configure a short `waitingForObjectTimeout` so pool exhaustion fails within a known interval:
 
 ```java
-ConnectionPoolConfig pipelinePoolConfig = new ConnectionPoolConfig();
-pipelinePoolConfig.setMaxTotal(expectedConcurrentPipelines);
-pipelinePoolConfig.setMaxWait(Duration.ofSeconds(1));
+SimpleObjectPoolConfig pipelinePoolConfig = ConnectionPoolConfig.builder()
+        .maxPoolSize(expectedConcurrentPipelines)
+        .waitingForObjectTimeout(Duration.ofSeconds(1))
+        .build();
 
 try (RedisClusterClient pipelineClient = RedisClusterClient.builder()
         .nodes(nodes)

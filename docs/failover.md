@@ -105,14 +105,13 @@ JedisClientConfig config = DefaultJedisClientConfig.builder()
         .socketTimeoutMillis(5000).connectionTimeoutMillis(5000).build();
 
 // Custom pool config per database can be provided
-ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-poolConfig.setMaxTotal(8);
-poolConfig.setMaxIdle(8);
-poolConfig.setMinIdle(0);
-poolConfig.setBlockWhenExhausted(true);
-poolConfig.setMaxWait(Duration.ofSeconds(1));
-poolConfig.setTestWhileIdle(true);
-poolConfig.setTimeBetweenEvictionRuns(Duration.ofSeconds(1));
+SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder()
+        .maxPoolSize(8)
+        .minPoolSize(0)
+        .waitingForObjectTimeout(Duration.ofSeconds(1))
+        .testWhileIdle(true)
+        .durationBetweenEvictionsRuns(Duration.ofSeconds(1))
+        .build();
 
 HostAndPort east = new HostAndPort("redis-east.example.com", 14000);
 HostAndPort west = new HostAndPort("redis-west.example.com", 14000);
