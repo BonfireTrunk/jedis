@@ -16,11 +16,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import redis.clients.jedis.DefaultJedisClientConfig;
+import redis.clients.jedis.EndpointConfig;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.args.ClusterResetType;
-import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.Endpoints;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.resps.ClusterShardInfo;
 import redis.clients.jedis.resps.ClusterShardNodeInfo;
@@ -39,24 +39,33 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Tag("integration")
 public class ClusterCommandsTest {
 
+  private static EndpointConfig endpoint;
+
   private static Jedis node1;
   private static Jedis node2;
 
-  private static HostAndPort nodeInfo1 = HostAndPorts.getClusterServers().get(0);
-  private static HostAndPort nodeInfo2 = HostAndPorts.getClusterServers().get(1);
+  private static HostAndPort nodeInfo1;
+  private static HostAndPort nodeInfo2;
 
   @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(nodeInfo1,
-      DefaultJedisClientConfig.builder().password("cluster").build());
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(
+      () -> Endpoints.getRedisEndpoint("cluster-unbound"));
+
+  @BeforeAll
+  public static void prepareEndpoints() {
+    endpoint = Endpoints.getRedisEndpoint("cluster-unbound");
+    nodeInfo1 = endpoint.getHostsAndPorts().get(0);
+    nodeInfo2 = endpoint.getHostsAndPorts().get(1);
+  }
 
   @BeforeEach
   public void setUp() throws Exception {
     node1 = new Jedis(nodeInfo1);
-    node1.auth("cluster");
+    node1.auth(endpoint.getPassword());
     node1.flushAll();
 
     node2 = new Jedis(nodeInfo2);
-    node2.auth("cluster");
+    node2.auth(endpoint.getPassword());
     node2.flushAll();
   }
 
@@ -66,30 +75,30 @@ public class ClusterCommandsTest {
     node2.disconnect();
   }
 
-  @BeforeAll
-  public static void resetRedisBefore() {
-    removeSlots();
-  }
-
   @AfterAll
   public static void resetRedisAfter() {
-    removeSlots();
+    if (endpoint != null) {
+      removeSlots();
+    }
   }
 
   public static void removeSlots() {
+    if (endpoint == null)
+      return;
+
     try (Jedis node = new Jedis(nodeInfo1)) {
-      node.auth("cluster");
+      node.auth(endpoint.getPassword());
       node.clusterReset(ClusterResetType.SOFT);
     }
     try (Jedis node = new Jedis(nodeInfo2)) {
-      node.auth("cluster");
+      node.auth(endpoint.getPassword());
       node.clusterReset(ClusterResetType.SOFT);
     }
   }
 
   @Test
   public void testClusterSoftReset() {
-    node1.clusterMeet("127.0.0.1", nodeInfo2.getPort());
+    node1.clusterMeet(nodeInfo2.getHost(), nodeInfo2.getPort());
     assertTrue(node1.clusterNodes().split("\n").length > 1);
     node1.clusterReset(ClusterResetType.SOFT);
     assertEquals(1, node1.clusterNodes().split("\n").length);
@@ -118,13 +127,12 @@ public class ClusterCommandsTest {
     String nodes = node1.clusterNodes();
     assertTrue(nodes.split("\n").length > 0);
   }
-
-  //
-  // @Test
-  // public void clusterMeet() {
-  // String status = node1.clusterMeet("127.0.0.1", nodeInfo2.getPort());
-  // assertEquals("OK", status);
-  // }
+//
+//  @Test
+//  public void clusterMeet() {
+//    String status = node1.clusterMeet("127.0.0.1", nodeInfo2.getPort());
+//    assertEquals("OK", status);
+//  }
 
   @Test
   public void clusterAddSlotsAndDelSlots() {
@@ -241,7 +249,6 @@ public class ClusterCommandsTest {
         assertNotNull(nodeInfo.getIp());
         assertNull(nodeInfo.getHostname());
         assertNotNull(nodeInfo.getPort());
-        assertNotNull(nodeInfo.getTlsPort()); // currently we are always starting Redis server with `tls-port`
         assertNotNull(nodeInfo.getRole());
         assertNotNull(nodeInfo.getReplicationOffset());
         assertNotNull(nodeInfo.getHealth());
@@ -263,9 +270,12 @@ public class ClusterCommandsTest {
     // It assumes JedisClusterCRC16 is correctly implemented
     assertEquals(JedisClusterCRC16.getSlot("{user1000}.following"),
       node1.clusterKeySlot("{user1000}.following"));
-    assertEquals(JedisClusterCRC16.getSlot("foo{bar}{zap}"), node1.clusterKeySlot("foo{bar}{zap}"));
-    assertEquals(JedisClusterCRC16.getSlot("foo{}{bar}"), node1.clusterKeySlot("foo{}{bar}"));
-    assertEquals(JedisClusterCRC16.getSlot("foo{{bar}}zap"), node1.clusterKeySlot("foo{{bar}}zap"));
+    assertEquals(JedisClusterCRC16.getSlot("foo{bar}{zap}"),
+        node1.clusterKeySlot("foo{bar}{zap}"));
+    assertEquals(JedisClusterCRC16.getSlot("foo{}{bar}"),
+        node1.clusterKeySlot("foo{}{bar}"));
+    assertEquals(JedisClusterCRC16.getSlot("foo{{bar}}zap"),
+        node1.clusterKeySlot("foo{{bar}}zap"));
   }
 
   @Test
@@ -281,8 +291,7 @@ public class ClusterCommandsTest {
   @Test
   @SinceRedisVersion("7.2.0")
   public void clusterMyShardId() {
-    MatcherAssert
-        .assertThat(node1.clusterMyShardId(), Matchers.not(Matchers.isEmptyOrNullString()));
+    MatcherAssert.assertThat(node1.clusterMyShardId(), Matchers.not(Matchers.isEmptyOrNullString()));
   }
 
   @Test
@@ -290,16 +299,13 @@ public class ClusterCommandsTest {
     try {
       assertEquals("OK", node1.clusterSetConfigEpoch(1));
     } catch (JedisDataException jde) {
-      assertEquals(
-        "ERR The user can assign a config epoch only when the node does not know any other node.",
-        jde.getMessage());
+      assertEquals("ERR The user can assign a config epoch only when the node does not know any other node.", jde.getMessage());
     }
   }
 
   @Test
   public void ClusterBumpEpoch() {
-    MatcherAssert.assertThat(node1.clusterBumpEpoch(),
-      Matchers.matchesPattern("^BUMPED|STILL [0-9]+$"));
+    MatcherAssert.assertThat(node1.clusterBumpEpoch(), Matchers.matchesPattern("^BUMPED|STILL [0-9]+$"));
   }
 
 }

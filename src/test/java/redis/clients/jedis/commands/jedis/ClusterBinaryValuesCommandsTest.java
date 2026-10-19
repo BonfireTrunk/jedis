@@ -2,7 +2,7 @@ package redis.clients.jedis.commands.jedis;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -110,20 +110,20 @@ public class ClusterBinaryValuesCommandsTest extends ClusterJedisCommandsTestBas
 
   @Test
   public void georadiusStoreBinary() {
-    // prepare datas
-    Map<byte[], GeoCoordinate> bcoordinateMap = new HashMap<byte[], GeoCoordinate>();
-    bcoordinateMap.put("Palermo".getBytes(), new GeoCoordinate(13.361389, 38.115556));
-    bcoordinateMap.put("Catania".getBytes(), new GeoCoordinate(15.087269, 37.502669));
-    cluster.geoadd("{Sicily}".getBytes(), bcoordinateMap);
+      // prepare datas
+      Map<byte[], GeoCoordinate> bcoordinateMap = new HashMap<byte[], GeoCoordinate>();
+      bcoordinateMap.put("Palermo".getBytes(), new GeoCoordinate(13.361389, 38.115556));
+      bcoordinateMap.put("Catania".getBytes(), new GeoCoordinate(15.087269, 37.502669));
+      cluster.geoadd("{Sicily}".getBytes(), bcoordinateMap);
 
-    long size = cluster.georadiusStore("{Sicily}".getBytes(), 15, 37, 200, GeoUnit.KM,
-      GeoRadiusParam.geoRadiusParam(),
-      GeoRadiusStoreParam.geoRadiusStoreParam().store("{Sicily}Store"));
-    assertEquals(2, size);
-    List<byte[]> bexpected = new ArrayList<byte[]>();
-    bexpected.add("Palermo".getBytes());
-    bexpected.add("Catania".getBytes());
-    assertByteArrayListEquals(bexpected, cluster.zrange("{Sicily}Store".getBytes(), 0, -1));
+      long size = cluster.georadiusStore("{Sicily}".getBytes(), 15, 37, 200, GeoUnit.KM,
+        GeoRadiusParam.geoRadiusParam(),
+        GeoRadiusStoreParam.geoRadiusStoreParam().store("{Sicily}Store"));
+      assertEquals(2, size);
+      List<byte[]> bexpected = new ArrayList<byte[]>();
+      bexpected.add("Palermo".getBytes());
+      bexpected.add("Catania".getBytes());
+      assertByteArrayListEquals(bexpected, cluster.zrange("{Sicily}Store".getBytes(), 0, -1));
   }
 
   @Test
@@ -154,9 +154,47 @@ public class ClusterBinaryValuesCommandsTest extends ClusterJedisCommandsTestBas
   }
 
   @Test
-  public void failKeys() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      cluster.keys("*".getBytes());
-    });
+  public void testKeysBroadcastAndAggregation() {
+    // Use keys without hash tags - they will be distributed across different hash slots
+    // These keys intentionally don't use hash tags like {key} to ensure distribution
+    String key1 = "testkey_alpha";
+    String key2 = "testkey_beta";
+    String key3 = "testkey_gamma";
+
+    // Initially, no keys should match the pattern
+    assertEquals(0, cluster.keys("testkey_*").size());
+
+    // Set multiple keys that will be distributed across different hash slots
+    cluster.set(key1, "value1");
+    cluster.set(key2, "value2");
+    cluster.set(key3, "value3");
+
+    // Call keys with a pattern that should match all three keys
+    // This triggers broadcasting to all shards and aggregation of results
+    Set<String> matchedKeys = cluster.keys("testkey_*");
+
+    // Verify all keys are returned, demonstrating proper cross-shard aggregation
+    assertEquals(3, matchedKeys.size());
+    assertTrue(matchedKeys.contains(key1));
+    assertTrue(matchedKeys.contains(key2));
+    assertTrue(matchedKeys.contains(key3));
+
+    // Test with a more specific pattern that matches only some keys
+    Set<String> alphaKeys = cluster.keys("testkey_a*");
+    assertEquals(1, alphaKeys.size());
+    assertTrue(alphaKeys.contains(key1));
+
+    // Test binary version with keys distributed across different slots
+    byte[] bkey1 = "binkey_one".getBytes();
+    byte[] bkey2 = "binkey_two".getBytes();
+    byte[] bkey3 = "binkey_three".getBytes();
+
+    cluster.set(bkey1, "bvalue1".getBytes());
+    cluster.set(bkey2, "bvalue2".getBytes());
+    cluster.set(bkey3, "bvalue3".getBytes());
+
+    // Verify binary KEYS also broadcasts and aggregates correctly
+    Set<byte[]> binaryMatchedKeys = cluster.keys("binkey_*".getBytes());
+    assertEquals(3, binaryMatchedKeys.size());
   }
 }

@@ -31,7 +31,7 @@ import redis.clients.jedis.exceptions.JedisClusterOperationException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.SafeEncoder;
 
-import static redis.clients.jedis.JedisCluster.INIT_NO_ERROR_PROPERTY;
+import static redis.clients.jedis.RedisClusterClient.INIT_NO_ERROR_PROPERTY;
 
 @Internal
 public class JedisClusterInfoCache {
@@ -249,6 +249,7 @@ public class JedisClusterInfoCache {
     w.lock();
     try {
       resetSlots();
+      primaryNodesCache.clear();
       if (clientSideCache != null) {
         clientSideCache.flush();
       }
@@ -274,6 +275,7 @@ public class JedisClusterInfoCache {
           hostAndPortKeys.add(getNodeKey(targetNode));
           setupNodeIfNotExist(targetNode);
           if (i == MASTER_NODE_INDEX) {
+            primaryNodesCache.put(getNodeKey(targetNode), getNode(targetNode));
             assignSlotsToNode(slotNums, targetNode);
           } else if (clientConfig.isReadOnlyForRedisClusterReplicas()) {
             assignSlotsToReplicaNode(slotNums, targetNode);
@@ -514,7 +516,7 @@ public class JedisClusterInfoCache {
 
   @SuppressWarnings("unchecked")
   private List<Object> executeClusterSlots(Connection jedis) {
-    CommandArguments clusterSlotsCmd = new ClusterCommandArguments(Protocol.Command.CLUSTER).add(
+    CommandArguments clusterSlotsCmd = new CommandArguments(Protocol.Command.CLUSTER).add(
         "SLOTS");
     return (List<Object>) jedis.executeCommand(clusterSlotsCmd);
   }

@@ -7,21 +7,26 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import io.redis.test.annotations.SinceRedisVersion;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import redis.clients.jedis.exceptions.InvalidURIException;
 import redis.clients.jedis.exceptions.JedisAccessControlException;
 import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.RedisVersionCondition;
+import redis.clients.jedis.util.TestEnvUtil;
 
 /**
  * This test class is a copy of {@link JedisPoolTest}.
@@ -30,13 +35,24 @@ import redis.clients.jedis.util.RedisVersionCondition;
  */
 @SinceRedisVersion("6.0.0")
 @Tag("integration")
+@ConditionalOnEnv(value = TestEnvUtil.ENV_OSS_DOCKER, enabled = true)
 public class ACLJedisPoolTest {
-  private static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0-acl");
+  private static EndpointConfig endpoint;
 
-  private static final EndpointConfig endpointWithDefaultUser = HostAndPorts.getRedisEndpoint("standalone0");
+  private static EndpointConfig endpointWithDefaultUser;
 
   @RegisterExtension
-  public static RedisVersionCondition versionCondition = new RedisVersionCondition(endpoint);
+  public static EnvCondition envCondition = new EnvCondition();
+
+  @RegisterExtension
+  public static RedisVersionCondition versionCondition = new RedisVersionCondition(
+      () -> Endpoints.getRedisEndpoint("standalone0-acl"));
+
+  @BeforeAll
+  public static void prepare() {
+    endpoint = Endpoints.getRedisEndpoint("standalone0-acl");
+    endpointWithDefaultUser = Endpoints.getRedisEndpoint("standalone0");
+  }
 
   @Test
   public void checkConnections() {
@@ -64,9 +80,9 @@ public class ACLJedisPoolTest {
 
   @Test
   public void checkResourceIsClosableAndReusable() {
-    var config = JedisPoolConfig.builder().defaultConfig().maxPoolSize(1)
-                                .waitingForObjectTimeout(Duration.ZERO);
-    try (JedisPool pool = new JedisPool(config.build(), endpoint.getHost(), endpoint.getPort(),
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
+    try (JedisPool pool = new JedisPool(config, endpoint.getHost(), endpoint.getPort(),
         Protocol.DEFAULT_TIMEOUT, Protocol.DEFAULT_TIMEOUT, 0 /* infinite */, endpoint.getUsername(),
         endpoint.getPassword(), Protocol.DEFAULT_DATABASE, "closable-reusable-pool", false, null, null, null)) {
 
@@ -83,11 +99,11 @@ public class ACLJedisPoolTest {
 
   @Test
   public void checkResourceWithConfigIsClosableAndReusable() {
-    var config = JedisPoolConfig.builder();
-    config.maxPoolSize(1);
-    config.waitingForObjectTimeout(Duration.ZERO);
-    try (JedisPool pool = new JedisPool(config.build(), endpoint.getHostAndPort(), endpoint
-        .getClientConfigBuilder().clientName("closable-reusable-pool").build())) {
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
+    try (JedisPool pool = new JedisPool(config, endpoint.getHostAndPort(),
+        endpoint.getClientConfigBuilder().serverDefaultProtocol().clientName("closable-reusable-pool")
+        .build())) {
 
       Jedis jedis = pool.getResource();
       jedis.set("hello", "jedis");
@@ -120,10 +136,9 @@ public class ACLJedisPoolTest {
 
   @Test
   public void checkPoolOverflow() {
-    var config = JedisPoolConfig.builder();
-    config.maxPoolSize(1);
-    config.waitingForObjectTimeout(Duration.ZERO);
-    try (JedisPool pool = new JedisPool(config.build(), endpoint.getHost(), endpoint.getPort());
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
+    try (JedisPool pool = new JedisPool(config, endpoint.getHost(), endpoint.getPort());
         Jedis jedis = pool.getResource()) {
       jedis.auth(endpoint.getUsername(), endpoint.getPassword());
 
@@ -137,10 +152,10 @@ public class ACLJedisPoolTest {
 
   @Test
   public void securePool() {
-    var config = JedisPoolConfig.builder();
-    config.testOnBorrow(true);
-    JedisPool pool = new JedisPool(config.build(), endpoint.getHost(), endpoint.getPort(), 2000, endpoint.getUsername(),
-                                   endpoint.getPassword());
+    SimpleObjectPoolConfig config = JedisPoolConfig.builder().testOnBorrow(true)
+        .build();
+    JedisPool pool = new JedisPool(config, endpoint.getHost(), endpoint.getPort(), 2000, endpoint.getUsername(),
+        endpoint.getPassword());
     try (Jedis jedis = pool.getResource()) {
       jedis.set("foo", "bar");
     }
@@ -150,10 +165,10 @@ public class ACLJedisPoolTest {
 
   @Test
   public void securePoolNonSSL() {
-    var config = JedisPoolConfig.builder();
-    config.testOnBorrow(true);
-    JedisPool pool = new JedisPool(config.build(), endpoint.getHost(), endpoint.getPort(), 2000,
-        endpoint.getUsername(), endpoint.getPassword(), false);
+    SimpleObjectPoolConfig config = JedisPoolConfig.builder().testOnBorrow(true)
+        .build();
+    JedisPool pool = new JedisPool(config, endpoint.getHost(), endpoint.getPort(), 2000, endpoint.getUsername(),
+        endpoint.getPassword(), false);
     try (Jedis jedis = pool.getResource()) {
       jedis.set("foo", "bar");
     }
@@ -163,16 +178,14 @@ public class ACLJedisPoolTest {
 
   @Test
   public void nonDefaultDatabase() {
-    try (JedisPool pool0 = new JedisPool(new JedisPoolConfig(), endpoint.getHost(),
-        endpoint.getPort(), 2000, endpoint.getUsername(), endpoint.getPassword());
-        Jedis jedis0 = pool0.getResource()) {
+    try (JedisPool pool0 = new JedisPool(new JedisPoolConfig(), endpoint.getHost(), endpoint.getPort(), 2000,
+        endpoint.getUsername(), endpoint.getPassword()); Jedis jedis0 = pool0.getResource()) {
       jedis0.set("foo", "bar");
       assertEquals("bar", jedis0.get("foo"));
     }
 
-    try (JedisPool pool1 = new JedisPool(new JedisPoolConfig(), endpoint.getHost(),
-        endpoint.getPort(), 2000, endpoint.getUsername(), endpoint.getPassword(), 1);
-        Jedis jedis1 = pool1.getResource()) {
+    try (JedisPool pool1 = new JedisPool(new JedisPoolConfig(), endpoint.getHost(), endpoint.getPort(), 2000,
+        endpoint.getUsername(), endpoint.getPassword(), 1); Jedis jedis1 = pool1.getResource()) {
       assertNull(jedis1.get("foo"));
     }
   }
@@ -268,10 +281,10 @@ public class ACLJedisPoolTest {
 
   @Test
   public void testCloseConnectionOnMakeObject() {
-    var config = JedisPoolConfig.builder();
-    config.testOnBorrow(true);
-    try (JedisPool pool = new JedisPool(config.build(), endpoint.getHost(), endpoint.getPort(),
-        2000, endpoint.getUsername(), "wrongpassword");
+    SimpleObjectPoolConfig config = JedisPoolConfig.builder().testOnBorrow(true)
+        .build();
+    try (JedisPool pool = new JedisPool(new JedisPoolConfig(), endpoint.getHost(),
+        endpoint.getPort(), 2000, endpoint.getUsername(), "wrongpassword");
         Jedis jedis = new Jedis(endpointWithDefaultUser.getURIBuilder()
             .credentials("", endpointWithDefaultUser.getPassword()).build())) {
       int currentClientCount = getClientCount(jedis.clientList());

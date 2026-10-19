@@ -10,28 +10,44 @@ import redis.clients.jedis.resps.CommandInfo;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class EnabledOnCommandCondition implements ExecutionCondition {
 
-  private final HostAndPort hostPort;
-  private final JedisClientConfig config;
+  private final Supplier<EndpointConfig> endpointSupplier;
+  private HostAndPort hostPort;
+  private JedisClientConfig config;
 
   public EnabledOnCommandCondition(HostAndPort hostPort, JedisClientConfig config) {
+    this.endpointSupplier = null;
     this.hostPort = hostPort;
     this.config = config;
   }
 
-  public EnabledOnCommandCondition(EndpointConfig endpointConfig) {
-    this.hostPort = endpointConfig.getHostAndPort();
-    this.config = endpointConfig.getClientConfigBuilder().build();
+  public EnabledOnCommandCondition(Supplier<EndpointConfig> endpointSupplier) {
+    this.endpointSupplier = endpointSupplier;
+    this.hostPort = null;
+    this.config = null;
+  }
+
+  private void ensureInitialized() {
+    if (hostPort == null && endpointSupplier != null) {
+      EndpointConfig endpoint = endpointSupplier.get();
+      this.hostPort = endpoint.getHostAndPort();
+      this.config = endpoint.getClientConfigBuilder().serverDefaultProtocol().build();
+    }
   }
 
   @Override
   public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
-    try (Jedis jedisClient = new Jedis(hostPort, config)) {
-      String[] command = getCommandFromAnnotations(context);
+    String[] command = getCommandFromAnnotations(context);
+    if (command == null) {
+      return ConditionEvaluationResult.enabled("No command constraint present");
+    }
 
-      if (command != null && !isCommandAvailable(jedisClient, command[0], command[1])) {
+    ensureInitialized();
+    try (Jedis jedisClient = new Jedis(hostPort, config)) {
+      if (!isCommandAvailable(jedisClient, command[0], command[1])) {
         return ConditionEvaluationResult.disabled(
             "Test requires Redis command '" + command[0] + " " + command[1]
                 + "' to be available on " + hostPort + ", but it was not found.");

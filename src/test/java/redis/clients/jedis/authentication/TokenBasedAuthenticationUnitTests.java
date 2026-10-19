@@ -11,7 +11,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -32,9 +34,12 @@ import redis.clients.authentication.core.TokenListener;
 import redis.clients.authentication.core.TokenManager;
 import redis.clients.authentication.core.TokenManagerConfig;
 import redis.clients.authentication.core.TokenManagerConfig.RetryPolicy;
+import redis.clients.jedis.Connection;
 import redis.clients.jedis.ConnectionPool;
 import redis.clients.jedis.EndpointConfig;
 import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.RedisCredentials;
+import redis.clients.jedis.util.ReflectionTestUtil;
 
 public class TokenBasedAuthenticationUnitTests {
 
@@ -50,10 +55,10 @@ public class TokenBasedAuthenticationUnitTests {
     when(identityProviderConfig.getProvider()).thenReturn(identityProvider);
 
     try (MockedConstruction<TokenManager> mockedConstructor = mockConstruction(TokenManager.class,
-        (mock, context) -> {
-          assertEquals(identityProvider, context.arguments().get(0));
-          assertEquals(tokenManagerConfig, context.arguments().get(1));
-        })) {
+      (mock, context) -> {
+        assertEquals(identityProvider, context.arguments().get(0));
+        assertEquals(tokenManagerConfig, context.arguments().get(1));
+      })) {
 
       new AuthXManager(new TokenAuthConfig(tokenManagerConfig, identityProviderConfig));
     }
@@ -76,7 +81,7 @@ public class TokenBasedAuthenticationUnitTests {
     try (ConnectionPool pool = new ConnectionPool(hnp,
         endpoint.getClientConfigBuilder().authXManager(jedisAuthXManager).build()) {
       @Override
-      public void evict() throws Exception {
+      public void evict() {
         numberOfEvictions.incrementAndGet();
         super.evict();
       }
@@ -102,7 +107,7 @@ public class TokenBasedAuthenticationUnitTests {
     try (ConnectionPool pool = new ConnectionPool(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().authXManager(jedisAuthXManager).build()) {
       @Override
-      public void evict() throws Exception {
+      public void evict() {
         numberOfEvictions.incrementAndGet();
         super.evict();
       }
@@ -155,7 +160,7 @@ public class TokenBasedAuthenticationUnitTests {
     delay = manager.calculateRenewalDelay(expireDate, issueDate);
 
     assertThat(delay,
-        lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
+      lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
 
     duration = 10000;
     config.lower = 8000;
@@ -166,7 +171,7 @@ public class TokenBasedAuthenticationUnitTests {
     delay = manager.calculateRenewalDelay(expireDate, issueDate);
 
     assertThat(delay,
-        lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
+      lessThanOrEqualTo(Math.min(duration - config.lower, (long) (duration * config.ratio))));
 
     duration = 10000;
     config.lower = 10000;
@@ -248,7 +253,8 @@ public class TokenBasedAuthenticationUnitTests {
         new TokenManagerConfig(0.7F, 200, 2000, new TokenManagerConfig.RetryPolicy(5, 100)));
 
     AuthXManager manager = new AuthXManager(tokenManager);
-    JedisAuthenticationException e = assertThrows(JedisAuthenticationException.class, manager::start);
+    JedisAuthenticationException e = assertThrows(JedisAuthenticationException.class,
+      manager::start);
 
     assertEquals(exceptionMessage, e.getCause().getCause().getMessage());
   }
@@ -270,7 +276,8 @@ public class TokenBasedAuthenticationUnitTests {
         new TokenManagerConfig(0.7F, 200, 1000, new TokenManagerConfig.RetryPolicy(2, 100)));
 
     AuthXManager manager = new AuthXManager(tokenManager);
-    JedisAuthenticationException e = assertThrows(JedisAuthenticationException.class, manager::start);
+    JedisAuthenticationException e = assertThrows(JedisAuthenticationException.class,
+      manager::start);
 
     latch.countDown();
     assertEquals(exceptionMessage, e.getMessage());
@@ -352,5 +359,32 @@ public class TokenBasedAuthenticationUnitTests {
     } finally {
       manager.stop();
     }
+  }
+
+  @Test
+  public void authenticateConnectionsPrunesClearedReferences() {
+    AuthXManager manager = new AuthXManager(mock(TokenManager.class));
+
+    Connection live1 = mock(Connection.class);
+    Connection live2 = mock(Connection.class);
+
+    // A pooled connection that has been garbage collected leaves behind a cleared
+    // WeakReference. Seed one ahead of the live connections so pruning happens mid-walk.
+    List<WeakReference<Connection>> connections = ReflectionTestUtil.getField(manager,
+      "connections");
+    connections.add(new WeakReference<>(null));
+    manager.addConnection(live1);
+    manager.addConnection(live2);
+
+    Token token = new SimpleToken("user1", "tokenVal", System.currentTimeMillis() + 5 * 1000,
+        System.currentTimeMillis(), Collections.singletonMap("oid", "user1"));
+
+    manager.authenticateConnections(token);
+
+    assertEquals(2, connections.size());
+    ArgumentCaptor<RedisCredentials> credentials = ArgumentCaptor.forClass(RedisCredentials.class);
+    verify(live1).setCredentials(credentials.capture());
+    verify(live2).setCredentials(credentials.capture());
+    credentials.getAllValues().forEach(c -> assertEquals("user1", c.getUser()));
   }
 }

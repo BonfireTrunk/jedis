@@ -36,12 +36,15 @@ import redis.clients.jedis.*;
 import redis.clients.jedis.MultiDbConfig.DatabaseConfig;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.annots.VisibleForTesting;
+import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.exceptions.JedisValidationException;
+import redis.clients.jedis.mcf.InitializationPolicy.Decision;
 import redis.clients.jedis.mcf.JedisFailoverException.*;
 import redis.clients.jedis.providers.ConnectionProvider;
 import redis.clients.jedis.MultiDbConfig.StrategySupplier;
+import redis.clients.jedis.util.JedisAsserts;
 import redis.clients.jedis.util.Pool;
 
 /**
@@ -105,13 +108,29 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
 
   private final AtomicLong failoverFreezeUntil = new AtomicLong(0);
   private final AtomicInteger failoverAttemptCount = new AtomicInteger(0);
+  private final Cache cache;
 
+  /**
+   * Constructor for MultiDbConnectionProvider. For the case where client side cache is not used.
+   * Check other constructor where client side cache is demanded.
+   * @param multiDbConfig the multi-database configuration
+   */
   public MultiDbConnectionProvider(MultiDbConfig multiDbConfig) {
+    this(multiDbConfig, null);
+  }
+
+  /**
+   * Constructor for MultiDbConnectionProvider. For the case where client side cache is used.
+   * @param multiDbConfig the multi-database configuration
+   * @param cache the client-side cache
+   */
+  public MultiDbConnectionProvider(MultiDbConfig multiDbConfig, Cache cache) {
 
     if (multiDbConfig == null) throw new JedisValidationException(
         "MultiDbConfig must not be NULL for MultiDbConnectionProvider");
 
     this.multiDbConfig = multiDbConfig;
+    this.cache = cache;
 
     ////////////// Configure Retry ////////////////////
     MultiDbConfig.RetryConfig commandRetry = multiDbConfig.getCommandRetry();
@@ -133,7 +152,7 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
     StatusTracker statusTracker = new StatusTracker(healthStatusManager);
 
     // Wait for initial health check results and select active database based on weights
-    activeDatabase = waitForInitialHealthyDatabase(statusTracker);
+    activeDatabase = waitForInitializationPolicy(statusTracker);
 
     // Mark initialization as complete - handleHealthStatusChange can now process events
     initializationComplete = true;
@@ -144,7 +163,7 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
       // is set to true.
       // Simple rule is to never assign value of 'activeDatabase' outside of
       // 'activeDatabaseChangeLock' once the 'initializationComplete' is done.
-      waitForInitialHealthyDatabase(statusTracker);
+      waitForInitializationPolicy(statusTracker);
       switchToHealthyDatabase(SwitchReason.HEALTH_CHECK, temp);
     }
     this.fallbackExceptionList = multiDbConfig.getFallbackExceptionList();
@@ -324,7 +343,7 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
 
     TrackingConnectionPool pool = TrackingConnectionPool.builder()
         .hostAndPort(hostPort(config.getEndpoint())).clientConfig(config.getJedisClientConfig())
-        .poolConfig(config.getConnectionPoolConfig()).build();
+        .poolConfig(config.getConnectionPoolConfig()).cache(cache).build();
 
     Database database;
     StrategySupplier strategySupplier = config.getHealthCheckStrategySupplier();
@@ -369,44 +388,121 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
     if (databaseWithHealthChange == null) return;
 
     if (initializationComplete) {
-      if (!newStatus.isHealthy() && databaseWithHealthChange == activeDatabase) {
-        databaseWithHealthChange.setGracePeriod();
-        switchToHealthyDatabase(SwitchReason.HEALTH_CHECK, databaseWithHealthChange);
+      try {
+        if (!newStatus.isHealthy() && databaseWithHealthChange == activeDatabase) {
+          databaseWithHealthChange.setGracePeriod();
+          switchToHealthyDatabase(SwitchReason.HEALTH_CHECK, databaseWithHealthChange);
+        } else if (newStatus.isHealthy() && databaseWithHealthChange != activeDatabase) {
+          failoverIfActiveInoperable();
+        }
+      } catch (JedisFailoverException e) {
+        // Nothing to switch to right now. Do not propagate: this listener runs inside the
+        // health check scheduler task, and an escaping exception would cancel the periodic
+        // check, freezing this endpoint's status and preventing any future recovery.
+        log.warn("No failover target is available after the health status of {} changed to {}",
+          endpoint, newStatus, e);
       }
     }
   }
 
   /**
+   * Switches away from an inoperable active database to the best operable one, whatever its weight.
+   * Without one, the failure counts as a failover attempt.
+   * @throws JedisFailoverException if there is no operable database
+   */
+  private void failoverIfActiveInoperable() {
+    Database current = activeDatabase;
+    if (!current.isHealthy()) switchToHealthyDatabase(SwitchReason.HEALTH_CHECK, current);
+  }
+
+  /**
    * Waits for initial health check results and selects the first healthy database based on weight
-   * priority. Blocks until at least one database becomes healthy or all databases are determined to
-   * be unhealthy.
+   * priority. Uses the configured initialization policy to determine when enough databases are
+   * available.
    * @param statusTracker the status tracker to use for waiting on health check results
    * @return the first healthy database found, ordered by weight (highest first)
-   * @throws JedisConnectionException if all databases are unhealthy
+   * @throws JedisConnectionException (or JedisValidationException in unlikely cases) if
+   *           initialization fails according to the policy
    */
-  private Database waitForInitialHealthyDatabase(StatusTracker statusTracker) {
+  @VisibleForTesting
+  Database waitForInitializationPolicy(StatusTracker statusTracker) {
+    InitializationPolicy policy = multiDbConfig.getInitializationPolicy();
+    log.debug("Waiting for initialization policy {} to complete for {} configured databases",
+      policy.getClass().getSimpleName(), databaseMap.size());
+
+    // Evaluate immediately with the current statuses
+    ConnectionInitializationContext ctx = new ConnectionInitializationContext(databaseMap,
+        healthStatusManager);
+    Decision decision = ctx.conformsTo(policy);
+    log.debug("Initial policy evaluation: {} with context: {}", decision, ctx);
+
+    if (decision == Decision.FAIL) {
+      throw new JedisConnectionException(
+          "Initialization failed due to initialization policy: " + ctx);
+    }
+
     // Sort databases by weight in descending order
     List<Map.Entry<Endpoint, Database>> sortedDatabases = databaseMap.entrySet().stream()
         .sorted(Map.Entry.<Endpoint, Database> comparingByValue(
           Comparator.comparing(Database::getWeight).reversed()))
         .collect(Collectors.toList());
 
-    log.info("Selecting initial database from {} configured databases", sortedDatabases.size());
-
-    // Select database in weight order
+    // Check databases in weight order
     for (Map.Entry<Endpoint, Database> entry : sortedDatabases) {
       Endpoint endpoint = entry.getKey();
       Database database = entry.getValue();
 
       log.info("Evaluating database {} (weight: {})", endpoint, database.getWeight());
 
-      HealthStatus status;
-
       // Check if health checks are enabled for this endpoint
       if (healthStatusManager.hasHealthCheck(endpoint)) {
         log.info("Health checks enabled for {}, waiting for result", endpoint);
         // Wait for this database's health status to be determined
-        status = statusTracker.waitForHealthStatus(endpoint);
+        statusTracker.waitForHealthStatus(endpoint);
+      } else {
+        // No health check configured - assume healthy
+        log.debug("No health check configured for database {}, defaulting to HEALTHY", endpoint);
+      }
+
+      ConnectionInitializationContext evalCtx = new ConnectionInitializationContext(databaseMap,
+          healthStatusManager);
+      Decision d = evalCtx.conformsTo(policy);
+      log.debug("Policy evaluation after {}: {}", endpoint, d);
+      if (d == Decision.SUCCESS) {
+        return selectBestAvailableDatabase(sortedDatabases);
+      }
+      if (d == Decision.FAIL) {
+        throw new JedisConnectionException(
+            "Initialization failed due to initialization policy: " + evalCtx);
+      }
+      // else CONTINUE -> move to the next pending endpoint
+    }
+
+    // All databases are unhealthy
+    throw new JedisConnectionException(
+        "All configured databases are unhealthy. Cannot initialize MultiDbConnectionProvider.");
+  }
+
+  /**
+   * Selects the best available (healthy) database based on weight priority.
+   * @param sortedDatabases the list of databases sorted by weight in descending order
+   * @return the highest-weighted healthy database
+   * @throws JedisConnectionException if no healthy database is available
+   */
+  private Database selectBestAvailableDatabase(
+      List<Map.Entry<Endpoint, Database>> sortedDatabases) {
+    log.info("Selecting initial database from {} configured databases", sortedDatabases.size());
+
+    // Select first healthy database in weight order
+    for (Map.Entry<Endpoint, Database> entry : sortedDatabases) {
+      Endpoint endpoint = entry.getKey();
+      Database database = entry.getValue();
+
+      HealthStatus status;
+
+      // Check if health checks are enabled for this endpoint
+      if (healthStatusManager.hasHealthCheck(endpoint)) {
+        status = healthStatusManager.getHealthStatus(endpoint);
       } else {
         // No health check configured - assume healthy
         log.info("No health check configured for database {}, defaulting to HEALTHY", endpoint);
@@ -421,9 +517,9 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
       }
     }
 
-    // All databases are unhealthy
+    // No healthy database found (should not happen if policy succeeded)
     throw new JedisConnectionException(
-        "All configured databases are unhealthy. Cannot initialize MultiDbConnectionProvider.");
+        "No healthy database available after initialization policy succeeded.");
   }
 
   /**
@@ -516,9 +612,11 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
   }
 
   /**
-   * Asserts that the active database is operable. If not, throws an exception.
+   * Asserts that the active database is operable. If not, switches to another operable database or,
+   * when there is none, throws an exception.
    * <p>
-   * This method is called by the circuit breaker command executor before executing a command.
+   * This method is called by the circuit breaker command executor when a command cannot get a
+   * connection from the active database.
    * @throws JedisPermanentlyNotAvailableException if the there is no operable database and the max
    *           number of failover attempts has been exceeded.
    * @throws JedisTemporarilyNotAvailableException if the there is no operable database and the max
@@ -527,8 +625,17 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
   @VisibleForTesting
   public void assertOperability() {
     Database current = activeDatabase;
-    if (!current.isHealthy() && !this.canIterateFrom(current)) {
+    if (current.isHealthy()) return;
+    if (!canIterateFrom(current)) {
       handleNoHealthyDatabase();
+    } else if (activeDatabaseChangeLock.tryLock()) {
+      // Never wait for a switch in progress: this command fails anyway, the next ones use the
+      // new database
+      try {
+        failoverIfActiveInoperable();
+      } finally {
+        activeDatabaseChangeLock.unlock();
+      }
     }
   }
 
@@ -773,7 +880,7 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
     private TrackingConnectionPool connectionPool;
     private final Retry retry;
     private final CircuitBreaker circuitBreaker;
-    private final float weight;
+    private float weight;
     private final HealthCheck healthCheck;
     private final MultiDbConfig multiDbConfig;
     private boolean disabled = false;
@@ -841,6 +948,11 @@ public class MultiDbConnectionProvider implements ConnectionProvider {
      */
     public float getWeight() {
       return weight;
+    }
+
+    public void setWeight(float weight) {
+      JedisAsserts.isTrue(weight > 0, "Database weight must be greater than 0");
+      this.weight = weight;
     }
 
     public boolean isCBForcedOpen() {

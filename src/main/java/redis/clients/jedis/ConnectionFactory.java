@@ -12,7 +12,6 @@ import redis.clients.jedis.authentication.AuthXEventListener;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConnection;
 import redis.clients.jedis.exceptions.JedisException;
-import today.bonfire.oss.sop.PooledObject;
 import today.bonfire.oss.sop.PooledObjectFactory;
 
 /**
@@ -150,25 +149,33 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
   }
 
   private Connection build() {
-    return connectionBuilder.build();
+    Connection conn = connectionBuilder.buildUninitialized();
+    initialize(conn);
+    return conn;
+  }
+
+  /**
+   * Initialize a freshly built {@link Connection}.
+   * <p>
+   * Subclasses may override to wrap initialization (for example, with cancellation tracking),
+   * but must ensure {@link Connection#initializeFromClientConfig()} is invoked exactly once.
+   */
+  protected void initialize(Connection conn) {
+      conn.initializeFromClientConfig();
   }
 
   @Override
-  public void activateObject(Connection obj) {
-    // no-op
-  }
-
-  public void activateObject(PooledObject<Connection> pooledConnection) throws Exception {
+  public void activateObject(Connection connection) {
     // what to do ??
   }
 
   @Override
-  public void destroyObject(Connection obj) {
-    if (obj.isConnected()) {
+  public void destroyObject(Connection jedis) {
+    if (jedis.isConnected()) {
       try {
-        obj.close();
+        jedis.close();
       } catch (RuntimeException e) {
-        logger.debug("Error while closing", e);
+        logger.debug("Error while close", e);
       }
     }
   }
@@ -178,33 +185,26 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
     try {
       return objectMaker.get();
     } catch (JedisException je) {
-      logger.debug("Error while creating object", je);
+      logger.debug("Error while makeObject", je);
       throw je;
     }
   }
 
   @Override
-  public void passivateObject(Connection obj) {
+  public void passivateObject(Connection jedis) {
     // TODO maybe should select db 0? Not sure right now.
-      reAuthenticate(obj);
+    reAuthenticate(jedis);
   }
 
   @Override
-  public boolean isObjectValidForBorrow(Connection obj) {
-    try {
-      // Quick validation before borrowing - same as previous validateObject
-      return obj.isConnected();
-    } catch (final Exception e) {
-      logger.warn("Error while validating connection for borrow.", e);
-      return false;
-    }
+  public boolean isObjectValidForBorrow(Connection jedis) {
+    return isObjectValid(jedis);
   }
 
   @Override
-  public boolean isObjectValid(Connection obj) {
-    final Connection jedis = obj;
-    // Full validation - same logic as before
+  public boolean isObjectValid(Connection jedis) {
     try {
+      // check HostAndPort ??
       if (!jedis.isConnected()) {
         return false;
       }

@@ -6,13 +6,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisValidationException;
 import redis.clients.jedis.mcf.ConnectionFailoverException;
 import redis.clients.jedis.mcf.PingStrategy;
+import redis.clients.jedis.util.JedisAsserts;
 import redis.clients.jedis.mcf.HealthCheckStrategy;
-import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+import redis.clients.jedis.mcf.InitializationPolicy;
 
 /**
  * Configuration class for multi-database Redis deployments with automatic failover and failback
@@ -56,7 +58,7 @@ import today.bonfire.oss.sop.SimpleObjectPoolConfig;
  *       .healthCheckEnabled(true).build();
  *
  *   // Build multi-database configuration
- *   MultiDbConfig config = MultiDbConfig.builder(primary, secondary)
+ *   MultiDbConfig config = MultiDbConfig.builder().database(primary).database(secondary)
  *       .failureDetector(CircuitBreakerConfig.builder().failureRateThreshold(10.0f).build())
  *       .commandRetry(RetryConfig.builder().maxAttempts(3).build()).failbackSupported(true)
  *       .gracePeriod(10000).build();
@@ -308,7 +310,7 @@ public final class MultiDbConfig {
      * <p>
      * <strong>Default:</strong> {@value #CIRCUIT_BREAKER_SLIDING_WINDOW_SIZE_DEFAULT}
      * </p>
-     * @return sliding window size (calls or seconds depending on window type)
+     * @return sliding window size in seconds
      */
     public int getSlidingWindowSize() {
       return slidingWindowSize;
@@ -577,7 +579,7 @@ public final class MultiDbConfig {
    * monitoring overhead.
    * </p>
    * <p>
-   * <strong>Default:</strong> {@value #FAILBACK_CHECK_INTERVAL_DEFAULT} milliseconds (5 seconds)
+   * <strong>Default:</strong> {@value #FAILBACK_CHECK_INTERVAL_DEFAULT} milliseconds (2 minutes)
    * </p>
    * @see #getFailbackCheckInterval()
    * @see #isFailbackSupported
@@ -593,7 +595,7 @@ public final class MultiDbConfig {
    * between databases during intermittent failures.
    * </p>
    * <p>
-   * <strong>Default:</strong> {@value #GRACE_PERIOD_DEFAULT} milliseconds (10 seconds)
+   * <strong>Default:</strong> {@value #GRACE_PERIOD_DEFAULT} milliseconds (1 minute)
    * </p>
    * @see #getGracePeriod()
    * @see #isFailbackSupported
@@ -618,9 +620,12 @@ public final class MultiDbConfig {
   /**
    * Maximum number of failover attempts.
    * <p>
-   * This setting controls how many times the system will attempt to failover to a different
-   * database before giving up. For example, if set to 3, the system will make 1 initial attempt
-   * plus 2 failover attempts for a total of 3 attempts.
+   * While no healthy database is available, up to this many counted attempts are reported with
+   * {@code JedisTemporarilyNotAvailableException} and the client keeps trying to recover. Once they
+   * are exceeded, the failure is reported with {@code JedisPermanentlyNotAvailableException} and
+   * Jedis gives no guarantee of automatic recovery: create a new client. Attempts are counted at
+   * most once per {@code delayInBetweenFailoverAttempts}, so the two settings together define how
+   * long an outage is treated as temporary.
    * </p>
    * <p>
    * <strong>Default:</strong> {@value #MAX_NUM_FAILOVER_ATTEMPTS_DEFAULT}
@@ -632,9 +637,9 @@ public final class MultiDbConfig {
   /**
    * Delay in milliseconds between failover attempts.
    * <p>
-   * This setting controls how long the system will wait before attempting to failover to a
-   * different database. For example, if set to 1000, the system will wait 1 second before
-   * attempting to failover to a different database.
+   * Minimum time between two counted failover attempts while no healthy database is available.
+   * Together with {@code maxNumFailoverAttempts} it defines how long an outage is treated as
+   * temporary, before Jedis reports it as permanent and gives no guarantee of automatic recovery.
    * </p>
    * <p>
    * <strong>Default:</strong> {@value #DELAY_IN_BETWEEN_FAILOVER_ATTEMPTS_DEFAULT} milliseconds
@@ -642,6 +647,22 @@ public final class MultiDbConfig {
    * @see #getDelayInBetweenFailoverAttempts()
    */
   private int delayInBetweenFailoverAttempts;
+
+  /**
+   * Initialization policy that determines when the multi-database connection is ready to be
+   * returned based on the availability of individual database connections.
+   * <p>
+   * The policy is evaluated based on the completion status of database health checks, and the
+   * decision to continue waiting, succeed, or fail is based on the number of available, pending,
+   * and failed connections.
+   * </p>
+   * <p>
+   * <strong>Default:</strong> {@link InitializationPolicy.BuiltIn#MAJORITY_AVAILABLE}
+   * </p>
+   * @see InitializationPolicy
+   * @see #getInitializationPolicy()
+   */
+  private InitializationPolicy initializationPolicy;
 
   /**
    * Constructs a new MultiDbConfig with the specified database configurations.
@@ -774,6 +795,22 @@ public final class MultiDbConfig {
   }
 
   /**
+   * Returns the initialization policy that determines when the multi-database connection is ready.
+   * <p>
+   * The policy is evaluated based on the completion status of database health checks, and the
+   * decision to continue waiting, succeed, or fail is based on the number of available, pending,
+   * and failed connections.
+   * </p>
+   * @return the initialization policy, defaults to
+   *         {@link InitializationPolicy.BuiltIn#MAJORITY_AVAILABLE}
+   * @see InitializationPolicy
+   * @see #initializationPolicy
+   */
+  public InitializationPolicy getInitializationPolicy() {
+    return initializationPolicy;
+  }
+
+  /**
    * Creates a new Builder instance for configuring MultiDbConfig.
    * <p>
    * At least one database configuration must be added to the builder before calling build(). Use
@@ -837,11 +874,14 @@ public final class MultiDbConfig {
      */
     private float weight = 1.0f;
 
+    /** Health check enabled. Default: true */
+    private boolean healthCheckEnabled = true;
+
     /**
      * Strategy supplier for creating health check instances for this database. Default is
      * PingStrategy.DEFAULT.
      */
-    private StrategySupplier healthCheckStrategySupplier;
+    private StrategySupplier healthCheckStrategySupplier = PingStrategy.DEFAULT;
 
     /**
      * Constructs a DatabaseConfig with basic endpoint and client configuration.
@@ -860,24 +900,6 @@ public final class MultiDbConfig {
     }
 
     /**
-     * Constructs a DatabaseConfig with endpoint, client, and connection pool configuration.
-     * <p>
-     * This constructor allows specification of connection pool settings in addition to basic
-     * endpoint configuration. Default weight of 1.0f and PingStrategy for health checks are used.
-     * </p>
-     * @param endpoint the Redis endpoint (host and port)
-     * @param clientConfig the Jedis client configuration
-     * @param connectionPoolConfig the connection pool configuration
-     * @throws IllegalArgumentException if endpoint or clientConfig is null
-     */
-    public DatabaseConfig(Endpoint endpoint, JedisClientConfig clientConfig,
-        SimpleObjectPoolConfig connectionPoolConfig) {
-      this.endpoint = endpoint;
-      this.jedisClientConfig = clientConfig;
-      this.connectionPoolConfig = connectionPoolConfig;
-    }
-
-    /**
      * Private constructor used by the Builder to create configured instances.
      * @param builder the builder containing configuration values
      */
@@ -886,6 +908,7 @@ public final class MultiDbConfig {
       this.jedisClientConfig = builder.jedisClientConfig;
       this.connectionPoolConfig = builder.connectionPoolConfig;
       this.weight = builder.weight;
+      this.healthCheckEnabled = builder.healthCheckEnabled;
       this.healthCheckStrategySupplier = builder.healthCheckStrategySupplier;
     }
 
@@ -948,7 +971,18 @@ public final class MultiDbConfig {
      * @see redis.clients.jedis.mcf.HealthCheckStrategy
      */
     public StrategySupplier getHealthCheckStrategySupplier() {
+      if (!healthCheckEnabled) {
+        return null;
+      }
       return healthCheckStrategySupplier;
+    }
+
+    /**
+     * Returns whether health checks are enabled for this database.
+     * @return true if health checks are enabled, false otherwise
+     */
+    public boolean isHealthCheckEnabled() {
+      return healthCheckEnabled;
     }
 
     /**
@@ -979,6 +1013,9 @@ public final class MultiDbConfig {
 
       /** Weight for database selection priority. Default: 1.0f */
       private float weight = 1.0f;
+
+      /** Health check enabled. Default: true */
+      private boolean healthCheckEnabled = true;
 
       /** Health check strategy supplier. Default: PingStrategy.DEFAULT */
       private StrategySupplier healthCheckStrategySupplier = PingStrategy.DEFAULT;
@@ -1027,6 +1064,7 @@ public final class MultiDbConfig {
        * @return this builder instance for method chaining
        */
       public Builder weight(float weight) {
+        JedisAsserts.isTrue(weight > 0, "Database weight must be greater than 0");
         this.weight = weight;
         return this;
       }
@@ -1094,11 +1132,7 @@ public final class MultiDbConfig {
        * @return this builder instance for method chaining
        */
       public Builder healthCheckEnabled(boolean healthCheckEnabled) {
-        if (!healthCheckEnabled) {
-          this.healthCheckStrategySupplier = null;
-        } else if (healthCheckStrategySupplier == null) {
-          this.healthCheckStrategySupplier = PingStrategy.DEFAULT;
-        }
+        this.healthCheckEnabled = healthCheckEnabled;
         return this;
       }
 
@@ -1160,6 +1194,9 @@ public final class MultiDbConfig {
 
     /** Delay in milliseconds between failover attempts. */
     private int delayInBetweenFailoverAttempts = DELAY_IN_BETWEEN_FAILOVER_ATTEMPTS_DEFAULT;
+
+    /** Initialization policy for determining when the multi-database connection is ready. */
+    private InitializationPolicy initializationPolicy = InitializationPolicy.BuiltIn.MAJORITY_AVAILABLE;
 
     /**
      * Constructs a new Builder with the specified database configurations.
@@ -1399,9 +1436,12 @@ public final class MultiDbConfig {
     /**
      * Sets the maximum number of failover attempts.
      * <p>
-     * This setting controls how many times the system will attempt to failover to a different
-     * database before giving up. For example, if set to 3, the system will make 1 initial attempt
-     * plus 2 failover attempts for a total of 3 attempts.
+     * While no healthy database is available, up to this many counted attempts are reported with
+     * {@code JedisTemporarilyNotAvailableException} and the client keeps trying to recover. Once
+     * they are exceeded, the failure is reported with {@code JedisPermanentlyNotAvailableException}
+     * and Jedis gives no guarantee of automatic recovery: create a new client. Attempts are counted
+     * at most once per {@code delayInBetweenFailoverAttempts}, so the two settings together define
+     * how long an outage is treated as temporary.
      * </p>
      * <p>
      * <strong>Default:</strong> {@value #MAX_NUM_FAILOVER_ATTEMPTS_DEFAULT}
@@ -1417,9 +1457,9 @@ public final class MultiDbConfig {
     /**
      * Sets the delay in milliseconds between failover attempts.
      * <p>
-     * This setting controls how long the system will wait before attempting to failover to a
-     * different database. For example, if set to 1000, the system will wait 1 second before
-     * attempting to failover to a different database.
+     * Minimum time between two counted failover attempts while no healthy database is available.
+     * Together with {@code maxNumFailoverAttempts} it defines how long an outage is treated as
+     * temporary, before Jedis reports it as permanent and gives no guarantee of automatic recovery.
      * </p>
      * <p>
      * <strong>Default:</strong> {@value #DELAY_IN_BETWEEN_FAILOVER_ATTEMPTS_DEFAULT} milliseconds
@@ -1429,6 +1469,33 @@ public final class MultiDbConfig {
      */
     public Builder delayInBetweenFailoverAttempts(int delayInBetweenFailoverAttempts) {
       this.delayInBetweenFailoverAttempts = delayInBetweenFailoverAttempts;
+      return this;
+    }
+
+    /**
+     * Sets the initialization policy that determines when the multi-database connection is ready.
+     * <p>
+     * The policy is evaluated based on the completion status of database health checks, and the
+     * decision to continue waiting, succeed, or fail is based on the number of available, pending,
+     * and failed connections.
+     * </p>
+     * <p>
+     * <strong>Built-in policies:</strong>
+     * </p>
+     * <ul>
+     * <li>{@link InitializationPolicy.BuiltIn#ALL_AVAILABLE} - All databases need to be
+     * available</li>
+     * <li>{@link InitializationPolicy.BuiltIn#MAJORITY_AVAILABLE} - Majority of databases need to
+     * be available (default)</li>
+     * <li>{@link InitializationPolicy.BuiltIn#ONE_AVAILABLE} - At least one database needs to be
+     * available</li>
+     * </ul>
+     * @param initializationPolicy the initialization policy to use
+     * @return this builder instance for method chaining
+     */
+    public Builder initializationPolicy(InitializationPolicy initializationPolicy) {
+      JedisAsserts.notNull(initializationPolicy, "initializationPolicy must not be null");
+      this.initializationPolicy = initializationPolicy;
       return this;
     }
 
@@ -1460,6 +1527,7 @@ public final class MultiDbConfig {
       config.fastFailover = this.fastFailover;
       config.maxNumFailoverAttempts = this.maxNumFailoverAttempts;
       config.delayInBetweenFailoverAttempts = this.delayInBetweenFailoverAttempts;
+      config.initializationPolicy = this.initializationPolicy;
 
       return config;
     }

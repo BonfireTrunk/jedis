@@ -10,11 +10,173 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.args.ListDirection;
+import redis.clients.jedis.args.ListMoveOrder;
 import redis.clients.jedis.args.ListPosition;
+import redis.clients.jedis.params.LMoveMParams;
 import redis.clients.jedis.params.LPosParams;
 import redis.clients.jedis.util.KeyValue;
 
 public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
+
+  @Test
+  public void testLmovem() {
+    String srcKey = "sourceList";
+    String dstKey = "destinationList";
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    List<String> expected = Arrays.asList("a", "b");
+
+    when(commandObjects.lmovem(srcKey, dstKey, from, to)).thenReturn(listStringCommandObject);
+    when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expected);
+
+    List<String> result = jedis.lmovem(srcKey, dstKey, from, to);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listStringCommandObject);
+    verify(commandObjects).lmovem(srcKey, dstKey, from, to);
+  }
+
+  @Test
+  public void testLmovemBinary() {
+    byte[] srcKey = "sourceList".getBytes();
+    byte[] dstKey = "destinationList".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    List<byte[]> expected = Arrays.asList("a".getBytes(), "b".getBytes());
+
+    when(commandObjects.lmovem(srcKey, dstKey, from, to)).thenReturn(listBytesCommandObject);
+    when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expected);
+
+    List<byte[]> result = jedis.lmovem(srcKey, dstKey, from, to);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listBytesCommandObject);
+    verify(commandObjects).lmovem(srcKey, dstKey, from, to);
+  }
+
+  @Test
+  public void testLmovemWithParams() {
+    String srcKey = "sourceList";
+    String dstKey = "destinationList";
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.LEFT;
+    LMoveMParams params = LMoveMParams.lMoveMParams().count(2, ListMoveOrder.OBO);
+    List<String> expected = Arrays.asList("b", "a");
+
+    when(commandObjects.lmovem(srcKey, dstKey, from, to, params)).thenReturn(listStringCommandObject);
+    when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expected);
+
+    List<String> result = jedis.lmovem(srcKey, dstKey, from, to, params);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listStringCommandObject);
+    verify(commandObjects).lmovem(srcKey, dstKey, from, to, params);
+  }
+
+  @Test
+  public void testLmovemWithParamsBinary() {
+    byte[] srcKey = "sourceList".getBytes();
+    byte[] dstKey = "destinationList".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.LEFT;
+    LMoveMParams params = LMoveMParams.lMoveMParams().exactly(2, ListMoveOrder.BULK);
+    List<byte[]> expected = Arrays.asList("a".getBytes(), "b".getBytes());
+
+    when(commandObjects.lmovem(srcKey, dstKey, from, to, params)).thenReturn(listBytesCommandObject);
+    when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expected);
+
+    List<byte[]> result = jedis.lmovem(srcKey, dstKey, from, to, params);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listBytesCommandObject);
+    verify(commandObjects).lmovem(srcKey, dstKey, from, to, params);
+  }
+
+  @Test
+  public void testBlmovem() {
+    String srcKey = "sourceList";
+    String dstKey = "destinationList";
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 10.5;
+    List<String> expected = Arrays.asList("a");
+
+    when(commandObjects.blmovem(srcKey, dstKey, from, to, timeout)).thenReturn(listStringCommandObject);
+    when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expected);
+
+    List<String> result = jedis.blmovem(srcKey, dstKey, from, to, timeout);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listStringCommandObject);
+    verify(commandObjects).blmovem(srcKey, dstKey, from, to, timeout);
+  }
+
+  @Test
+  public void testBlmovemWithParams() {
+    String srcKey = "sourceList";
+    String dstKey = "destinationList";
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 10.5;
+    LMoveMParams params = LMoveMParams.lMoveMParams().count(3, ListMoveOrder.BULK);
+    List<String> expected = Arrays.asList("a", "b", "c");
+
+    when(commandObjects.blmovem(srcKey, dstKey, from, to, timeout, params)).thenReturn(listStringCommandObject);
+    when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expected);
+
+    List<String> result = jedis.blmovem(srcKey, dstKey, from, to, timeout, params);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listStringCommandObject);
+    verify(commandObjects).blmovem(srcKey, dstKey, from, to, timeout, params);
+  }
+
+  @Test
+  public void testBlmovemBinary() {
+    byte[] srcKey = "sourceList".getBytes();
+    byte[] dstKey = "destinationList".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 10.5;
+    List<byte[]> expected = Arrays.asList("a".getBytes());
+
+    when(commandObjects.blmovem(srcKey, dstKey, from, to, timeout)).thenReturn(listBytesCommandObject);
+    when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expected);
+
+    List<byte[]> result = jedis.blmovem(srcKey, dstKey, from, to, timeout);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listBytesCommandObject);
+    verify(commandObjects).blmovem(srcKey, dstKey, from, to, timeout);
+  }
+
+  @Test
+  public void testBlmovemWithParamsBinary() {
+    byte[] srcKey = "sourceList".getBytes();
+    byte[] dstKey = "destinationList".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 10.5;
+    LMoveMParams params = LMoveMParams.lMoveMParams().exactly(2, ListMoveOrder.OBO);
+    List<byte[]> expected = Arrays.asList("b".getBytes(), "a".getBytes());
+
+    when(commandObjects.blmovem(srcKey, dstKey, from, to, timeout, params)).thenReturn(listBytesCommandObject);
+    when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expected);
+
+    List<byte[]> result = jedis.blmovem(srcKey, dstKey, from, to, timeout, params);
+
+    assertThat(result, equalTo(expected));
+
+    verify(commandExecutor).executeCommand(listBytesCommandObject);
+    verify(commandObjects).blmovem(srcKey, dstKey, from, to, timeout, params);
+  }
 
   @Test
   public void testBlmove() {
@@ -61,13 +223,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     double timeout = 10.5; // Timeout in seconds
     ListDirection direction = ListDirection.LEFT;
     String[] keys = { "listKey1", "listKey2" };
-    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey1", Arrays.asList(
-      "value1", "value2"));
+    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey1", Arrays.asList("value1", "value2"));
 
-    when(commandObjects.blmpop(timeout, direction, keys)).thenReturn(
-      keyValueStringListStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandObjects.blmpop(timeout, direction, keys)).thenReturn(keyValueStringListStringCommandObject);
+    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, List<String>> result = jedis.blmpop(timeout, direction, keys);
 
@@ -82,13 +241,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     double timeout = 10.5; // Timeout in seconds
     ListDirection direction = ListDirection.LEFT;
     byte[][] keys = { "listKey1".getBytes(), "listKey2".getBytes() };
-    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey1".getBytes(),
-        Arrays.asList("value1".getBytes(), "value2".getBytes()));
+    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey1".getBytes(), Arrays.asList("value1".getBytes(), "value2".getBytes()));
 
-    when(commandObjects.blmpop(timeout, direction, keys)).thenReturn(
-      keyValueBytesListBytesCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandObjects.blmpop(timeout, direction, keys)).thenReturn(keyValueBytesListBytesCommandObject);
+    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], List<byte[]>> result = jedis.blmpop(timeout, direction, keys);
 
@@ -104,13 +260,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     ListDirection direction = ListDirection.RIGHT;
     int count = 2;
     String[] keys = { "listKey1", "listKey2" };
-    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey2", Arrays.asList(
-      "value3", "value4"));
+    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey2", Arrays.asList("value3", "value4"));
 
-    when(commandObjects.blmpop(timeout, direction, count, keys)).thenReturn(
-      keyValueStringListStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandObjects.blmpop(timeout, direction, count, keys)).thenReturn(keyValueStringListStringCommandObject);
+    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, List<String>> result = jedis.blmpop(timeout, direction, count, keys);
 
@@ -126,13 +279,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     ListDirection direction = ListDirection.RIGHT;
     int count = 2;
     byte[][] keys = { "listKey1".getBytes(), "listKey2".getBytes() };
-    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey2".getBytes(),
-        Arrays.asList("value3".getBytes(), "value4".getBytes()));
+    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey2".getBytes(), Arrays.asList("value3".getBytes(), "value4".getBytes()));
 
-    when(commandObjects.blmpop(timeout, direction, count, keys)).thenReturn(
-      keyValueBytesListBytesCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandObjects.blmpop(timeout, direction, count, keys)).thenReturn(keyValueBytesListBytesCommandObject);
+    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], List<byte[]>> result = jedis.blmpop(timeout, direction, count, keys);
 
@@ -183,8 +333,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     KeyValue<String, String> expectedKeyValue = new KeyValue<>(key, "value1");
 
     when(commandObjects.blpop(timeout, key)).thenReturn(keyValueStringStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, String> result = jedis.blpop(timeout, key);
 
@@ -198,12 +347,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
   public void testBlpopDoubleTimeoutBinary() {
     double timeout = 10.5; // Timeout in seconds
     byte[][] keys = { "listKey1".getBytes(), "listKey2".getBytes() };
-    KeyValue<byte[], byte[]> expectedKeyValue = new KeyValue<>("listKey1".getBytes(),
-        "value1".getBytes());
+    KeyValue<byte[], byte[]> expectedKeyValue = new KeyValue<>("listKey1".getBytes(), "value1".getBytes());
 
     when(commandObjects.blpop(timeout, keys)).thenReturn(keyValueBytesBytesCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesBytesCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueBytesBytesCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], byte[]> result = jedis.blpop(timeout, keys);
 
@@ -237,8 +384,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     KeyValue<String, String> expectedKeyValue = new KeyValue<>("listKey1", "value1");
 
     when(commandObjects.blpop(timeout, keys)).thenReturn(keyValueStringStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, String> result = jedis.blpop(timeout, keys);
 
@@ -289,8 +435,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     KeyValue<String, String> expectedKeyValue = new KeyValue<>(key, "value1");
 
     when(commandObjects.brpop(timeout, key)).thenReturn(keyValueStringStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, String> result = jedis.brpop(timeout, key);
 
@@ -304,12 +449,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
   public void testBrpopDoubleTimeoutBinary() {
     double timeout = 10.5; // Timeout in seconds
     byte[][] keys = { "listKey1".getBytes(), "listKey2".getBytes() };
-    KeyValue<byte[], byte[]> expectedKeyValue = new KeyValue<>("listKey1".getBytes(),
-        "value1".getBytes());
+    KeyValue<byte[], byte[]> expectedKeyValue = new KeyValue<>("listKey1".getBytes(), "value1".getBytes());
 
     when(commandObjects.brpop(timeout, keys)).thenReturn(keyValueBytesBytesCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesBytesCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueBytesBytesCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], byte[]> result = jedis.brpop(timeout, keys);
 
@@ -343,8 +486,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     KeyValue<String, String> expectedKeyValue = new KeyValue<>("listKey1", "value1");
 
     when(commandObjects.brpop(timeout, keys)).thenReturn(keyValueStringStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, String> result = jedis.brpop(timeout, keys);
 
@@ -362,8 +504,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     String expectedPoppedAndPushedValue = "value";
 
     when(commandObjects.brpoplpush(source, destination, timeout)).thenReturn(stringCommandObject);
-    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(
-      expectedPoppedAndPushedValue);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedPoppedAndPushedValue);
 
     String result = jedis.brpoplpush(source, destination, timeout);
 
@@ -381,8 +522,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     byte[] expectedPoppedAndPushedValue = "value".getBytes();
 
     when(commandObjects.brpoplpush(source, destination, timeout)).thenReturn(bytesCommandObject);
-    when(commandExecutor.executeCommand(bytesCommandObject)).thenReturn(
-      expectedPoppedAndPushedValue);
+    when(commandExecutor.executeCommand(bytesCommandObject)).thenReturn(expectedPoppedAndPushedValue);
 
     byte[] result = jedis.brpoplpush(source, destination, timeout);
 
@@ -536,12 +676,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
   public void testLmpop() {
     ListDirection direction = ListDirection.LEFT;
     String[] keys = { "listKey1", "listKey2" };
-    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey1", Arrays.asList(
-      "value1", "value2"));
+    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey1", Arrays.asList("value1", "value2"));
 
     when(commandObjects.lmpop(direction, keys)).thenReturn(keyValueStringListStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, List<String>> result = jedis.lmpop(direction, keys);
 
@@ -555,12 +693,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
   public void testLmpopBinary() {
     ListDirection direction = ListDirection.LEFT;
     byte[][] keys = { "listKey1".getBytes(), "listKey2".getBytes() };
-    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey1".getBytes(),
-        Arrays.asList("value1".getBytes(), "value2".getBytes()));
+    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey1".getBytes(), Arrays.asList("value1".getBytes(), "value2".getBytes()));
 
     when(commandObjects.lmpop(direction, keys)).thenReturn(keyValueBytesListBytesCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], List<byte[]>> result = jedis.lmpop(direction, keys);
 
@@ -575,13 +711,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     ListDirection direction = ListDirection.RIGHT;
     int count = 2;
     String[] keys = { "listKey1", "listKey2" };
-    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey2", Arrays.asList(
-      "value3", "value4"));
+    KeyValue<String, List<String>> expectedKeyValue = new KeyValue<>("listKey2", Arrays.asList("value3", "value4"));
 
-    when(commandObjects.lmpop(direction, count, keys)).thenReturn(
-      keyValueStringListStringCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandObjects.lmpop(direction, count, keys)).thenReturn(keyValueStringListStringCommandObject);
+    when(commandExecutor.executeCommand(keyValueStringListStringCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, List<String>> result = jedis.lmpop(direction, count, keys);
 
@@ -596,13 +729,10 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     ListDirection direction = ListDirection.RIGHT;
     int count = 2;
     byte[][] keys = { "listKey1".getBytes(), "listKey2".getBytes() };
-    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey2".getBytes(),
-        Arrays.asList("value3".getBytes(), "value4".getBytes()));
+    KeyValue<byte[], List<byte[]>> expectedKeyValue = new KeyValue<>("listKey2".getBytes(), Arrays.asList("value3".getBytes(), "value4".getBytes()));
 
-    when(commandObjects.lmpop(direction, count, keys)).thenReturn(
-      keyValueBytesListBytesCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandObjects.lmpop(direction, count, keys)).thenReturn(keyValueBytesListBytesCommandObject);
+    when(commandExecutor.executeCommand(keyValueBytesListBytesCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], List<byte[]>> result = jedis.lmpop(direction, count, keys);
 
@@ -877,8 +1007,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     byte[] key = "listKey".getBytes();
     long start = 0;
     long stop = -1; // Get all elements in the list
-    List<byte[]> expectedValues = Arrays.asList("value1".getBytes(), "value2".getBytes(),
-      "value3".getBytes());
+    List<byte[]> expectedValues = Arrays.asList("value1".getBytes(), "value2".getBytes(), "value3".getBytes());
 
     when(commandObjects.lrange(key, start, stop)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedValues);
@@ -1072,8 +1201,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     String expectedPoppedAndPushedValue = "value";
 
     when(commandObjects.rpoplpush(srckey, dstkey)).thenReturn(stringCommandObject);
-    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(
-      expectedPoppedAndPushedValue);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedPoppedAndPushedValue);
 
     String result = jedis.rpoplpush(srckey, dstkey);
 
@@ -1090,8 +1218,7 @@ public class UnifiedJedisListCommandsTest extends UnifiedJedisMockedTestBase {
     byte[] expectedPoppedAndPushedValue = "value".getBytes();
 
     when(commandObjects.rpoplpush(srckey, dstkey)).thenReturn(bytesCommandObject);
-    when(commandExecutor.executeCommand(bytesCommandObject)).thenReturn(
-      expectedPoppedAndPushedValue);
+    when(commandExecutor.executeCommand(bytesCommandObject)).thenReturn(expectedPoppedAndPushedValue);
 
     byte[] result = jedis.rpoplpush(srckey, dstkey);
 

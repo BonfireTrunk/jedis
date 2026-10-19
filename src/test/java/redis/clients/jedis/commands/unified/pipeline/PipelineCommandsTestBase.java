@@ -5,15 +5,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import redis.clients.jedis.util.EnabledOnCommandCondition;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.RedisVersionCondition;
 import redis.clients.jedis.*;
 import redis.clients.jedis.commands.CommandsTestsParameters;
-import redis.clients.jedis.commands.unified.pooled.PooledCommandsTestHelper;
+import redis.clients.jedis.commands.unified.client.RedisClientCommandsTestHelper;
 
 @Tag("integration")
 public abstract class PipelineCommandsTestBase {
 
-  protected JedisPooled jedis;
+  protected RedisClient client;
   protected Pipeline pipe;
   /**
    * Input data for parameterized tests. In principle all subclasses of this class should be
@@ -23,9 +24,14 @@ public abstract class PipelineCommandsTestBase {
   protected final RedisProtocol protocol;
 
   @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(PooledCommandsTestHelper.nodeInfo);
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(
+      RedisClientCommandsTestHelper::getEndpointConfig);
   @RegisterExtension
-  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(PooledCommandsTestHelper.nodeInfo);
+  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(
+      RedisClientCommandsTestHelper::getEndpointConfig);
+  @RegisterExtension
+  public static EnvCondition conditionalOnEnvCondition = new EnvCondition();
+
   /**
    * The RESP protocol is to be injected by the subclasses, usually via JUnit
    * parameterized tests, because most of the subclassed tests are meant to be
@@ -41,14 +47,14 @@ public abstract class PipelineCommandsTestBase {
 
   @BeforeEach
   public void setUp() {
-    jedis = PooledCommandsTestHelper.getPooled(protocol);
-    PooledCommandsTestHelper.clearData();
-    pipe = jedis.pipelined();
+    client = RedisClientCommandsTestHelper.getClient(protocol);
+    RedisClientCommandsTestHelper.clearData();
+    pipe = client.pipelined();
   }
 
   @AfterEach
   public void tearDown() {
     pipe.close();
-    jedis.close();
+    client.close();
   }
 }

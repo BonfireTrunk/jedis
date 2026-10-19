@@ -42,7 +42,7 @@ public class FTSearchParams implements IParams {
   private Map<String, Object> params;
   private Integer dialect;
 
-  // / non command parameters
+  /// non command parameters
   private Map<String, Boolean> returnFieldDecodeMap = null;
 
   public FTSearchParams() {
@@ -154,6 +154,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Set the query not to return the contents of documents, and rather just return the ids
+   *
    * @return the query itself
    */
   public FTSearchParams noContent() {
@@ -163,6 +164,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Set the query to verbatim mode, disabling stemming and query expansion
+   *
    * @return the query object
    */
   public FTSearchParams verbatim() {
@@ -172,6 +174,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Set the query not to filter for stopwords. In general this should not be used
+   *
    * @return the query object
    */
   public FTSearchParams noStopwords() {
@@ -182,6 +185,7 @@ public class FTSearchParams implements IParams {
   /**
    * Set the query to return a factored score for each results. This is useful to merge results from
    * multiple queries.
+   *
    * @return the query object itself
    */
   public FTSearchParams withScores() {
@@ -193,8 +197,7 @@ public class FTSearchParams implements IParams {
     return filter(new NumericFilter(field, min, max));
   }
 
-  public FTSearchParams filter(String field, double min, boolean exclusiveMin, double max,
-      boolean exclusiveMax) {
+  public FTSearchParams filter(String field, double min, boolean exclusiveMin, double max, boolean exclusiveMax) {
     return filter(new NumericFilter(field, min, exclusiveMin, max, exclusiveMax));
   }
 
@@ -214,6 +217,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Limit the query to results that are limited to a specific set of keys
+   *
    * @param keys a list of TEXT fields in the schemas
    * @return the query object itself
    */
@@ -228,6 +232,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Limit the query to results that are limited to a specific set of fields
+   *
    * @param fields a list of TEXT fields in the schemas
    * @return the query object itself
    */
@@ -246,6 +251,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Result's projection - the fields to return by the query
+   *
    * @param fields a list of TEXT fields in the schemas
    * @return the query object itself
    */
@@ -281,8 +287,7 @@ public class FTSearchParams implements IParams {
 
   public FTSearchParams returnField(FieldName field, boolean decode) {
     returnFields(field);
-    addReturnFieldDecode(field.getAttribute() != null ? field.getAttribute() : field.getName(),
-      decode);
+    addReturnFieldDecode(field.getAttribute() != null ? field.getAttribute() : field.getName(), decode);
     return this;
   }
 
@@ -317,19 +322,20 @@ public class FTSearchParams implements IParams {
    * Set the query custom scorer
    * <p>
    * See http://redisearch.io for documentation on extending RediSearch
+   *
    * @param scorer a custom scorer.
+   *
    * @return the query object itself
    */
   public FTSearchParams scorer(String scorer) {
     this.scorer = scorer;
     return this;
   }
-
-  //
-  // public FTSearchParams explainScore() {
-  // this.explainScore = true;
-  // return this;
-  // }
+//
+//  public FTSearchParams explainScore() {
+//    this.explainScore = true;
+//    return this;
+//  }
 
   public FTSearchParams slop(int slop) {
     this.slop = slop;
@@ -350,7 +356,9 @@ public class FTSearchParams implements IParams {
    * Set the query language, for stemming purposes
    * <p>
    * See http://redisearch.io for documentation on languages and stemming
+   *
    * @param language a language.
+   *
    * @return the query object itself
    */
   public FTSearchParams language(String language) {
@@ -360,6 +368,7 @@ public class FTSearchParams implements IParams {
 
   /**
    * Set the query to be sorted by a Sortable field defined in the schema
+   *
    * @param sortBy the sorting field's name
    * @param order the sorting order
    * @return the query object itself
@@ -372,21 +381,26 @@ public class FTSearchParams implements IParams {
 
   /**
    * Limit the results to a certain offset and limit
+   *
    * @param offset the first result to show, zero based indexing
    * @param num how many results we want to show
    * @return the query itself, for builder-style syntax
    */
   public FTSearchParams limit(int offset, int num) {
-    this.limit = new int[] { offset, num };
+    this.limit = new int[]{offset, num};
     return this;
   }
 
   /**
-   * Parameters can be referenced in the query string by a $ , followed by the parameter name, e.g.,
-   * $user , and each such reference in the search query to a parameter name is substituted by the
+   * Adds a query parameter. Parameters are referenced in the query string by {@code $} followed
+   * by the parameter name, e.g. {@code $user}, and each such reference is substituted by the
    * corresponding parameter value.
-   * @param name
-   * @param value can be String, long or float
+   * <p>
+   * Adding a parameter with an existing name overwrites its previous value. Parameters
+   * accumulate across {@code addParam} and {@link #params(Map)} calls.
+   *
+   * @param name the parameter name, referenced in the query as {@code $name}
+   * @param value the parameter value; can be String, long or float
    * @return the query object itself
    */
   public FTSearchParams addParam(String name, Object value) {
@@ -397,17 +411,27 @@ public class FTSearchParams implements IParams {
     return this;
   }
 
+  /**
+   * Adds all entries of the given map as query parameters, merging them with any parameters
+   * already set via {@link #addParam(String, Object)} or previous {@code params} calls. An entry
+   * whose name is already set overwrites its previous value.
+   *
+   * @param paramValues parameter name to value; values can be String, long or float
+   * @return the query object itself
+   * @see #addParam(String, Object)
+   */
   public FTSearchParams params(Map<String, Object> paramValues) {
     if (this.params == null) {
       this.params = new HashMap<>(paramValues);
     } else {
-      this.params.putAll(params);
+      this.params.putAll(paramValues);
     }
     return this;
   }
 
   /**
    * Set the dialect version to execute the query accordingly
+   *
    * @param dialect integer
    * @return the query object itself
    */
@@ -459,8 +483,7 @@ public class FTSearchParams implements IParams {
       this(field, min, false, max, false);
     }
 
-    public NumericFilter(String field, double min, boolean exclusiveMin, double max,
-        boolean exclusiveMax) {
+    public NumericFilter(String field, double min, boolean exclusiveMin, double max, boolean exclusiveMax) {
       this.field = field;
       this.min = min;
       this.max = max;
@@ -470,7 +493,8 @@ public class FTSearchParams implements IParams {
 
     @Override
     public void addParams(CommandArguments args) {
-      args.add(FILTER).add(field).add(formatNum(min, exclusiveMin))
+      args.add(FILTER).add(field)
+          .add(formatNum(min, exclusiveMin))
           .add(formatNum(max, exclusiveMax));
     }
 
@@ -500,7 +524,9 @@ public class FTSearchParams implements IParams {
 
     @Override
     public void addParams(CommandArguments args) {
-      args.add(GEOFILTER).add(field).add(lon).add(lat).add(radius).add(unit);
+      args.add(GEOFILTER).add(field)
+          .add(lon).add(lat)
+          .add(radius).add(unit);
     }
   }
 
@@ -579,7 +605,7 @@ public class FTSearchParams implements IParams {
     }
 
     public HighlightParams tags(String open, String close) {
-      this.tags = new String[] { open, close };
+      this.tags = new String[]{open, close};
       return this;
     }
 

@@ -6,8 +6,11 @@ import redis.clients.jedis.resps.AccessControlLogEntry;
 import redis.clients.jedis.resps.AccessControlUser;
 
 /**
- * This class provides the interfaces necessary to interact with Access Control Lists (ACLs) within
- * redis. These are the interfaces for string-based (i.e. decoded) interactions.
+ * This class provides the interfaces necessary to interact with
+ * Access Control Lists (ACLs) within redis. These are the interfaces
+ * for string-based (i.e. decoded) interactions.
+ *
+ *
  * @see <a href="https://redis.io/topics/acl">Redis ACL Guide</a>
  */
 
@@ -15,6 +18,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Returns the username used to authenticate the current connection.
+   *
    * @see <a href="https://redis.io/commands/acl-whoami">ACL WHOAMI</a>
    * @return The username used for the current connection
    */
@@ -22,12 +26,14 @@ public interface AccessControlLogCommands {
 
   /**
    * Generate a random password
+   *
    * @return A random password
    */
   String aclGenPass();
 
   /**
    * Generate a random password
+   *
    * @param bits the number of output bits
    * @return A random password
    */
@@ -35,13 +41,16 @@ public interface AccessControlLogCommands {
 
   /**
    * Returns the currently active ACL rules on the Redis Server
+   *
    * @see <a href="https://redis.io/commands/acl-list">ACL LIST</a>
    * @return An array of ACL rules
    */
   List<String> aclList();
 
   /**
-   * Shows a list of all usernames currently configured with access control lists (ACL).
+   * Shows a list of all usernames currently configured with access control
+   * lists (ACL).
+   *
    * @see <a href="https://redis.io/commands/acl-users">ACL USERS</a>
    * @return list of users
    */
@@ -56,6 +65,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Create an ACL for the specified user with the default rules.
+   *
    * @param name user who receives an acl
    * @see <a href="https://redis.io/commands/acl-setuser">ACL SETUSER</a>
    * @return A string containing OK on success
@@ -64,6 +74,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Create an ACL for the specified user, while specifying the rules.
+   *
    * @param name user who receives an acl
    * @param rules the acl rules for the specified user
    * @see <a href="https://redis.io/commands/acl-setuser">ACL SETUSER</a>
@@ -73,6 +84,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Delete the specified user, from the ACL.
+   *
    * @param names The usernames to delete
    * @see <a href="https://redis.io/commands/acl-deluser">ACL DELUSER</a>
    * @return The number of users delete
@@ -81,6 +93,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Show the available ACL categories.
+   *
    * @see <a href="https://redis.io/commands/acl-cat">ACL CAT</a>
    * @return the available ACL categories
    */
@@ -88,6 +101,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Show the available ACLs for a given category.
+   *
    * @param category The category for which to list available ACLs
    * @see <a href="https://redis.io/commands/acl-cat">ACL CAT</a>
    * @return the available ACL categories
@@ -96,6 +110,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Shows the recent ACL security events.
+   *
    * @see <a href="https://redis.io/commands/acl-log">ACL LOG</a>
    * @return The list of recent security events
    */
@@ -103,6 +118,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Shows the recent limit ACL security events.
+   *
    * @param limit The number of results to return
    * @see <a href="https://redis.io/commands/acl-log">ACL LOG</a>
    * @return The list of recent security events
@@ -111,13 +127,15 @@ public interface AccessControlLogCommands {
 
   /**
    * Reset the script event log
+   *
    * @return The OK string
    */
   String aclLogReset();
 
   /**
-   * This function tells Redis to reload its external ACL rules, when Redis is configured with an
-   * external ACL file
+   * This function tells Redis to reload its external ACL rules,
+   * when Redis is configured with an external ACL file
+   *
    * @see <a href="https://redis.io/commands/acl-load">ACL LOAD</a>
    * @return OK or error text
    */
@@ -125,6 +143,7 @@ public interface AccessControlLogCommands {
 
   /**
    * Save the currently defined in-memory ACL to disk.
+   *
    * @see <a href="https://redis.io/commands/acl-save">ACL SAVE</a>
    * @return OK on success
    */

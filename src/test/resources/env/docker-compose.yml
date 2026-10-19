@@ -1,3 +1,8 @@
+x-client-libs-image: &client-libs-image
+  image: "${CLIENT_LIBS_TEST_IMAGE}:${CLIENT_LIBS_TEST_IMAGE_TAG:-${REDIS_VERSION:-}}"
+x-client-libs-stack-image: &client-libs-stack-image
+  image: "${CLIENT_LIBS_TEST_IMAGE}:${CLIENT_LIBS_TEST_IMAGE_TAG:-${REDIS_STACK_VERSION:-${REDIS_VERSION:-}}}"
+
 services:
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.8.0
@@ -5,15 +10,16 @@ services:
       - "8474:8474"   # Admin API
       - "29379:29379" # redis-failover-1 proxy
       - "29380:29380" # redis-failover-2 proxy
+      - "26400:26400" # redis-unavailable proxy
   redis-failover-1:
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
+    <<: *client-libs-image
     container_name: redis-failover-1
     environment:
       - PORT=9379
     ports:
       - 9379:9379
   redis-failover-2:
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
+    <<: *client-libs-image
     container_name: redis-failover-2
     environment:
       - PORT=9380
@@ -22,12 +28,13 @@ services:
   redis1-2-5-8-sentinel:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
+    <<: *client-libs-image
     container_name: redis1-2-5-8-sentinel
     #network_mode: host
     environment:
       - REDIS_CLUSTER=no
-      - REDIS_PASSWORD=foobared
+      - REDIS_CLIENT_USER=deploy
+      - REDIS_CLIENT_PASSWORD=verify
       - TLS_ENABLED=yes
     ports:
       - "6379:6379"
@@ -42,11 +49,11 @@ services:
     volumes:
       -  ${REDIS_ENV_CONF_DIR}/redis1-2-5-8-sentinel/config:/redis/config:r
       -  ${REDIS_ENV_WORK_DIR}/redis1-2-5-8-sentinel/work:/redis/work:rw
-  redis3-4-sentinel:
+  standalone2-sentinel:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
-    container_name: redis3-4-sentinel
+    <<: *client-libs-image
+    container_name: standalone2-sentinel
     #network_mode: host
     environment:
       - REDIS_CLUSTER=no
@@ -57,19 +64,19 @@ services:
       - "16381:16381"
       - "6382:6382"
       - "16382:16382"
-      - "26380:26380" # sentinel
+      - "26380:26380" # sentinel-standalone2-1
       - "36380:36380" # sentinel tls
-      - "26382:26382" # sentinel
+      - "26382:26382" # sentinel-standalone2-3
       - "36382:36382" # sentinel tls
     volumes:
-      -  ${REDIS_ENV_CONF_DIR}/redis3-4-sentinel/config:/redis/config:r
-      -  ${REDIS_ENV_WORK_DIR}/redis3-4-sentinel/work:/redis/work:rw
+      -  ${REDIS_ENV_CONF_DIR}/standalone2-sentinel/config:/redis/config:r
+      -  ${REDIS_ENV_WORK_DIR}/standalone2-sentinel/work:/redis/work:rw
 
-  redis6-7-sentinel:
+  sentinel-failover:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
-    container_name: redis6-7-sentinel
+    <<: *client-libs-image
+    container_name: sentinel-standalone2-failover
     #network_mode: host
     environment:
       - REDIS_CLUSTER=no
@@ -80,33 +87,14 @@ services:
       - "26381:26381" # sentinel
       - "36381:36381" # sentinel tls
     volumes:
-      -  ${REDIS_ENV_CONF_DIR}/redis6-7-sentinel/config:/redis/config:r
-      -  ${REDIS_ENV_WORK_DIR}/redis6-7-sentinel/work:/redis/work:rw
-  redis9-sentinel:
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
-    container_name: redis9-sentinel
-    #network_mode: host
-    environment:
-      - REDIS_CLUSTER=no
-      - REDIS_CLIENT_USER=deploy
-      - REDIS_CLIENT_PASSWORD=verify
-      - TLS_ENABLED=yes
-    ports:
-      - "6387:6387"
-      - "16387:16387"
-      - "26383:26383"    # sentinel
-      - "36383:36383"    # sentinel tls
-    volumes:
-      -  ${REDIS_ENV_CONF_DIR}/redis9-sentinel/config:/redis/config:r
-      -  ${REDIS_ENV_WORK_DIR}/redis9-sentinel/work:/redis/work:rw
+      -  ${REDIS_ENV_CONF_DIR}/sentinel-standalone2-failover/config:/redis/config:r
+      -  ${REDIS_ENV_WORK_DIR}/sentinel-standalone2-failover/work:/redis/work:rw
 
-  redis10-11:
+  redis9-10:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
-    container_name: redis10-11
+    <<: *client-libs-image
+    container_name: redis9-10
     #network_mode: host
     environment:
       - REDIS_CLUSTER=no
@@ -114,12 +102,12 @@ services:
       - "6388:6388"
       - "6389:6389"
     volumes:
-      - ${REDIS_ENV_CONF_DIR}/redis10-11/config:/redis/config:r
-      - ${REDIS_ENV_WORK_DIR}/redis10-11/work:/redis/work:rw
+      - ${REDIS_ENV_CONF_DIR}/redis9-10/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis9-10/work:/redis/work:rw
   redis-unavailable:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
+    <<: *client-libs-image
     container_name: redis-unavailable-1
     #network_mode: host
     environment:
@@ -133,33 +121,39 @@ services:
   cluster-unbound:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
+    <<: *client-libs-image
     container_name: cluster-unbound-1
     environment:
-      - TLS_ENABLED=yes
       - REDIS_PASSWORD=cluster
     ports:
       - "7379-7383:7379-7383"
-      - "8379-8383:8379-8383"
     volumes:
       - ${REDIS_ENV_CONF_DIR}/cluster-unbound/config:/redis/config:r
       - ${REDIS_ENV_WORK_DIR}/cluster-unbound/work:/redis/work:rw
 
+  #TLS endpoints of Cluster stable are used for TLS tests that do not require client authentication
   cluster-stable:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_VERSION}"
+    <<: *client-libs-image
     container_name: cluster-stable-1
     #network_mode: host
-    command: --cluster-announce-ip 127.0.0.1 --cluster-node-timeout 150
+    # cluster-node-timeout must be generous here: this env has no failover tests, and a low
+    # value lets brief main-thread stalls (e.g. bulk vector indexing) trigger a transient
+    # CLUSTERDOWN that silently rejects writes mid-test.
+    command: --cluster-preferred-endpoint-type hostname --cluster-announce-hostname "localhost" --cluster-node-timeout 5000 --tls-auth-clients no --save ""
     environment:
       - REDIS_CLUSTER=yes
       - REDIS_PASSWORD=cluster
       - PORT=7479
+      - TLS_PORT=8479
       - NODES=6
       - REPLICAS=1
+      - TLS_ENABLED=yes
+      - TLS_AUTH_CLIENTS_USER=off
     ports:
       - "7479-7484:7479-7484"
+      - "8479-8484:8479-8484"
     volumes:
       - ${REDIS_ENV_CONF_DIR}/cluster-stable/config:/redis/config:r
       - ${REDIS_ENV_WORK_DIR}/cluster-stable/work:/redis/work:rw
@@ -167,8 +161,9 @@ services:
   jedis-stack:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_STACK_VERSION:-${REDIS_VERSION}}"
+    <<: *client-libs-stack-image
     container_name: jedis-stack
+    command: --save ""
     environment:
       - REDIS_CLUSTER=no
       - PORT=6479
@@ -178,10 +173,94 @@ services:
       -  ${REDIS_ENV_WORK_DIR}/jedis-stack/work:/redis/work:rw
 #todo find a way to connect from mac os host to exposed unix socket in container
 #  redis_uds:
-#    image: redis:${REDIS_VERSION}
+#    <<: *client-libs-image
 #    container_name: redis_uds
 #    #network_mode: host
 #    command: redis-server /etc/redis.conf
 #    volumes:
 #      - "./redis_uds/config/node-0/redis.conf:/etc/redis.conf"
 #      - "./work/redis_uds/work:/tmp/docker/"
+
+  # Standalone Redis instance with mTLS (mutual TLS) authentication
+  # Uses TLS_CLIENT_CNS to generate client certificates for mTLS users
+  # TLS_AUTH_CLIENTS_USER=CN (default) extracts username from client certificate CN
+  # ACL users matching client certificate CNs are configured via --user directives
+  standalone-mtls:
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+    <<: *client-libs-image
+    container_name: standalone-mtls
+    command:
+      - "--save"
+      - ""
+      - "--user"
+      - "mtls-user1"
+      - "on"
+      - "nopass"
+      - "~*"
+      - "&*"
+      - "+@all"
+      - "--user"
+      - "mtls-user2"
+      - "on"
+      - "nopass"
+      - "~*"
+      - "&*"
+      - "+@all"
+    environment:
+      - REDIS_CLUSTER=no
+      - TLS_ENABLED=yes
+      - TLS_PORT=6790
+      - PORT=6789
+      - TLS_CLIENT_CNS=mtls-user1 mtls-user2 mtls-user-without-acl
+    ports:
+      # We don't expose non-TLS port on purpose
+      - "6790:6790"
+    volumes:
+      - ${REDIS_ENV_WORK_DIR}/standalone-mtls/work:/redis/work:rw
+
+  # Redis cluster with mTLS (mutual TLS) authentication
+  # 3 nodes without replicas to minimize memory footprint
+  # TLS_AUTH_CLIENTS_USER=CN (default) extracts username from client certificate CN
+  # ACL users matching client certificate CNs are configured via --user directives
+  cluster-mtls:
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+    <<: *client-libs-image
+    container_name: cluster-mtls
+    command:
+      - "--cluster-preferred-endpoint-type"
+      - "hostname"
+      - "--cluster-announce-hostname"
+      - "localhost"
+      - "--cluster-node-timeout"
+      - "150"
+      - "--save"
+      - ""
+      - "--user"
+      - "mtls-user1"
+      - "on"
+      - "nopass"
+      - "~*"
+      - "&*"
+      - "+@all"
+      - "--user"
+      - "mtls-user2"
+      - "on"
+      - "nopass"
+      - "~*"
+      - "&*"
+      - "+@all"
+    environment:
+      - REDIS_CLUSTER=yes
+      - TLS_ENABLED=yes
+      - TLS_PORT=8579
+      - PORT=7579
+      - NODES=3
+      - REPLICAS=0
+      - TLS_CLIENT_CNS=mtls-user1 mtls-user2 mtls-user-without-acl
+    ports:
+      # We don't expose non-TLS ports on purpose
+      - "8579-8581:8579-8581"
+    volumes:
+      - ${REDIS_ENV_WORK_DIR}/cluster-mtls/work:/redis/work:rw

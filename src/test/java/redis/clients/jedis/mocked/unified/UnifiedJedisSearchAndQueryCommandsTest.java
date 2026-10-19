@@ -32,8 +32,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     AggregationResult expectedResponse = mock(AggregationResult.class);
 
     when(commandObjects.ftAggregate(indexName, aggr)).thenReturn(aggregationResultCommandObject);
-    when(commandExecutor.executeCommand(aggregationResultCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandExecutor.executeCommand(aggregationResultCommandObject)).thenReturn(expectedResponse);
 
     AggregationResult result = jedis.ftAggregate(indexName, aggr);
 
@@ -50,13 +49,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftAliasAdd(aliasName, indexName)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftAliasAdd(aliasName, indexName);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftAliasAdd(aliasName, indexName);
   }
 
@@ -66,13 +65,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftAliasDel(aliasName)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftAliasDel(aliasName);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftAliasDel(aliasName);
   }
 
@@ -83,13 +82,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftAliasUpdate(aliasName, indexName)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftAliasUpdate(aliasName, indexName);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftAliasUpdate(aliasName, indexName);
   }
 
@@ -100,13 +99,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftAlter(indexName, schema)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftAlter(indexName, schema);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftAlter(indexName, schema);
   }
 
@@ -117,13 +116,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftAlter(indexName, schemaFields)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftAlter(indexName, schemaFields);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftAlter(indexName, schemaFields);
   }
 
@@ -203,13 +202,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftCreate(indexName, indexOptions, schema)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftCreate(indexName, indexOptions, schema);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftCreate(indexName, indexOptions, schema);
   }
 
@@ -220,15 +219,14 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     Iterable<SchemaField> schemaFields = Collections.singletonList(new TextField("myField"));
     String expectedResponse = "OK";
 
-    when(commandObjects.ftCreate(indexName, createParams, schemaFields)).thenReturn(
-      stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandObjects.ftCreate(indexName, createParams, schemaFields)).thenReturn(stringCommandObject);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftCreate(indexName, createParams, schemaFields);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftCreate(indexName, createParams, schemaFields);
   }
 
@@ -256,10 +254,8 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     int count = 10;
     AggregationResult expectedResponse = mock(AggregationResult.class);
 
-    when(commandObjects.ftCursorRead(indexName, cursorId, count)).thenReturn(
-      aggregationResultCommandObject);
-    when(commandExecutor.executeCommand(aggregationResultCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandObjects.ftCursorRead(indexName, cursorId, count)).thenReturn(aggregationResultCommandObject);
+    when(commandExecutor.executeCommand(aggregationResultCommandObject)).thenReturn(expectedResponse);
 
     AggregationResult result = jedis.ftCursorRead(indexName, cursorId, count);
 
@@ -293,8 +289,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String[] terms = { "term1", "term2" };
     long expectedResponse = 2L;
 
-    when(commandObjects.ftDictAddBySampleKey(indexName, dictionary, terms)).thenReturn(
-      longCommandObject);
+    when(commandObjects.ftDictAddBySampleKey(indexName, dictionary, terms)).thenReturn(longCommandObject);
     when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedResponse);
 
     long result = jedis.ftDictAddBySampleKey(indexName, dictionary, terms);
@@ -329,8 +324,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String[] terms = { "term1", "term2" };
     long expectedResponse = 1L;
 
-    when(commandObjects.ftDictDelBySampleKey(indexName, dictionary, terms)).thenReturn(
-      longCommandObject);
+    when(commandObjects.ftDictDelBySampleKey(indexName, dictionary, terms)).thenReturn(longCommandObject);
     when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedResponse);
 
     long result = jedis.ftDictDelBySampleKey(indexName, dictionary, terms);
@@ -363,8 +357,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String dictionary = "myDict";
     Set<String> expectedResponse = new HashSet<>(Arrays.asList("term1", "term2"));
 
-    when(commandObjects.ftDictDumpBySampleKey(indexName, dictionary)).thenReturn(
-      setStringCommandObject);
+    when(commandObjects.ftDictDumpBySampleKey(indexName, dictionary)).thenReturn(setStringCommandObject);
     when(commandExecutor.executeCommand(setStringCommandObject)).thenReturn(expectedResponse);
 
     Set<String> result = jedis.ftDictDumpBySampleKey(indexName, dictionary);
@@ -381,13 +374,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftDropIndex(indexName)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftDropIndex(indexName);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftDropIndex(indexName);
   }
 
@@ -397,13 +390,13 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String expectedResponse = "OK";
 
     when(commandObjects.ftDropIndexDD(indexName)).thenReturn(stringCommandObject);
-    when(commandExecutor.broadcastCommand(stringCommandObject)).thenReturn(expectedResponse);
+    when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftDropIndexDD(indexName);
 
     assertThat(result, equalTo(expectedResponse));
 
-    verify(commandExecutor).broadcastCommand(stringCommandObject);
+    verify(commandExecutor).executeCommand(stringCommandObject);
     verify(commandObjects).ftDropIndexDD(indexName);
   }
 
@@ -444,8 +437,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
   @Test
   public void testFtInfo() {
     String indexName = "myIndex";
-    Map<String, Object> expectedResponse = Collections.singletonMap("index_definition",
-      Collections.singletonMap("key_type", "HASH"));
+    Map<String, Object> expectedResponse = Collections.singletonMap("index_definition", Collections.singletonMap("key_type", "HASH"));
 
     when(commandObjects.ftInfo(indexName)).thenReturn(mapStringObjectCommandObject);
     when(commandExecutor.executeCommand(mapStringObjectCommandObject)).thenReturn(expectedResponse);
@@ -546,13 +538,10 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
   public void testFtSpellCheck() {
     String index = "myIndex";
     String query = "hello world";
-    Map<String, Map<String, Double>> expectedResponse = Collections.singletonMap("term1",
-      Collections.singletonMap("suggestion1", 1.0));
+    Map<String, Map<String, Double>> expectedResponse = Collections.singletonMap("term1", Collections.singletonMap("suggestion1", 1.0));
 
-    when(commandObjects.ftSpellCheck(index, query)).thenReturn(
-      mapStringMapStringDoubleCommandObject);
-    when(commandExecutor.executeCommand(mapStringMapStringDoubleCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandObjects.ftSpellCheck(index, query)).thenReturn(mapStringMapStringDoubleCommandObject);
+    when(commandExecutor.executeCommand(mapStringMapStringDoubleCommandObject)).thenReturn(expectedResponse);
 
     Map<String, Map<String, Double>> result = jedis.ftSpellCheck(index, query);
 
@@ -567,13 +556,10 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String index = "myIndex";
     String query = "hello world";
     FTSpellCheckParams spellCheckParams = new FTSpellCheckParams().distance(1);
-    Map<String, Map<String, Double>> expectedResponse = Collections.singletonMap("term1",
-      Collections.singletonMap("suggestion1", 1.0));
+    Map<String, Map<String, Double>> expectedResponse = Collections.singletonMap("term1", Collections.singletonMap("suggestion1", 1.0));
 
-    when(commandObjects.ftSpellCheck(index, query, spellCheckParams)).thenReturn(
-      mapStringMapStringDoubleCommandObject);
-    when(commandExecutor.executeCommand(mapStringMapStringDoubleCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandObjects.ftSpellCheck(index, query, spellCheckParams)).thenReturn(mapStringMapStringDoubleCommandObject);
+    when(commandExecutor.executeCommand(mapStringMapStringDoubleCommandObject)).thenReturn(expectedResponse);
 
     Map<String, Map<String, Double>> result = jedis.ftSpellCheck(index, query, spellCheckParams);
 
@@ -586,12 +572,10 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
   @Test
   public void testFtSynDump() {
     String indexName = "myIndex";
-    Map<String, List<String>> expectedResponse = Collections.singletonMap("group1",
-      Arrays.asList("term1", "term2"));
+    Map<String, List<String>> expectedResponse = Collections.singletonMap("group1", Arrays.asList("term1", "term2"));
 
     when(commandObjects.ftSynDump(indexName)).thenReturn(mapStringListStringCommandObject);
-    when(commandExecutor.executeCommand(mapStringListStringCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandExecutor.executeCommand(mapStringListStringCommandObject)).thenReturn(expectedResponse);
 
     Map<String, List<String>> result = jedis.ftSynDump(indexName);
 
@@ -608,8 +592,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String[] terms = { "term1", "term2" };
     String expectedResponse = "OK";
 
-    when(commandObjects.ftSynUpdate(indexName, synonymGroupId, terms)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.ftSynUpdate(indexName, synonymGroupId, terms)).thenReturn(stringCommandObject);
     when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.ftSynUpdate(indexName, synonymGroupId, terms);
@@ -730,8 +713,7 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
   public void testFtSugGetWithScores() {
     String key = "sugKey";
     String prefix = "sug";
-    List<Tuple> expectedResponse = Arrays.asList(new Tuple("suggestion1", 1.0), new Tuple(
-        "suggestion2", 0.8));
+    List<Tuple> expectedResponse = Arrays.asList(new Tuple("suggestion1", 1.0), new Tuple("suggestion2", 0.8));
 
     when(commandObjects.ftSugGetWithScores(key, prefix)).thenReturn(listTupleCommandObject);
     when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedResponse);
@@ -750,11 +732,9 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     String prefix = "sug";
     boolean fuzzy = true;
     int max = 10;
-    List<Tuple> expectedResponse = Arrays.asList(new Tuple("suggestion1", 1.0), new Tuple(
-        "suggestion2", 0.8));
+    List<Tuple> expectedResponse = Arrays.asList(new Tuple("suggestion1", 1.0), new Tuple("suggestion2", 0.8));
 
-    when(commandObjects.ftSugGetWithScores(key, prefix, fuzzy, max)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.ftSugGetWithScores(key, prefix, fuzzy, max)).thenReturn(listTupleCommandObject);
     when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedResponse);
 
     List<Tuple> result = jedis.ftSugGetWithScores(key, prefix, fuzzy, max);
@@ -789,13 +769,10 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     Map.Entry<AggregationResult, ProfilingInfo> expectedResponse = new AbstractMap.SimpleEntry<>(
         mock(AggregationResult.class), mock(ProfilingInfo.class));
 
-    when(commandObjects.ftProfileAggregate(indexName, profileParams, aggr)).thenReturn(
-      entryAggregationResultMapStringObjectCommandObject);
-    when(commandExecutor.executeCommand(entryAggregationResultMapStringObjectCommandObject))
-        .thenReturn(expectedResponse);
+    when(commandObjects.ftProfileAggregate(indexName, profileParams, aggr)).thenReturn(entryAggregationResultMapStringObjectCommandObject);
+    when(commandExecutor.executeCommand(entryAggregationResultMapStringObjectCommandObject)).thenReturn(expectedResponse);
 
-    Map.Entry<AggregationResult, ProfilingInfo> result = jedis.ftProfileAggregate(indexName,
-      profileParams, aggr);
+    Map.Entry<AggregationResult, ProfilingInfo> result = jedis.ftProfileAggregate(indexName, profileParams, aggr);
 
     assertThat(result, equalTo(expectedResponse));
 
@@ -811,13 +788,10 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     Map.Entry<SearchResult, ProfilingInfo> expectedResponse = new AbstractMap.SimpleEntry<>(
         mock(SearchResult.class), mock(ProfilingInfo.class));
 
-    when(commandObjects.ftProfileSearch(indexName, profileParams, query)).thenReturn(
-      entrySearchResultMapStringObjectCommandObject);
-    when(commandExecutor.executeCommand(entrySearchResultMapStringObjectCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandObjects.ftProfileSearch(indexName, profileParams, query)).thenReturn(entrySearchResultMapStringObjectCommandObject);
+    when(commandExecutor.executeCommand(entrySearchResultMapStringObjectCommandObject)).thenReturn(expectedResponse);
 
-    Map.Entry<SearchResult, ProfilingInfo> result = jedis.ftProfileSearch(indexName,
-      profileParams, query);
+    Map.Entry<SearchResult, ProfilingInfo> result = jedis.ftProfileSearch(indexName, profileParams, query);
 
     assertThat(result, equalTo(expectedResponse));
 
@@ -834,13 +808,10 @@ public class UnifiedJedisSearchAndQueryCommandsTest extends UnifiedJedisMockedTe
     Map.Entry<SearchResult, ProfilingInfo> expectedResponse = new AbstractMap.SimpleEntry<>(
         mock(SearchResult.class), mock(ProfilingInfo.class));
 
-    when(commandObjects.ftProfileSearch(indexName, profileParams, query, searchParams)).thenReturn(
-      entrySearchResultMapStringObjectCommandObject);
-    when(commandExecutor.executeCommand(entrySearchResultMapStringObjectCommandObject)).thenReturn(
-      expectedResponse);
+    when(commandObjects.ftProfileSearch(indexName, profileParams, query, searchParams)).thenReturn(entrySearchResultMapStringObjectCommandObject);
+    when(commandExecutor.executeCommand(entrySearchResultMapStringObjectCommandObject)).thenReturn(expectedResponse);
 
-    Map.Entry<SearchResult, ProfilingInfo> result = jedis.ftProfileSearch(indexName,
-      profileParams, query, searchParams);
+    Map.Entry<SearchResult, ProfilingInfo> result = jedis.ftProfileSearch(indexName, profileParams, query, searchParams);
 
     assertThat(result, equalTo(expectedResponse));
 

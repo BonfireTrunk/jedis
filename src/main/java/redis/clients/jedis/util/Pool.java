@@ -1,18 +1,13 @@
 package redis.clients.jedis.util;
 
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
-import today.bonfire.oss.sop.PoolObject;
 import today.bonfire.oss.sop.PooledObjectFactory;
 import today.bonfire.oss.sop.SimpleObjectPool;
 import today.bonfire.oss.sop.SimpleObjectPoolConfig;
-import today.bonfire.oss.sop.exceptions.PoolException;
 
-public class Pool<T extends PoolObject> extends SimpleObjectPool<T> {
+public class Pool<T> extends SimpleObjectPool<T> {
 
-  private final static JedisPoolConfig defaultPoolConfig = JedisPoolConfig.builder().build();
-
+  // Legacy
   public Pool(SimpleObjectPoolConfig poolConfig, PooledObjectFactory<T> factory) {
     this(factory, poolConfig);
   }
@@ -22,7 +17,7 @@ public class Pool<T extends PoolObject> extends SimpleObjectPool<T> {
   }
 
   public Pool(final PooledObjectFactory<T> factory) {
-    super(defaultPoolConfig, factory);
+    super(factory);
   }
 
   @Override
@@ -43,8 +38,6 @@ public class Pool<T extends PoolObject> extends SimpleObjectPool<T> {
       return super.borrowObject();
     } catch (JedisException je) {
       throw je;
-    } catch (PoolException pe) {
-      throw new JedisConnectionException("Could not get a resource from the pool", pe);
     } catch (Exception e) {
       throw new JedisException("Could not get a resource from the pool", e);
     }
@@ -72,8 +65,25 @@ public class Pool<T extends PoolObject> extends SimpleObjectPool<T> {
     }
   }
 
-  protected void clear() {
+  @Override
+  public int addObjects(int count) {
+    try {
+      return super.addObjects(count);
+    } catch (Exception e) {
+      throw new JedisException("Error trying to add idle objects", e);
+    }
+  }
+
+  /**
+   * Destroys all idle objects. Borrowed objects are not affected.
+   */
+  public void clear() {
     super.destroyAllIdleObjects();
+  }
+
+  @Override
+  public PooledObjectFactory<T> getFactory() {
+    return super.getFactory();
   }
 
   public int getNumActive() {

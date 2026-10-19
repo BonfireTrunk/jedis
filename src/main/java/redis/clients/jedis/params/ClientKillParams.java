@@ -70,6 +70,7 @@ public class ClientKillParams implements IParams {
 
   /**
    * Kill clients older than {@code maxAge} seconds.
+   *
    * @param maxAge Clients older than this number of seconds will be killed.
    * @return The {@code ClientKillParams} instance, for call chaining.
    */

@@ -18,7 +18,7 @@ public class ManagedConnectionProviderTest {
 
   @BeforeEach
   public void setUp() {
-    EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0");
+    EndpointConfig endpoint = Endpoints.getRedisEndpoint("standalone0");
     connection = new Connection(endpoint.getHostAndPort(), endpoint.getClientConfigBuilder().build());
   }
 
@@ -30,7 +30,7 @@ public class ManagedConnectionProviderTest {
   @Test
   public void test() {
     ManagedConnectionProvider managed = new ManagedConnectionProvider();
-    try (UnifiedJedis jedis = new UnifiedJedis(managed)) {
+    try (UnifiedJedis jedis = new UnifiedJedis(managed, RedisProtocol.RESP2)) {
       try {
         jedis.get("any");
         fail("Should get NPE.");

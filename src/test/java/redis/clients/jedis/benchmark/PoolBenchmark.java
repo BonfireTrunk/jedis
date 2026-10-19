@@ -1,19 +1,17 @@
 package redis.clients.jedis.benchmark;
 
-import redis.clients.jedis.EndpointConfig;
-import redis.clients.jedis.HostAndPorts;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+
+import redis.clients.jedis.*;
+
 public class PoolBenchmark {
 
+  private static EndpointConfig endpoint = Endpoints.getRedisEndpoint("standalone0");
   private static final int TOTAL_OPERATIONS = 100000;
-  private static EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0");
 
   public static void main(String[] args) throws Exception {
     Jedis j = new Jedis(endpoint.getHostAndPort());
@@ -29,7 +27,7 @@ public class PoolBenchmark {
   }
 
   private static void withPool() throws Exception {
-    final JedisPool pool = new JedisPool(new JedisPoolConfig().toBuilder().testOnBorrow(false).build(), endpoint.getHost(),
+    final JedisPool pool = new JedisPool(SimpleObjectPoolConfig.defaultConfig(), endpoint.getHost(),
         endpoint.getPort(), 2000, endpoint.getPassword());
     List<Thread> tds = new ArrayList<Thread>();
 

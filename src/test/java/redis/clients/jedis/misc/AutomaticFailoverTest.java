@@ -7,21 +7,27 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.*;
+import redis.clients.jedis.MultiDbConfig.DatabaseConfig;
 import redis.clients.jedis.exceptions.JedisAccessControlException;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.mcf.DatabaseSwitchEvent;
 import redis.clients.jedis.mcf.MultiDbConnectionProvider;
 import redis.clients.jedis.mcf.MultiDbConnectionProviderHelper;
 import redis.clients.jedis.mcf.SwitchReason;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.IOUtils;
+import redis.clients.jedis.util.TestEnvUtil;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
@@ -32,32 +38,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("failover")
 @Tag("integration")
+@ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
 public class AutomaticFailoverTest {
+
+  @RegisterExtension
+  public static EnvCondition envCondition = new EnvCondition();
 
   private static final Logger log = LoggerFactory.getLogger(AutomaticFailoverTest.class);
 
-  private final HostAndPort hostPortWithFailure = new HostAndPort(
-      HostAndPorts.getRedisEndpoint("standalone0").getHost(), 6378);
-  private final EndpointConfig endpointForAuthFailure = HostAndPorts
-      .getRedisEndpoint("standalone0");
-  private final EndpointConfig workingEndpoint = HostAndPorts
-      .getRedisEndpoint("standalone7-with-lfu-policy");
+  private static HostAndPort hostPortWithFailure;
+  private static EndpointConfig endpointForAuthFailure;
+  private static EndpointConfig workingEndpoint;
 
   private final JedisClientConfig clientConfig = DefaultJedisClientConfig.builder().build();
 
   private Jedis jedis2;
 
+  @BeforeAll
+  public static void prepareEndpoints() {
+    endpointForAuthFailure = Endpoints.getRedisEndpoint("standalone0");
+    workingEndpoint = Endpoints.getRedisEndpoint("standalone7-with-lfu-policy");
+    hostPortWithFailure = new HostAndPort(endpointForAuthFailure.getHost(), 6378);
+  }
+
   private List<MultiDbConfig.DatabaseConfig> getDatabaseConfigs(
       JedisClientConfig clientConfig, HostAndPort... hostPorts) {
     return Arrays.stream(hostPorts)
-        .map(hp -> new MultiDbConfig.DatabaseConfig(hp, clientConfig))
+        .map(hp -> DatabaseConfig.builder(hp, clientConfig).healthCheckEnabled(false).build())
         .collect(Collectors.toList());
   }
 
   @BeforeEach
   public void setUp() {
     jedis2 = new Jedis(workingEndpoint.getHostAndPort(),
-        workingEndpoint.getClientConfigBuilder().build());
+        workingEndpoint.getClientConfigBuilder().serverDefaultProtocol().build());
     jedis2.flushAll();
   }
 
@@ -71,14 +85,14 @@ public class AutomaticFailoverTest {
     MultiDbConnectionProvider provider = new MultiDbConnectionProvider(
         new MultiDbConfig.Builder(
             getDatabaseConfigs(clientConfig, hostPortWithFailure, workingEndpoint.getHostAndPort()))
-            .build());
+                .build());
 
     try (MultiDbClient client = MultiDbClient.builder().connectionProvider(provider).build()) {
       AbstractPipeline pipe = client.pipelined();
       pipe.set("pstr", "foobar");
       pipe.hset("phash", "foo", "bar");
       MultiDbConnectionProviderHelper.switchToHealthyDatabase(provider,
-          SwitchReason.HEALTH_CHECK, provider.getDatabase());
+        SwitchReason.HEALTH_CHECK, provider.getDatabase());
       pipe.sync();
     }
 
@@ -91,14 +105,14 @@ public class AutomaticFailoverTest {
     MultiDbConnectionProvider provider = new MultiDbConnectionProvider(
         new MultiDbConfig.Builder(
             getDatabaseConfigs(clientConfig, hostPortWithFailure, workingEndpoint.getHostAndPort()))
-            .build());
+                .build());
 
     try (MultiDbClient client = MultiDbClient.builder().connectionProvider(provider).build()) {
       AbstractTransaction tx = client.multi();
       tx.set("tstr", "foobar");
       tx.hset("thash", "foo", "bar");
       MultiDbConnectionProviderHelper.switchToHealthyDatabase(provider,
-          SwitchReason.HEALTH_CHECK, provider.getDatabase());
+        SwitchReason.HEALTH_CHECK, provider.getDatabase());
       assertEquals(Arrays.asList("OK", 1L), tx.exec());
     }
 
@@ -114,11 +128,11 @@ public class AutomaticFailoverTest {
     HostAndPort unresolvableHostAndPort = new HostAndPort("unresolvable", 6379);
     MultiDbConfig.Builder builder = new MultiDbConfig.Builder(
         getDatabaseConfigs(clientConfig, unresolvableHostAndPort, workingEndpoint.getHostAndPort()))
-        .commandRetry(MultiDbConfig.RetryConfig.builder().waitDuration(1).maxAttempts(1).build())
-        .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
-            .slidingWindowSize(slidingWindowSize)
-            .minNumOfFailures(slidingWindowMinFails)
-            .build());
+            .commandRetry(MultiDbConfig.RetryConfig.builder().waitDuration(1).maxAttempts(1).build())
+            .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
+                .slidingWindowSize(slidingWindowSize)
+                .minNumOfFailures(slidingWindowMinFails)
+                .build());
 
     RedisFailoverReporter failoverReporter = new RedisFailoverReporter();
     MultiDbConnectionProvider connectionProvider = new MultiDbConnectionProvider(
@@ -133,10 +147,9 @@ public class AutomaticFailoverTest {
 
     for (int attempt = 0; attempt < slidingWindowMinFails; attempt++) {
       assertFalse(failoverReporter.failedOver);
-      // With SimpleObjectPool on unresolvable host, we get JedisConnectionException
-      // The root cause (UnknownHostException) may not be in the direct cause chain
-      // but is logged during connection attempts
-      assertThrows(JedisConnectionException.class, () -> jedis.hset(key, "f1", "v1"));
+      Throwable thrown = assertThrows(JedisConnectionException.class,
+        () -> jedis.hset(key, "f1", "v1"));
+      assertThat(thrown.getCause(), instanceOf(UnknownHostException.class));
     }
 
     // already failed over now
@@ -157,12 +170,12 @@ public class AutomaticFailoverTest {
 
     MultiDbConfig.Builder builder = new MultiDbConfig.Builder(
         getDatabaseConfigs(clientConfig, hostPortWithFailure, workingEndpoint.getHostAndPort()))
-        .commandRetry(MultiDbConfig.RetryConfig.builder().maxAttempts(retryMaxAttempts).build())
-        .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
-            .failureRateThreshold(50)
-            .minNumOfFailures(slidingWindowMinFails)
-            .slidingWindowSize(slidingWindowSize)
-            .build());
+            .commandRetry(MultiDbConfig.RetryConfig.builder().maxAttempts(retryMaxAttempts).build())
+            .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
+                .failureRateThreshold(50)
+                .minNumOfFailures(slidingWindowMinFails)
+                .slidingWindowSize(slidingWindowSize)
+                .build());
 
     RedisFailoverReporter failoverReporter = new RedisFailoverReporter();
     MultiDbConnectionProvider connectionProvider = new MultiDbConnectionProvider(
@@ -199,10 +212,10 @@ public class AutomaticFailoverTest {
 
     MultiDbConfig.Builder builder = new MultiDbConfig.Builder(
         getDatabaseConfigs(clientConfig, hostPortWithFailure, workingEndpoint.getHostAndPort()))
-        .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
-            .slidingWindowSize(slidingWindowSize)
-            .build())
-        .fallbackExceptionList(Collections.singletonList(JedisConnectionException.class));
+            .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
+                .slidingWindowSize(slidingWindowSize)
+                .build())
+            .fallbackExceptionList(Collections.singletonList(JedisConnectionException.class));
 
     RedisFailoverReporter failoverReporter = new RedisFailoverReporter();
     MultiDbConnectionProvider cacheProvider = new MultiDbConnectionProvider(
@@ -231,13 +244,28 @@ public class AutomaticFailoverTest {
   public void failoverFromAuthError() {
     int slidingWindowSize = 10;
 
+    // Use deliberately wrong credentials for the first database so that
+    // authentication fails with JedisAccessControlException at connection
+    // time, while the second database uses correct credentials and works.
+    // The auth error is wrapped in JedisConnectionException by the connection
+    // pool, so the fallback list must include both exception types.
+    JedisClientConfig wrongAuthConfig = DefaultJedisClientConfig.builder().build();
+    JedisClientConfig correctAuthConfig = workingEndpoint.getClientConfigBuilder().build();
+
+    DatabaseConfig failingDb = DatabaseConfig.builder(
+        endpointForAuthFailure.getHostAndPort(), wrongAuthConfig)
+        .healthCheckEnabled(false).build();
+    DatabaseConfig workingDb = DatabaseConfig.builder(
+        workingEndpoint.getHostAndPort(), correctAuthConfig)
+        .healthCheckEnabled(false).build();
+
     MultiDbConfig.Builder builder = new MultiDbConfig.Builder(
-        getDatabaseConfigs(clientConfig, endpointForAuthFailure.getHostAndPort(),
-            workingEndpoint.getHostAndPort()))
-        .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
-            .slidingWindowSize(slidingWindowSize)
-            .build())
-        .fallbackExceptionList(Collections.singletonList(JedisAccessControlException.class));
+        new DatabaseConfig[]{ failingDb, workingDb })
+            .failureDetector(MultiDbConfig.CircuitBreakerConfig.builder()
+                .slidingWindowSize(slidingWindowSize)
+                .build())
+            .fallbackExceptionList(Arrays.asList(
+                JedisAccessControlException.class, JedisConnectionException.class));
 
     RedisFailoverReporter failoverReporter = new RedisFailoverReporter();
     MultiDbConnectionProvider cacheProvider = new MultiDbConnectionProvider(

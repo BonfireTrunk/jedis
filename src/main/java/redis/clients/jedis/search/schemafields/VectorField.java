@@ -37,7 +37,8 @@ public class VectorField extends SchemaField {
      * vector search with configurable accuracy-performance trade-offs.
      * Best suited for larger datasets (&gt; 1M vectors) where search performance
      * and scalability are more important than perfect accuracy.
-     */ HNSW("HNSW"),
+     */
+    HNSW("HNSW"),
 
     /**
      * SVS_VAMANA algorithm provides high-performance approximate vector search
@@ -82,7 +83,6 @@ public class VectorField extends SchemaField {
   private final Map<String, Object> attributes;
 
   private boolean indexMissing;
-
   // private boolean noIndex; // throws Field `NOINDEX` does not have a type
 
   /**

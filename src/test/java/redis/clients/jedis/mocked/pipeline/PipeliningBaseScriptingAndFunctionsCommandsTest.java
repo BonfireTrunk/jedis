@@ -470,8 +470,7 @@ public class PipeliningBaseScriptingAndFunctionsCommandsTest extends PipeliningB
   public void testFunctionListWithCodeAndPattern() {
     String libraryNamePattern = "lib*";
 
-    when(commandObjects.functionListWithCode(libraryNamePattern)).thenReturn(
-      listLibraryInfoCommandObject);
+    when(commandObjects.functionListWithCode(libraryNamePattern)).thenReturn(listLibraryInfoCommandObject);
 
     Response<List<LibraryInfo>> response = pipeliningBase.functionListWithCode(libraryNamePattern);
 
@@ -483,8 +482,7 @@ public class PipeliningBaseScriptingAndFunctionsCommandsTest extends PipeliningB
   public void testFunctionListWithCodeAndPatternBinary() {
     byte[] libraryNamePattern = "lib*".getBytes();
 
-    when(commandObjects.functionListWithCode(libraryNamePattern)).thenReturn(
-      listObjectCommandObject);
+    when(commandObjects.functionListWithCode(libraryNamePattern)).thenReturn(listObjectCommandObject);
 
     Response<List<Object>> response = pipeliningBase.functionListWithCode(libraryNamePattern);
 

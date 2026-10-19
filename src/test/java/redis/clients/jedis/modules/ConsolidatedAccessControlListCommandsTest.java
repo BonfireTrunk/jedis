@@ -3,18 +3,22 @@ package redis.clients.jedis.modules;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import io.redis.test.annotations.SinceRedisVersion;
 import java.util.Locale;
 import java.util.function.Consumer;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.MethodSource;
 
 
 import redis.clients.jedis.DefaultJedisClientConfig;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.bloom.RedisBloomProtocol.*;
@@ -24,19 +28,30 @@ import redis.clients.jedis.json.JsonProtocol.JsonCommand;
 import redis.clients.jedis.search.SearchProtocol.SearchCommand;
 import redis.clients.jedis.search.schemafields.TextField;
 import redis.clients.jedis.timeseries.TimeSeriesProtocol.TimeSeriesCommand;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.SafeEncoder;
+import redis.clients.jedis.util.TestEnvUtil;
 
 @SinceRedisVersion(value = "7.9.0")
 @ParameterizedClass
 @MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
 @Tag("integration")
+@ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
 public class ConsolidatedAccessControlListCommandsTest extends RedisModuleCommandsTestBase {
+
+  @RegisterExtension
+  public static EnvCondition envCondition = new EnvCondition();
 
   public static final String USER_NAME = "moduser";
   public static final String USER_PASSWORD = "secret";
 
   public ConsolidatedAccessControlListCommandsTest(RedisProtocol protocol) {
     super(protocol);
+  }
+
+  @BeforeAll
+  public static void prepare() {
+    RedisModuleCommandsTestBase.prepare();
   }
 
   @AfterEach
@@ -142,8 +157,10 @@ public class ConsolidatedAccessControlListCommandsTest extends RedisModuleComman
     jedis.aclSetUser(USER_NAME, ">" + USER_PASSWORD, "on", "~*");
 
     // client object with new user
-    try (UnifiedJedis client = new UnifiedJedis(hnp,
-        DefaultJedisClientConfig.builder().user(USER_NAME).password(USER_PASSWORD).build())) {
+    try (UnifiedJedis client = RedisClient.builder().hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(
+            DefaultJedisClientConfig.builder().user(USER_NAME).password(USER_PASSWORD).build())
+        .build()) {
 
       // user can't execute commands
       JedisAccessControlException noperm = assertThrows(JedisAccessControlException.class,
@@ -165,8 +182,10 @@ public class ConsolidatedAccessControlListCommandsTest extends RedisModuleComman
     jedis.aclSetUser(USER_NAME, ">" + USER_PASSWORD, "on", "~*");
 
     // client object with new user
-    try (UnifiedJedis client = new UnifiedJedis(hnp,
-        DefaultJedisClientConfig.builder().user(USER_NAME).password(USER_PASSWORD).build())) {
+    try (UnifiedJedis client = RedisClient.builder().hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(
+            DefaultJedisClientConfig.builder().user(USER_NAME).password(USER_PASSWORD).build())
+        .build()) {
 
       // user can't execute category commands
       JedisAccessControlException noperm = assertThrows(JedisAccessControlException.class,

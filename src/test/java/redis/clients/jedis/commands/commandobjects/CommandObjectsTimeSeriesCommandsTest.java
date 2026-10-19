@@ -11,13 +11,25 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static io.redis.test.utils.RedisVersion.V8_10_0_RC2_STRING;
 
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.redis.test.annotations.ConditionalOnEnv;
+import io.redis.test.annotations.EnabledOnCommand;
+import io.redis.test.annotations.SinceRedisVersion;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.timeseries.AggregationType;
 import redis.clients.jedis.timeseries.TSAlterParams;
@@ -29,15 +41,43 @@ import redis.clients.jedis.timeseries.TSMGetElement;
 import redis.clients.jedis.timeseries.TSMGetParams;
 import redis.clients.jedis.timeseries.TSMRangeElements;
 import redis.clients.jedis.timeseries.TSMRangeParams;
+import redis.clients.jedis.timeseries.TSNRangeParams;
 import redis.clients.jedis.timeseries.TSRangeParams;
+import redis.clients.jedis.util.EnabledOnCommandCondition;
+import redis.clients.jedis.util.RedisVersionCondition;
+import redis.clients.jedis.util.TestEnvUtil;
+import redis.clients.jedis.util.TestKeyRegistry;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=timeseries">Time series</a> commands.
  */
 public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesTestBase {
 
+  @RegisterExtension
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(() -> endpoint);
+  @RegisterExtension
+  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(
+      () -> endpoint);
+
   public CommandObjectsTimeSeriesCommandsTest(RedisProtocol protocol) {
     super(protocol);
+  }
+
+  private TestKeyRegistry keys;
+
+  @BeforeEach
+  public void setUpKeys(TestInfo testInfo) {
+    keys = TestKeyRegistry.create(testInfo);
+  }
+
+  @AfterEach
+  public void cleanUpKeys() {
+    // This low-level test drives commands through the private executor and has no reusable
+    // KeyBinaryCommands client, so open a short-lived Jedis to delete the registered keys.
+    try (Jedis cleanupClient = new Jedis(endpoint.getHostAndPort(),
+        endpoint.getClientConfigBuilder().protocol(protocol).build())) {
+      keys.cleanup(cleanupClient);
+    }
   }
 
   @Test
@@ -57,8 +97,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
       Thread.sleep(10);
     }
 
-    List<TSElement> range = exec(commandObjects
-        .tsRange(key, currentTime - 1000, currentTime + 1000));
+    List<TSElement> range = exec(commandObjects.tsRange(key, currentTime - 1000, currentTime + 1000));
 
     assertThat(range, hasSize(values.length));
     for (int i = 0; i < values.length; i++) {
@@ -85,8 +124,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     Long add2 = exec(commandObjects.tsAdd(key, timestamp2, value2));
     assertThat(add2, notNullValue());
 
-    List<TSElement> preDelRange = exec(commandObjects.tsRange(key, timestamp1 - 500,
-      timestamp2 + 500));
+    List<TSElement> preDelRange = exec(commandObjects.tsRange(key, timestamp1 - 500, timestamp2 + 500));
 
     assertThat(preDelRange, hasSize(2));
     assertThat(preDelRange.get(0).getValue(), equalTo(value1));
@@ -95,8 +133,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     Long del = exec(commandObjects.tsDel(key, timestamp1 - 500, timestamp1 + 500));
     assertThat(del, equalTo(1L));
 
-    List<TSElement> postDelRange = exec(commandObjects.tsRange(key, timestamp1 - 500,
-      timestamp2 + 500));
+    List<TSElement> postDelRange = exec(commandObjects.tsRange(key, timestamp1 - 500, timestamp2 + 500));
 
     assertThat(postDelRange, hasSize(1));
     assertThat(postDelRange.get(0).getValue(), equalTo(value2));
@@ -109,7 +146,8 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     long timestamp = System.currentTimeMillis();
     double value = 42.0;
 
-    TSCreateParams createParams = new TSCreateParams().uncompressed().retention(86400000);
+    TSCreateParams createParams = new TSCreateParams()
+        .uncompressed().retention(86400000);
 
     Long add = exec(commandObjects.tsAdd(key, timestamp, value, createParams));
     assertThat(add, notNullValue());
@@ -122,6 +160,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testTsMAdd() {
     String key1 = "testTsMAdd1";
     String key2 = "testTsMAdd2";
@@ -135,24 +174,22 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     long timestamp1 = 2000;
     long timestamp2 = 3000;
 
-    Map.Entry<String, TSElement> entry1 = new AbstractMap.SimpleEntry<>(key1, new TSElement(
-        timestamp1, 42.0));
+    Map.Entry<String, TSElement> entry1 =
+        new AbstractMap.SimpleEntry<>(key1, new TSElement(timestamp1, 42.0));
 
-    Map.Entry<String, TSElement> entry2 = new AbstractMap.SimpleEntry<>(key2, new TSElement(
-        timestamp2, 43.0));
+    Map.Entry<String, TSElement> entry2 =
+        new AbstractMap.SimpleEntry<>(key2, new TSElement(timestamp2, 43.0));
 
     List<Long> mAdd = exec(commandObjects.tsMAdd(entry1, entry2));
     assertThat(mAdd, contains(timestamp1, timestamp2));
 
-    List<TSElement> range1 = exec(commandObjects
-        .tsRange(key1, timestamp1 - 1000, timestamp1 + 1000));
+    List<TSElement> range1 = exec(commandObjects.tsRange(key1, timestamp1 - 1000, timestamp1 + 1000));
 
     assertThat(range1, hasSize(1));
     assertThat(range1.get(0).getTimestamp(), equalTo(timestamp1));
     assertThat(range1.get(0).getValue(), equalTo(42.0));
 
-    List<TSElement> range2 = exec(commandObjects
-        .tsRange(key2, timestamp2 - 1000, timestamp2 + 1000));
+    List<TSElement> range2 = exec(commandObjects.tsRange(key2, timestamp2 - 1000, timestamp2 + 1000));
 
     assertThat(range2, hasSize(1));
     assertThat(range2.get(0).getTimestamp(), equalTo(timestamp2));
@@ -294,6 +331,112 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
   }
 
   @Test
+  @EnabledOnCommand("TS.NRANGE")
+  public void testTsNRange() {
+    String key1 = keys.key("{%test%}:nrangeA");
+    String key2 = keys.key("{%test%}:nrangeB");
+    assertThat(exec(commandObjects.tsCreate(key1)), equalTo("OK"));
+    assertThat(exec(commandObjects.tsCreate(key2)), equalTo("OK"));
+
+    // Partly overlapping samples so the pivot produces a NaN cell.
+    exec(commandObjects.tsAdd(key1, 1000L, 10.0));
+    exec(commandObjects.tsAdd(key1, 2000L, 12.0));
+    exec(commandObjects.tsAdd(key2, 1000L, 100.0));
+    exec(commandObjects.tsAdd(key2, 3000L, 300.0));
+
+    String[] seriesKeys = { key1, key2 };
+    List<TSElement> rows = exec(commandObjects.tsNRange(seriesKeys, 0L, 60000L));
+
+    // Forward order: 1000, 2000, 3000. Each row has one value per key; missing -> NaN.
+    assertThat(rows, hasSize(3));
+    assertThat(rows.stream().map(TSElement::getTimestamp).collect(Collectors.toList()),
+      contains(1000L, 2000L, 3000L));
+    assertThat(rows.get(0).getValues(), contains(closeTo(10.0, 0.001), closeTo(100.0, 0.001)));
+    assertThat(rows.get(1).getValues().get(0), closeTo(12.0, 0.001));
+    assertThat(Double.isNaN(rows.get(1).getValues().get(1)), equalTo(true));
+    assertThat(Double.isNaN(rows.get(2).getValues().get(0)), equalTo(true));
+    assertThat(rows.get(2).getValues().get(1), closeTo(300.0, 0.001));
+
+    // COUNT limits rows after the merge, keeping the lowest timestamps.
+    List<TSElement> limited = exec(commandObjects.tsNRange(seriesKeys,
+      TSNRangeParams.nrangeParams(0L, 60000L).count(1)));
+    assertThat(limited, hasSize(1));
+    assertThat(limited.get(0).getTimestamp(), equalTo(1000L));
+  }
+
+  @Test
+  @EnabledOnCommand("TS.NRANGE")
+  public void testTsNRangeAggregation() {
+    String key1 = keys.key("{%test%}:naggA");
+    String key2 = keys.key("{%test%}:naggB");
+    assertThat(exec(commandObjects.tsCreate(key1)), equalTo("OK"));
+    assertThat(exec(commandObjects.tsCreate(key2)), equalTo("OK"));
+    exec(commandObjects.tsAdd(key1, 1000L, 10.0));
+    exec(commandObjects.tsAdd(key1, 1500L, 20.0));
+    exec(commandObjects.tsAdd(key2, 1000L, 100.0));
+
+    String[] seriesKeys = { key1, key2 };
+
+    // One aggregator per key: key1 -> AVG, key2 -> SUM.
+    List<TSElement> single = exec(commandObjects.tsNRange(seriesKeys,
+      TSNRangeParams.nrangeParams(0L, 60000L)
+          .aggregation(new AggregationType[] { AggregationType.AVG, AggregationType.SUM }, 1000L)));
+    assertThat(single.get(0).getValues(), hasSize(2));
+    assertThat(single.get(0).getValues().get(0), closeTo(15.0, 0.001)); // avg(10,20)
+    assertThat(single.get(0).getValues().get(1), closeTo(100.0, 0.001)); // sum(100)
+
+    // Multiple aggregators for key1 (AVG,MAX), one for key2 (SUM): 3 flat value columns.
+    List<TSElement> multi = exec(commandObjects.tsNRange(seriesKeys,
+      TSNRangeParams.nrangeParams(0L, 60000L).aggregation(new AggregationType[][] {
+          { AggregationType.AVG, AggregationType.MAX }, { AggregationType.SUM } }, 1000L)));
+    assertThat(multi.get(0).getValues(), hasSize(3));
+    assertThat(multi.get(0).getValues().get(0), closeTo(15.0, 0.001)); // avg key1
+    assertThat(multi.get(0).getValues().get(1), closeTo(20.0, 0.001)); // max key1
+    assertThat(multi.get(0).getValues().get(2), closeTo(100.0, 0.001)); // sum key2
+  }
+
+  @Test
+  @EnabledOnCommand("TS.NREVRANGE")
+  public void testTsNRevRange() {
+    String key1 = keys.key("{%test%}:nrevA");
+    String key2 = keys.key("{%test%}:nrevB");
+    assertThat(exec(commandObjects.tsCreate(key1)), equalTo("OK"));
+    assertThat(exec(commandObjects.tsCreate(key2)), equalTo("OK"));
+    exec(commandObjects.tsAdd(key1, 1000L, 10.0));
+    exec(commandObjects.tsAdd(key2, 2000L, 200.0));
+
+    String[] seriesKeys = { key1, key2 };
+    List<TSElement> rows = exec(commandObjects.tsNRevRange(seriesKeys, 0L, 60000L));
+
+    // Reverse order: 2000 then 1000; server order is preserved (not re-sorted by the client).
+    assertThat(rows.stream().map(TSElement::getTimestamp).collect(Collectors.toList()),
+      contains(2000L, 1000L));
+
+    List<TSElement> byParams = exec(commandObjects.tsNRevRange(seriesKeys,
+      TSNRangeParams.nrangeParams(0L, 60000L)));
+    assertThat(byParams.stream().map(TSElement::getTimestamp).collect(Collectors.toList()),
+      contains(2000L, 1000L));
+  }
+
+  @Test
+  @EnabledOnCommand("TS.NRANGE")
+  public void testTsNRangeDuplicateKeysPreserved() {
+    String key = keys.key("{%test%}:ndup");
+    assertThat(exec(commandObjects.tsCreate(key)), equalTo("OK"));
+    exec(commandObjects.tsAdd(key, 1000L, 5.0));
+    exec(commandObjects.tsAdd(key, 1500L, 9.0));
+
+    // Same key twice with different aggregators -> two value columns for one physical series.
+    String[] seriesKeys = { key, key };
+    List<TSElement> rows = exec(commandObjects.tsNRange(seriesKeys,
+      TSNRangeParams.nrangeParams(0L, 60000L)
+          .aggregation(new AggregationType[] { AggregationType.MIN, AggregationType.MAX }, 1000L)));
+    assertThat(rows.get(0).getValues(), hasSize(2));
+    assertThat(rows.get(0).getValues().get(0), closeTo(5.0, 0.001)); // min
+    assertThat(rows.get(0).getValues().get(1), closeTo(9.0, 0.001)); // max
+  }
+
+  @Test
   public void testTsMRangeCommands() {
     String key1 = "tsMRangeKey1";
     String key2 = "tsMRangeKey2";
@@ -389,7 +532,8 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
 
     String filter = "sensor_id=1234";
 
-    TSCreateParams createParams = new TSCreateParams().uncompressed().label("sensor_id", "1234");
+    TSCreateParams createParams = new TSCreateParams()
+        .uncompressed().label("sensor_id", "1234");
 
     exec(commandObjects.tsAdd(key1, timestamp1, value1, createParams));
     exec(commandObjects.tsAdd(key2, timestamp2, value2, createParams));
@@ -426,8 +570,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     exec(commandObjects.tsCreate(sourceKey));
     exec(commandObjects.tsCreate(destKey));
 
-    String createRule = exec(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType,
-      timeBucket));
+    String createRule = exec(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType, timeBucket));
     assertThat(createRule, equalTo("OK"));
 
     long timestamp1 = 1000L; // 1 second
@@ -471,8 +614,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     exec(commandObjects.tsCreate(sourceKey));
     exec(commandObjects.tsCreate(destKey));
 
-    String createRule = exec(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType,
-      timeBucket, 2000));
+    String createRule = exec(commandObjects.tsCreateRule(sourceKey, destKey, aggregationType, timeBucket, 2000));
     assertThat(createRule, equalTo("OK"));
 
     long timestamp1 = 1000L; // 1 second
@@ -500,6 +642,7 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     assertThat(destElements.get(0).getValue(), closeTo(value2, 0.001));
     assertThat(destElements.get(1).getValue(), closeTo(value3, 0.001));
   }
+
 
   @Test
   public void testTsDeleteRule() {
@@ -561,34 +704,75 @@ public class CommandObjectsTimeSeriesCommandsTest extends CommandObjectsModulesT
     String key2 = "temperature:sensor:2";
     String key3 = "humidity:sensor:1";
 
-    TSCreateParams paramsTempSensor1 = new TSCreateParams().label("type", "temperature").label(
-      "sensor_id", "1");
+    TSCreateParams paramsTempSensor1 = new TSCreateParams()
+        .label("type", "temperature").label("sensor_id", "1");
 
     exec(commandObjects.tsCreate(key1, paramsTempSensor1));
 
-    TSCreateParams paramsTempSensor2 = new TSCreateParams().label("type", "temperature").label(
-      "sensor_id", "2");
+    TSCreateParams paramsTempSensor2 = new TSCreateParams()
+        .label("type", "temperature").label("sensor_id", "2");
 
     exec(commandObjects.tsCreate(key2, paramsTempSensor2));
 
-    TSCreateParams paramsHumiditySensor1 = new TSCreateParams().label("type", "humidity").label(
-      "sensor_id", "1");
+    TSCreateParams paramsHumiditySensor1 = new TSCreateParams()
+        .label("type", "humidity").label("sensor_id", "1");
 
     exec(commandObjects.tsCreate(key3, paramsHumiditySensor1));
 
-    String[] filters = new String[] { "type=temperature" };
+    String[] filters = new String[]{ "type=temperature" };
     List<String> matchingKeys = exec(commandObjects.tsQueryIndex(filters));
 
     assertThat(matchingKeys, containsInAnyOrder(key1, key2));
   }
 
   @Test
+  @SinceRedisVersion(V8_10_0_RC2_STRING)
+  public void testTsQueryLabelsAndValues(TestInfo testInfo) {
+    // Keys are obtained from (and tracked by) the registry so they can be cleared afterwards
+    // instead of relying on a wholesale flush. Label names/values drive the assertions, so the
+    // registry-namespaced key names do not affect the results.
+    TestKeyRegistry keys = TestKeyRegistry.create(testInfo);
+    try {
+      exec(commandObjects.tsCreate(keys.key("temp:living"),
+          new TSCreateParams().label("type", "sensor").label("sensortype", "temperature").label("location", "LivingRoom")));
+      exec(commandObjects.tsCreate(keys.key("temp:kitchen"),
+          new TSCreateParams().label("type", "sensor").label("sensortype", "temperature").label("location", "Kitchen")));
+      exec(commandObjects.tsCreate(keys.key("hum:bedroom"),
+          new TSCreateParams().label("type", "sensor").label("sensortype", "humidity").label("location", "BedRoom")));
+      exec(commandObjects.tsCreate(keys.key("cpu:server"),
+          new TSCreateParams().label("type", "metric").label("unit", "percent")));
+
+      // LABELS with a filter: distinct label names across the sensor group.
+      assertThat(exec(commandObjects.tsQueryLabels("type=sensor")),
+          containsInAnyOrder("type", "sensortype", "location"));
+
+      // LABELS without a filter: all indexed series, so "unit" appears too.
+      assertThat(exec(commandObjects.tsQueryLabels()),
+          containsInAnyOrder("type", "sensortype", "location", "unit"));
+
+      // VALUES of a chosen label within the sensor group.
+      assertThat(exec(commandObjects.tsQueryLabelValues("location", "type=sensor")),
+          containsInAnyOrder("LivingRoom", "Kitchen", "BedRoom"));
+
+      // A label carried by no matching series yields an empty reply, not an error.
+      assertThat(exec(commandObjects.tsQueryLabelValues("nonexistent", "type=sensor")), empty());
+    } finally {
+      try (RedisClient client = RedisClient.builder().hostAndPort(endpoint.getHostAndPort())
+          .clientConfig(endpoint.getClientConfigBuilder().protocol(protocol).build()).build()) {
+        keys.cleanup(client);
+      }
+    }
+  }
+
+  @Test
   public void testTsAlterAndInfo() {
     String key = "tsKey";
 
-    TSCreateParams createParams = new TSCreateParams().label("sensor", "temperature");
+    TSCreateParams createParams = new TSCreateParams()
+        .label("sensor", "temperature");
 
-    TSAlterParams alterParams = new TSAlterParams().label("sensor", "humidity");
+    TSAlterParams alterParams = new TSAlterParams()
+        .label("sensor", "humidity");
 
     String create = exec(commandObjects.tsCreate(key, createParams));
     assertThat(create, equalTo("OK"));

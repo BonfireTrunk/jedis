@@ -13,27 +13,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.concurrent.atomic.AtomicReference;
 
 import redis.clients.jedis.Protocol.Command;
 import redis.clients.jedis.Protocol.Keyword;
 import redis.clients.jedis.annots.Experimental;
+import redis.clients.jedis.annots.Internal;
 import redis.clients.jedis.args.ClientAttributeOption;
 import redis.clients.jedis.args.Rawable;
 import redis.clients.jedis.authentication.AuthXManager;
 import redis.clients.jedis.commands.ProtocolCommand;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.exceptions.JedisValidationException;
+import redis.clients.jedis.exceptions.*;
 import redis.clients.jedis.util.IOUtils;
 import redis.clients.jedis.util.RedisInputStream;
 import redis.clients.jedis.util.RedisOutputStream;
 
-import today.bonfire.oss.sop.PoolObject;
-
-public class Connection implements Closeable, PoolObject {
+public class Connection implements Closeable {
 
   public static class Builder {
     private JedisSocketFactory socketFactory;
@@ -58,9 +55,49 @@ public class Connection implements Closeable, PoolObject {
     }
 
     public Connection build() {
-      Connection conn = new Connection(this);
+      Connection conn = createConnection();
       conn.initializeFromClientConfig();
       return conn;
+    }
+
+    /**
+     * Construct a fresh, uninitialized {@link Connection} for this builder.
+     * <p>
+     * Template-method hook for subclasses to return their concrete {@code Connection} subtype
+     * (see {@link redis.clients.jedis.csc.CacheConnection.Builder} for an example). The
+     * returned instance has its socket factory and client config wired up, but the network
+     * handshake has not run yet.
+     * <p>
+     * Two callers drive initialization differently:
+     * <ul>
+     *   <li>{@link #build()} — the public entry point — invokes
+     *       {@link Connection#initializeFromClientConfig()} on the returned instance before
+     *       handing it back, so external callers receive a ready-to-use connection.</li>
+     *   <li>{@link #buildUninitialized()} — the package-private accessor used by pool
+     *       factories — returns the uninitialized instance so the factory can interpose
+     *       between construction and initialization (e.g. to track an in-flight handshake
+     *       so a forced disconnect can interrupt it).</li>
+     * </ul>
+     * <p>
+     * Implementations must be free of side effects: do not open sockets, send commands, or
+     * invoke {@link Connection#initializeFromClientConfig()} — running initialization here
+     * would break the {@code buildUninitialized()} contract that pool factories rely on.
+     *
+     * @return a freshly constructed, uninitialized {@code Connection}
+     */
+    protected Connection createConnection() {
+      return new Connection(this);
+    }
+
+    /**
+     * Package-private entry point for pool factories that need to interpose between construction
+     * and initialization (e.g. to track in-flight connections so a forced disconnect can
+     * interrupt the init handshake). Callers MUST invoke
+     * {@link Connection#initializeFromClientConfig()} exactly once before handing the connection
+     * out.
+     */
+    final Connection buildUninitialized() {
+      return createConnection();
     }
   }
 
@@ -69,6 +106,20 @@ public class Connection implements Closeable, PoolObject {
   }
 
   private ConnectionPool memberOf;
+  /**
+   * The RESP protocol established for this connection.
+   *
+   * <p>Set after the handshake completes. Holds the protocol the connection is actually
+   * speaking with the server.</p>
+   *
+   * <ul>
+   *   <li>{@code null} – No protocol established yet (handshake has not run).</li>
+   *   <li>{@code RESP2} – RESP2 established (either explicitly requested, fallback from
+   *       auto-negotiation, or assumed default when no protocol was requested and
+   *       auto-negotiation was disabled).</li>
+   *   <li>{@code RESP3} – RESP3 established.</li>
+   * </ul>
+   */
   protected RedisProtocol protocol;
   private final JedisSocketFactory socketFactory;
   private Socket socket;
@@ -77,14 +128,19 @@ public class Connection implements Closeable, PoolObject {
   private int soTimeout = 0;
   private int infiniteSoTimeout = 0;
   private boolean broken = false;
+  private volatile Throwable brokenCause = null;
   private boolean strValActive;
   private String strVal;
   protected String server;
   protected String version;
-  private Long entityId;
   private AtomicReference<RedisCredentials> currentCredentials = new AtomicReference<>(null);
   private AuthXManager authXManager;
   private JedisClientConfig clientConfig;
+  private final ProtocolHandshake handshake = new ProtocolHandshake(this);
+  private final PushConsumerChainImpl pushConsumers = PushConsumerChainImpl.of();
+
+  /** Per-connection HIMPORT bookkeeping (prepared fieldsets + queued discards). */
+  private final HimportConnectionState himportState = new HimportConnectionState();
 
   public Connection() {
     this(Protocol.DEFAULT_HOST, Protocol.DEFAULT_PORT);
@@ -104,6 +160,9 @@ public class Connection implements Closeable, PoolObject {
 
   public Connection(final JedisSocketFactory socketFactory) {
     this.socketFactory = socketFactory;
+    this.authXManager = null;
+
+    initPushConsumers(null);
   }
 
   public Connection(final JedisSocketFactory socketFactory, JedisClientConfig clientConfig) {
@@ -115,6 +174,15 @@ public class Connection implements Closeable, PoolObject {
   protected Connection(Builder builder) {
     this.socketFactory = builder.getSocketFactory();
     this.clientConfig = builder.getClientConfig();
+  }
+
+  protected void initPushConsumers(JedisClientConfig config) {
+      /*
+       * Default consumers to process push messages.
+       * Marks all @{link PushMessages as processed, except for pub/sub.
+       * Pub/sub messages are propagated to the client.
+       */
+      addPushConsumer(PushConsumerChainImpl.PUBSUB_CONSUMER);
   }
 
   @Override
@@ -150,6 +218,13 @@ public class Connection implements Closeable, PoolObject {
     return strVal;
   }
 
+  /**
+   * Returns the RESP protocol established for this connection.
+   *
+   * @return {@code null} if no protocol has been established yet (handshake has not run);
+   *         {@link RedisProtocol#RESP2} or {@link RedisProtocol#RESP3} once the handshake
+   *         has completed.
+   */
   public final RedisProtocol getRedisProtocol() {
     return protocol;
   }
@@ -158,7 +233,37 @@ public class Connection implements Closeable, PoolObject {
     this.memberOf = pool;
   }
 
-  final HostAndPort getHostAndPort() {
+  /**
+   * This connection's HIMPORT bookkeeping (prepared fieldsets and queued discards).
+   */
+  HimportConnectionState himportState() {
+    return himportState;
+  }
+
+  /**
+   * Issues the {@code HIMPORT DISCARD}s that {@link HashImport#close()} queued for this
+   * connection, ahead of the command about to run: one packed write, replies drained in one pass.
+   * <p>
+   * Error replies are ignored &mdash; the server does not hold the fieldset either way.
+   * Connection failures propagate so the retry machinery sees them.
+   */
+  private void himportSendPendingDiscards() {
+    List<String> stale = himportState.drainDiscardable();
+    if (stale.isEmpty()) {
+      return;
+    }
+    for (String fieldset : stale) {
+      sendCommand(new CommandArguments(Command.HIMPORT).add(Keyword.DISCARD).add(fieldset));
+    }
+    getMany(stale.size());
+  }
+
+  /**
+   * Returns the host and port of the Redis server this connection is connected to.
+   *
+   * @return the host and port, or null if not available
+   */
+  public final HostAndPort getHostAndPort() {
     return ((DefaultJedisSocketFactory) socketFactory).getHostAndPort();
   }
 
@@ -172,8 +277,7 @@ public class Connection implements Closeable, PoolObject {
       try {
         this.socket.setSoTimeout(soTimeout);
       } catch (SocketException ex) {
-        setBroken();
-        throw new JedisConnectionException(ex);
+        throw markBroken(new JedisConnectionException(ex));
       }
     }
   }
@@ -185,8 +289,7 @@ public class Connection implements Closeable, PoolObject {
       }
       socket.setSoTimeout(infiniteSoTimeout);
     } catch (SocketException ex) {
-      setBroken();
-      throw new JedisConnectionException(ex);
+      throw markBroken(new JedisConnectionException(ex));
     }
   }
 
@@ -194,8 +297,7 @@ public class Connection implements Closeable, PoolObject {
     try {
       socket.setSoTimeout(this.soTimeout);
     } catch (SocketException ex) {
-      setBroken();
-      throw new JedisConnectionException(ex);
+      throw markBroken(new JedisConnectionException(ex));
     }
   }
 
@@ -204,23 +306,35 @@ public class Connection implements Closeable, PoolObject {
   }
 
   public Object executeCommand(final CommandArguments args) {
+    himportSendPendingDiscards();
     sendCommand(args);
     return getOne();
   }
 
   public <T> T executeCommand(final CommandObject<T> commandObject) {
+    himportSendPendingDiscards();
+    List<Consumer<Connection>> preProcessHooks = commandObject.getPreProcessHooks();
+    if (!preProcessHooks.isEmpty()) {
+      for (Consumer<Connection> preProcessHook : preProcessHooks) {
+        preProcessHook.accept(this);
+      }
+    }
+
     final CommandArguments args = commandObject.getArguments();
     sendCommand(args);
+    final Object reply;
     if (!args.isBlocking()) {
-      return commandObject.getBuilder().build(getOne());
+      reply = getOne();
     } else {
       try {
         setTimeoutInfinite();
-        return commandObject.getBuilder().build(getOne());
+        reply = getOne();
       } finally {
         rollbackTimeout();
       }
     }
+
+    return commandObject.getBuilder().build(reply);
   }
 
   public void sendCommand(final ProtocolCommand cmd) {
@@ -240,30 +354,40 @@ public class Connection implements Closeable, PoolObject {
   }
 
   public void sendCommand(final CommandArguments args) {
+    connect();
+    if (broken) {
+      throw new JedisConnectionException("Attempting to write to a broken connection.", brokenCause);
+    }
+
     try {
-      connect();
       Protocol.sendCommand(outputStream, args);
     } catch (JedisConnectionException ex) {
-      /*
-       * When client send request which formed by invalid protocol, Redis send back error message
-       * before close connection. We try to read it to provide reason of failure.
-       */
-      try {
-        String errorMessage = Protocol.readErrorLineIfPossible(inputStream);
-        if (errorMessage != null && errorMessage.length() > 0) {
-          ex = new JedisConnectionException(errorMessage, ex.getCause());
-        }
-      } catch (Exception e) {
-        /*
-         * Catch any IOException or JedisConnectionException occurred from InputStream#read and just
-         * ignore. This approach is safe because reading error message is optional and connection
-         * will eventually be closed.
-         */
-      }
-      // Any other exceptions related to connection?
-      setBroken();
-      throw ex;
+      throw enrichWithRedisErrorLine(markBroken(ex));
+    } catch (RuntimeException ex) {
+      throw markBroken(ex);
+    } catch (Error err) {
+      throw markBroken(err);
     }
+  }
+
+  private JedisConnectionException enrichWithRedisErrorLine(JedisConnectionException ex) {
+    /*
+     * When client send request which formed by invalid protocol, Redis send back error message
+     * before close connection. We try to read it to provide reason of failure.
+     */
+    try {
+      String errorMessage = Protocol.readErrorLineIfPossible(inputStream);
+      if (errorMessage != null && !errorMessage.isEmpty()) {
+        return new JedisConnectionException(errorMessage, ex.getCause());
+      }
+    } catch (Exception e) {
+      /*
+       * Catch any IOException or JedisConnectionException occurred from InputStream#read and just
+       * ignore. This approach is safe because reading error message is optional and connection
+       * will eventually be closed.
+       */
+    }
+    return ex;
   }
 
   public void connect() throws JedisConnectionException {
@@ -276,16 +400,23 @@ public class Connection implements Closeable, PoolObject {
         inputStream = new RedisInputStream(socket.getInputStream());
 
         broken = false; // unset broken status when connection is (re)initialized
+        himportState.reset(); // a fresh socket lost any server-side HIMPORT fieldsets
 
       } catch (JedisConnectionException jce) {
 
-        setBroken();
-        throw jce;
+        throw markBroken(jce);
 
       } catch (IOException ioe) {
 
-        setBroken();
-        throw new JedisConnectionException("Failed to create input/output stream", ioe);
+        throw markBroken(new JedisConnectionException("Failed to create input/output stream", ioe));
+
+      } catch (RuntimeException ex) {
+
+        throw markBroken(ex);
+
+      } catch (Error err) {
+
+        throw markBroken(err);
 
       } finally {
 
@@ -348,6 +479,29 @@ public class Connection implements Closeable, PoolObject {
 
   public void setBroken() {
     broken = true;
+  }
+
+  private JedisConnectionException markBroken(JedisConnectionException ex) {
+    setBroken(ex);
+    return ex;
+  }
+
+  private RuntimeException markBroken(RuntimeException ex) {
+    setBroken(ex);
+    return ex;
+  }
+
+  private Error markBroken(Error err) {
+    setBroken(err);
+    return err;
+  }
+
+  private void setBroken(Throwable cause) {
+    if (!broken) {
+      // first cause wins — that is the root failure later guard exceptions should point at
+      brokenCause = cause;
+    }
+    setBroken();
   }
 
   public String getStatusCodeReply() {
@@ -420,51 +574,62 @@ public class Connection implements Closeable, PoolObject {
   }
 
   protected void flush() {
+    if (broken) {
+      throw new JedisConnectionException("Attempting to write to a broken connection.", brokenCause);
+    }
+
     try {
       outputStream.flush();
     } catch (IOException ex) {
-      setBroken();
-      throw new JedisConnectionException(ex);
+      throw markBroken(new JedisConnectionException(ex));
+    } catch (Error err) {
+      throw markBroken(err);
     }
   }
 
   @Experimental
-  protected Object protocolRead(RedisInputStream is) {
-    return Protocol.read(is);
+  protected Object protocolRead(RedisInputStream is, PushConsumerChain consumer) {
+    return Protocol.read(is, consumer);
   }
 
   @Experimental
-  protected void protocolReadPushes(RedisInputStream is) {
+  protected void protocolReadPushes(RedisInputStream is, PushConsumerChain consumer) {
   }
 
   protected Object readProtocolWithCheckingBroken() {
     if (broken) {
-      throw new JedisConnectionException("Attempting to read from a broken connection.");
+      throw new JedisConnectionException("Attempting to read from a broken connection.", brokenCause);
     }
 
     try {
-      return protocolRead(inputStream);
-    } catch (JedisConnectionException exc) {
-      broken = true;
+      return protocolRead(inputStream, pushConsumers);
+    } catch (JedisDataException exc) {
+      // Redis error reply was fully parsed; the stream is aligned and the connection reusable.
       throw exc;
+    } catch (RuntimeException exc) {
+      // Transport failures (JedisConnectionException) and any other unexpected failure mid-read
+      // leave the stream position indeterminate.
+      throw markBroken(exc);
+    } catch (Error err) {
+      throw markBroken(err);
     }
   }
 
   protected void readPushesWithCheckingBroken() {
     if (broken) {
-      throw new JedisConnectionException("Attempting to read from a broken connection.");
+      throw new JedisConnectionException("Attempting to read from a broken connection.", brokenCause);
     }
 
     try {
       if (inputStream.available() > 0) {
-        protocolReadPushes(inputStream);
+        protocolReadPushes(inputStream, pushConsumers);
       }
     } catch (IOException e) {
-      broken = true;
-      throw new JedisConnectionException("Failed to check buffer on connection.", e);
-    } catch (JedisConnectionException exc) {
-      setBroken();
-      throw exc;
+      throw markBroken(new JedisConnectionException("Failed to check buffer on connection.", e));
+    } catch (RuntimeException exc) {
+      throw markBroken(exc);
+    } catch (Error err) {
+      throw markBroken(err);
     }
   }
 
@@ -498,7 +663,15 @@ public class Connection implements Closeable, PoolObject {
     return true;
   }
 
-  public void initializeFromClientConfig() {
+  /**
+   * Initialize this connection using the {@link JedisClientConfig} captured at construction.
+   * <p>
+   * Internal lifecycle step: invoked once by {@link Connection.Builder#build()} for direct
+   * callers, and once by {@link ConnectionFactory#initialize(Connection)} for pooled
+   * connections. There is no public construction path that produces an uninitialized-but-
+   * configured {@code Connection}, so this method has no out-of-package use case.
+   */
+  void initializeFromClientConfig() {
     this.initializeFromClientConfig(clientConfig);
   }
 
@@ -507,9 +680,12 @@ public class Connection implements Closeable, PoolObject {
       this.soTimeout = config.getSocketTimeoutMillis();
       this.infiniteSoTimeout = config.getBlockingSocketTimeoutMillis();
 
+      initPushConsumers(config);
+
       connect();
 
-      protocol = config.getRedisProtocol();
+      RedisProtocol requestedProtocol = config.getRedisProtocol();
+      boolean autoNegotiateProtocol = config.isAutoNegotiateProtocol();
 
       Supplier<RedisCredentials> credentialsProvider = config.getCredentialsProvider();
 
@@ -522,13 +698,15 @@ public class Connection implements Closeable, PoolObject {
         final RedisCredentialsProvider redisCredentialsProvider = (RedisCredentialsProvider) credentialsProvider;
         try {
           redisCredentialsProvider.prepare();
-          helloAndAuth(protocol, redisCredentialsProvider.get());
+          establishProtocol(requestedProtocol, autoNegotiateProtocol,
+            redisCredentialsProvider.get());
         } finally {
           redisCredentialsProvider.cleanUp();
         }
       } else {
-        helloAndAuth(protocol, credentialsProvider != null ? credentialsProvider.get()
-            : new DefaultRedisCredentials(config.getUser(), config.getPassword()));
+        establishProtocol(requestedProtocol, autoNegotiateProtocol,
+          credentialsProvider != null ? credentialsProvider.get()
+              : new DefaultRedisCredentials(config.getUser(), config.getPassword()));
       }
 
       List<CommandArguments> fireAndForgetMsg = new ArrayList<>();
@@ -545,20 +723,15 @@ public class Connection implements Closeable, PoolObject {
       }
 
       if (!setInfoConfig.isDisabled()) {
-        String libName = JedisMetaInfo.getArtifactId();
-        if (libName != null && validateClientInfo(libName)) {
-          String libNameSuffix = setInfoConfig.getLibNameSuffix();
-          if (libNameSuffix != null) { // validation is moved into ClientSetInfoConfig constructor
-            libName = libName + '(' + libNameSuffix + ')';
-          }
-          fireAndForgetMsg.add(new CommandArguments(Command.CLIENT).add(Keyword.SETINFO)
-              .add(ClientAttributeOption.LIB_NAME.getRaw()).add(libName));
-        }
+        fireAndForgetMsg.add(
+                new CommandArguments(Command.CLIENT).add(Keyword.SETINFO).add(ClientAttributeOption.LIB_NAME.getRaw())
+                        .add(setInfoConfig.getDriverInfo().getFormattedName()));
 
         String libVersion = JedisMetaInfo.getVersion();
         if (libVersion != null && validateClientInfo(libVersion)) {
-          fireAndForgetMsg.add(new CommandArguments(Command.CLIENT).add(Keyword.SETINFO)
-              .add(ClientAttributeOption.LIB_VER.getRaw()).add(libVersion));
+          fireAndForgetMsg.add(
+                  new CommandArguments(Command.CLIENT).add(Keyword.SETINFO).add(ClientAttributeOption.LIB_VER.getRaw())
+                          .add(libVersion));
         }
       }
 
@@ -587,34 +760,67 @@ public class Connection implements Closeable, PoolObject {
     }
   }
 
-  private void helloAndAuth(final RedisProtocol protocol, final RedisCredentials credentials) {
-    Map<String, Object> helloResult = null;
-    if (protocol != null && credentials != null && credentials.getUser() != null) {
-      byte[] rawPass = encodeToBytes(credentials.getPassword());
-      try {
-        helloResult = hello(encode(protocol.version()), Keyword.AUTH.getRaw(),
-          encode(credentials.getUser()), rawPass);
-      } finally {
-        Arrays.fill(rawPass, (byte) 0); // clear sensitive data
-      }
-    } else {
-      authenticate(credentials);
-      helloResult = protocol == null ? null : hello(encode(protocol.version()));
-    }
-    if (helloResult != null) {
-      server = (String) helloResult.get("server");
-      version = (String) helloResult.get("version");
+  /**
+   * Establish the RESP protocol version and authenticate if needed.
+   *
+   * Performs protocol negotiation using the {@code HELLO} command and optional authentication,
+   * and resolves the effective RESP protocol used for the connection.
+   *
+   * <p>This method supports both explicit protocol selection and legacy compatibility mode.</p>
+   *
+   * <p>Behavior:</p>
+   * <ul>
+   *   <li>If {@code requestedProtocol} is {@code null} and {@code autoNegotiateProtocol} is
+   *       {@code true}, the client first attempts {@code HELLO 3} and falls back to RESP2 if
+   *       RESP3 is not supported.</li>
+   *
+   *   <li>If {@code requestedProtocol} is {@code null} and {@code autoNegotiateProtocol} is
+   *       {@code false}, no {@code HELLO} is sent. The connection assumes RESP2 as the default
+   *       protocol and only {@code AUTH} is performed if credentials are provided. This is the
+   *       legacy {@link Jedis} behaviour.</li>
+   *
+   *   <li>If {@code RESP2} is requested, a strict {@code HELLO 2} handshake is performed.</li>
+   *
+   *   <li>If {@code RESP3} is requested, a strict {@code HELLO 3} handshake is performed.</li>
+   * </ul>
+   *
+   * <p>Side effects:</p>
+   * <ul>
+   *   <li>Performs authentication if credentials are provided.</li>
+   *   <li>Populates internal server metadata (version, server info).</li>
+   *   <li>Stores the resolved protocol version for the connection.</li>
+   * </ul>
+   *
+   * @param requestedProtocol the requested RESP protocol, or {@code null} to defer to
+   *          {@code autoNegotiateProtocol}
+   * @param autoNegotiateProtocol whether to attempt {@code HELLO 3} with RESP2 fallback when no
+   *          protocol is explicitly requested; ignored when {@code requestedProtocol} is
+   *          non-{@code null}
+   * @param credentials credentials used for authentication (may be {@code null})
+   * @throws IllegalArgumentException if the requested protocol is not supported
+   * @throws IllegalStateException if the server's HELLO response is missing the protocol field
+   * @throws JedisProtocolNotSupportedException if protocol negotiation fails
+   * @throws JedisDataException if the server returns an error during handshake
+   */
+  private void establishProtocol(final RedisProtocol requestedProtocol,
+      final boolean autoNegotiateProtocol, final RedisCredentials credentials) {
+    HelloResult helloResult = handshake.establish(requestedProtocol, autoNegotiateProtocol,
+      credentials);
+    version = helloResult.getVersion();
+    server = helloResult.getServer();
+
+    if (helloResult.getProtocol() == null) {
+      throw new IllegalStateException("HELLO response is missing the protocol version field");
     }
 
-    // clearing 'char[] credentials.getPassword()' should be
-    // handled in RedisCredentialsProvider.cleanUp()
+    this.protocol = helloResult.getProtocol();
   }
 
   public void setCredentials(RedisCredentials credentials) {
     currentCredentials.set(credentials);
   }
 
-  private String authenticate(RedisCredentials credentials) {
+  String authenticate(RedisCredentials credentials) {
     if (credentials == null || credentials.getPassword() == null) {
       return null;
     }
@@ -638,6 +844,62 @@ public class Connection implements Closeable, PoolObject {
   protected Map<String, Object> hello(byte[]... args) {
     sendCommand(Command.HELLO, args);
     return BuilderFactory.ENCODED_OBJECT_MAP.build(getOne());
+  }
+
+  /**
+   * Sends the {@code HELLO} command to negotiate the RESP protocol version and optionally perform authentication.
+   *
+   * <p>Behavior:</p>
+   * <ul>
+   *   <li>If {@code credentials} is {@code null}, only protocol negotiation is performed
+   *       (no {@code AUTH} is sent).</li>
+   *
+   *   <li>If {@code credentials} is provided and contains a password, authentication is
+   *
+   *       performed via {@code HELLO ... AUTH <user> <password>}.</li>
+   *
+   *   <li>If {@code credentials#getUser()} is {@code null}, the {@code default} user is used.</li>
+   *   <li>If {@code credentials} is provided but the password is {@code null}, no authentication
+   *       is performed.</li>
+   * </ul>
+   *
+   * <p>Note:</p>
+   * <ul>
+   *   <li>{@code HELLO} is available only in Redis 6.0 and newer.</li>
+   *   <li>The command both negotiates the protocol version (RESP2/RESP3) and returns
+   *       server metadata.</li>
+   * </ul>
+   *
+   * @param protocol the requested RESP protocol version (must not be {@code null})
+   * @param credentials optional credentials used for authentication (may be {@code null})
+   * @return the parsed {@code HELLO} response containing server metadata
+   * @throws IllegalArgumentException if {@code protocol} is {@code null}
+   */
+  HelloResult hello(RedisProtocol protocol, RedisCredentials credentials) {
+    if (protocol == null) {
+      throw new IllegalArgumentException("protocol must not be null");
+    }
+
+    byte[] rawPass = null;
+    try {
+      byte[][] args;
+      byte[] versionRaw = encode(protocol.version());
+      if (credentials != null && credentials.getPassword() != null) {
+        String user = credentials.getUser();
+        if (user == null) {
+          user = "default";
+        }
+        rawPass = encodeToBytes(credentials.getPassword());
+        args = new byte[][] { versionRaw, Keyword.AUTH.getRaw(), encode(user), rawPass };
+      } else {
+        args = new byte[][] { versionRaw };
+      }
+      return new HelloResult(hello(args));
+    } finally {
+      if (rawPass != null) {
+        Arrays.fill(rawPass, (byte) 0); // clear sensitive data
+      }
+    }
   }
 
   protected byte[] encodeToBytes(char[] chars) {
@@ -670,13 +932,17 @@ public class Connection implements Closeable, PoolObject {
     return authXManager;
   }
 
-  @Override
-  public Long getEntityId() {
-    return entityId;
+  /**
+   * Returns an unmodifiable view of the registered push consumers.
+   *
+   * @return
+   */
+  List<PushConsumer> getPushConsumers() {
+    return pushConsumers.getConsumers();
   }
 
-  @Override
-  public void setEntityId(Long entityIdValue) {
-    this.entityId = entityIdValue;
+  @Internal
+  protected void addPushConsumer(PushConsumer consumer) {
+    this.pushConsumers.add(consumer);
   }
 }

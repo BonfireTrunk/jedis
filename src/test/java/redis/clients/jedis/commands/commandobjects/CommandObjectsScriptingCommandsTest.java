@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.redis.test.annotations.SinceRedisVersion;
+import io.redis.test.annotations.ConditionalOnEnv;
 import io.redis.test.utils.RedisVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.resps.FunctionStats;
 import redis.clients.jedis.resps.LibraryInfo;
 import redis.clients.jedis.util.RedisVersionUtil;
+import redis.clients.jedis.util.TestEnvUtil;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=scripting">Scripting</a> commands.
@@ -83,6 +85,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvalWithScriptKeyCountAndParams() {
     exec(commandObjects.set("key1", "value1"));
     exec(commandObjects.set("key2", "value2"));
@@ -116,6 +119,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvalWithScriptKeysAndArgsList() {
     exec(commandObjects.hset("fruits", "apples", "5"));
     exec(commandObjects.hset("fruits", "bananas", "3"));
@@ -123,16 +127,21 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
 
     // Script to sum the values for the fruits provided as args. The hash name is provided as key.
     // The sum is written to a string value whose name is also provided as keys.
-    String script = "local sum = 0\n" + "for i, fruitKey in ipairs(ARGV) do\n"
-        + "    local value = redis.call('HGET', KEYS[1], fruitKey)\n" + "    if value then\n"
-        + "        sum = sum + tonumber(value)\n" + "    end\n" + "end\n"
-        + "redis.call('SET', KEYS[2], sum)\n" + "return sum";
+    String script = "local sum = 0\n" +
+        "for i, fruitKey in ipairs(ARGV) do\n" +
+        "    local value = redis.call('HGET', KEYS[1], fruitKey)\n" +
+        "    if value then\n" +
+        "        sum = sum + tonumber(value)\n" +
+        "    end\n" +
+        "end\n" +
+        "redis.call('SET', KEYS[2], sum)\n" +
+        "return sum";
 
     String initialTotal = exec(commandObjects.get("total"));
     assertThat(initialTotal, nullValue());
 
-    Object eval = exec(commandObjects.eval(script, Arrays.asList("fruits", "total"),
-      Arrays.asList("apples", "bananas", "oranges")));
+    Object eval = exec(commandObjects.eval(script,
+        Arrays.asList("fruits", "total"), Arrays.asList("apples", "bananas", "oranges")));
 
     assertThat(eval, equalTo(12L));
 
@@ -147,8 +156,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     assertThat(initialTotalBinary, nullValue());
 
     Object evalBinary = exec(commandObjects.eval(script.getBytes(),
-      Arrays.asList("fruits".getBytes(), "total".getBytes()),
-      Arrays.asList("apples".getBytes(), "bananas".getBytes(), "oranges".getBytes())));
+        Arrays.asList("fruits".getBytes(), "total".getBytes()), Arrays.asList("apples".getBytes(), "bananas".getBytes(), "oranges".getBytes())));
 
     assertThat(evalBinary, equalTo(12L));
 
@@ -158,6 +166,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvalReadonlyWithScriptKeysAndArgsList() {
     exec(commandObjects.set("readonlyKey1", "readonlyValue1"));
     exec(commandObjects.set("readonlyKey2", "readonlyValue2"));
@@ -165,13 +174,13 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     // Script to retrieve values for provided keys, concatenates
     String script = "return redis.call('get', KEYS[1]) .. redis.call('get', KEYS[2])";
 
-    Object eval = exec(commandObjects.evalReadonly(script,
-      Arrays.asList("readonlyKey1", "readonlyKey2"), Collections.emptyList()));
+    Object eval = exec(commandObjects.evalReadonly(
+        script, Arrays.asList("readonlyKey1", "readonlyKey2"), Collections.emptyList()));
 
     assertThat(eval, equalTo("readonlyValue1readonlyValue2"));
 
-    Object evalBinary = exec(commandObjects.evalReadonly(script.getBytes(),
-      Arrays.asList("readonlyKey1".getBytes(), "readonlyKey2".getBytes()), Collections.emptyList()));
+    Object evalBinary = exec(commandObjects.evalReadonly(
+        script.getBytes(), Arrays.asList("readonlyKey1".getBytes(), "readonlyKey2".getBytes()), Collections.emptyList()));
 
     assertThat(evalBinary, equalTo("readonlyValue1readonlyValue2".getBytes()));
   }
@@ -211,6 +220,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvalWithScriptKeyCountAndParamsSha() {
     exec(commandObjects.set("key1", "value1"));
     exec(commandObjects.set("key2", "value2"));
@@ -246,24 +256,30 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvalWithScriptKeysAndArgsListSha() {
     exec(commandObjects.hset("fruits", "apples", "5"));
     exec(commandObjects.hset("fruits", "bananas", "3"));
     exec(commandObjects.hset("fruits", "oranges", "4"));
 
     // Sums the values for given fruits, stores the result, and returns it
-    String script = "local sum = 0\n" + "for i, fruitKey in ipairs(ARGV) do\n"
-        + "    local value = redis.call('HGET', KEYS[1], fruitKey)\n" + "    if value then\n"
-        + "        sum = sum + tonumber(value)\n" + "    end\n" + "end\n"
-        + "redis.call('SET', KEYS[2], sum)\n" + "return sum";
+    String script = "local sum = 0\n" +
+        "for i, fruitKey in ipairs(ARGV) do\n" +
+        "    local value = redis.call('HGET', KEYS[1], fruitKey)\n" +
+        "    if value then\n" +
+        "        sum = sum + tonumber(value)\n" +
+        "    end\n" +
+        "end\n" +
+        "redis.call('SET', KEYS[2], sum)\n" +
+        "return sum";
     String sha1 = exec(commandObjects.scriptLoad(script));
     assertThat(sha1, notNullValue());
 
     String initialTotal = exec(commandObjects.get("total"));
     assertThat(initialTotal, nullValue());
 
-    Object eval = exec(commandObjects.evalsha(sha1, Arrays.asList("fruits", "total"),
-      Arrays.asList("apples", "bananas", "oranges")));
+    Object eval = exec(commandObjects.evalsha(
+        sha1, Arrays.asList("fruits", "total"), Arrays.asList("apples", "bananas", "oranges")));
 
     assertThat(eval, equalTo(12L));
 
@@ -277,9 +293,10 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     String initialTotalBinary = exec(commandObjects.get("total"));
     assertThat(initialTotalBinary, nullValue());
 
-    Object evalBinary = exec(commandObjects.evalsha(sha1.getBytes(),
-      Arrays.asList("fruits".getBytes(), "total".getBytes()),
-      Arrays.asList("apples".getBytes(), "bananas".getBytes(), "oranges".getBytes())));
+    Object evalBinary = exec(commandObjects.evalsha(
+        sha1.getBytes(),
+        Arrays.asList("fruits".getBytes(), "total".getBytes()),
+        Arrays.asList("apples".getBytes(), "bananas".getBytes(), "oranges".getBytes())));
 
     assertThat(evalBinary, equalTo(12L));
 
@@ -289,6 +306,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvalReadonlyWithScriptKeysAndArgsListSha() {
     exec(commandObjects.set("readonlyKey1", "readonlyValue1"));
     exec(commandObjects.set("readonlyKey2", "readonlyValue2"));
@@ -298,13 +316,17 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     String sha1 = exec(commandObjects.scriptLoad(script));
     assertThat(sha1, notNullValue());
 
-    Object eval = exec(commandObjects.evalshaReadonly(sha1,
-      Arrays.asList("readonlyKey1", "readonlyKey2"), Collections.emptyList()));
+    Object eval = exec(commandObjects.evalshaReadonly(
+        sha1,
+        Arrays.asList("readonlyKey1", "readonlyKey2"),
+        Collections.emptyList()));
 
     assertThat(eval, equalTo("readonlyValue1readonlyValue2"));
 
-    Object evalBinary = exec(commandObjects.evalshaReadonly(sha1.getBytes(),
-      Arrays.asList("readonlyKey1".getBytes(), "readonlyKey2".getBytes()), Collections.emptyList()));
+    Object evalBinary = exec(commandObjects.evalshaReadonly(
+        sha1.getBytes(),
+        Arrays.asList("readonlyKey1".getBytes(), "readonlyKey2".getBytes()),
+        Collections.emptyList()));
 
     assertThat(evalBinary, equalTo("readonlyValue1readonlyValue2".getBytes()));
   }
@@ -326,13 +348,13 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
 
     String nonExistingSha1 = "nonexistentsha1";
 
-    List<Boolean> existsMultiple = exec(commandObjects.scriptExists("sampleKey", sha1, anotherSha1,
-      nonExistingSha1));
+    List<Boolean> existsMultiple = exec(commandObjects.scriptExists(
+        "sampleKey", sha1, anotherSha1, nonExistingSha1));
 
     assertThat(existsMultiple, contains(true, true, false));
 
-    List<Boolean> existsMultipleBinary = exec(commandObjects.scriptExists("sampleKey".getBytes(),
-      sha1.getBytes(), anotherSha1.getBytes(), nonExistingSha1.getBytes()));
+    List<Boolean> existsMultipleBinary = exec(commandObjects.scriptExists(
+        "sampleKey".getBytes(), sha1.getBytes(), anotherSha1.getBytes(), nonExistingSha1.getBytes()));
 
     assertThat(existsMultipleBinary, contains(true, true, false));
   }
@@ -368,8 +390,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     String sampleKey = "testKey";
     exec(commandObjects.set(sampleKey, "sampleValue")); // Set a value for the sampleKey
 
-    byte[] anotherSha1 = exec(commandObjects.scriptLoad(anotherScript.getBytes(),
-      sampleKey.getBytes()));
+    byte[] anotherSha1 = exec(commandObjects.scriptLoad(anotherScript.getBytes(), sampleKey.getBytes()));
     assertThat(anotherSha1, notNullValue());
 
     Object scriptResponse2 = exec(commandObjects.evalsha(anotherSha1, sampleKey.getBytes()));
@@ -473,12 +494,18 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSumValuesFunction() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args)\n" + "local sum = 0\n"
-        + "for _, key in ipairs(keys) do\n" + "local val = redis.call('GET', key)\n"
-        + "if val then sum = sum + tonumber(val) end\n" + "end\n"
-        + "redis.call('SET', 'total', sum)\n" + "return sum\n" + "end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args)\n" +
+        "local sum = 0\n" +
+        "for _, key in ipairs(keys) do\n" +
+        "local val = redis.call('GET', key)\n" +
+        "if val then sum = sum + tonumber(val) end\n" +
+        "end\n" +
+        "redis.call('SET', 'total', sum)\n" +
+        "return sum\n" +
+        "end)";
     String functionLoad = exec(commandObjects.functionLoad(luaScript));
     assertThat(functionLoad, equalTo("mylib"));
 
@@ -489,8 +516,10 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     String initialTotal = exec(commandObjects.get("total"));
     assertThat(initialTotal, nullValue());
 
-    Object fcall = exec(commandObjects.fcall("sumValues", Arrays.asList("key1", "key2", "key3"),
-      new ArrayList<>()));
+    Object fcall = exec(commandObjects.fcall(
+        "sumValues",
+        Arrays.asList("key1", "key2", "key3"),
+        new ArrayList<>()));
 
     assertThat(fcall, equalTo(60L));
 
@@ -503,8 +532,10 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     String totalAfterRest = exec(commandObjects.get("total"));
     assertThat(totalAfterRest, nullValue());
 
-    Object fcallBinary = exec(commandObjects.fcall("sumValues".getBytes(),
-      Arrays.asList("key1".getBytes(), "key2".getBytes(), "key3".getBytes()), new ArrayList<>()));
+    Object fcallBinary = exec(commandObjects.fcall(
+        "sumValues".getBytes(),
+        Arrays.asList("key1".getBytes(), "key2".getBytes(), "key3".getBytes()),
+        new ArrayList<>()));
 
     assertThat(fcallBinary, equalTo(60L));
 
@@ -514,12 +545,17 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSumValuesFunctionReadonly() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function{function_name='sumValues', callback=function(keys, args)\n"
-        + "local sum = 0\n" + "for _, key in ipairs(keys) do\n"
-        + "local val = redis.call('GET', key)\n" + "if val then sum = sum + tonumber(val) end\n"
-        + "end\n" + "return sum\n" + "end, flags={'no-writes'}}";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function{function_name='sumValues', callback=function(keys, args)\n" +
+        "local sum = 0\n" +
+        "for _, key in ipairs(keys) do\n" +
+        "local val = redis.call('GET', key)\n" +
+        "if val then sum = sum + tonumber(val) end\n" +
+        "end\n" +
+        "return sum\n" +
+        "end, flags={'no-writes'}}";
     String functionLoad = exec(commandObjects.functionLoad(luaScript));
     assertThat(functionLoad, equalTo("mylib"));
 
@@ -527,13 +563,17 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     exec(commandObjects.set("key2", "20"));
     exec(commandObjects.set("key3", "30"));
 
-    Object fcall = exec(commandObjects.fcallReadonly("sumValues",
-      Arrays.asList("key1", "key2", "key3"), new ArrayList<>()));
+    Object fcall = exec(commandObjects.fcallReadonly(
+        "sumValues",
+        Arrays.asList("key1", "key2", "key3"),
+        new ArrayList<>()));
 
     assertThat(fcall, equalTo(60L));
 
-    Object fcallBinary = exec(commandObjects.fcallReadonly("sumValues".getBytes(),
-      Arrays.asList("key1".getBytes(), "key2".getBytes(), "key3".getBytes()), new ArrayList<>()));
+    Object fcallBinary = exec(commandObjects.fcallReadonly(
+        "sumValues".getBytes(),
+        Arrays.asList("key1".getBytes(), "key2".getBytes(), "key3".getBytes()),
+        new ArrayList<>()));
 
     assertThat(fcallBinary, equalTo(60L));
   }
@@ -541,8 +581,8 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionDeletion() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args) return 42 end)";
     exec(commandObjects.functionLoad(luaScript));
 
     String libraryName = "mylib";
@@ -564,8 +604,8 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionDeletionBinary() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args) return 42 end)";
     exec(commandObjects.functionLoad(luaScript));
 
     String libraryName = "mylib";
@@ -587,8 +627,8 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionListing() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args) return 42 end)";
     exec(commandObjects.functionLoad(luaScript));
 
     String libraryName = "mylib";
@@ -637,8 +677,7 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
     assertThat(listWithCodeLibrary.get(0).getFunctions().get(0), hasEntry("name", "sumValues"));
     assertThat(listWithCodeLibrary.get(0).getLibraryCode(), notNullValue());
 
-    List<Object> listWithCodeLibraryBinary = exec(commandObjects.functionListWithCode(libraryName
-        .getBytes()));
+    List<Object> listWithCodeLibraryBinary = exec(commandObjects.functionListWithCode(libraryName.getBytes()));
 
     assertThat(listWithCodeLibraryBinary, hasSize(1));
   }
@@ -646,58 +685,58 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionReload() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('dummy', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('dummy', function(keys, args) return 42 end)";
     String loadResult = exec(commandObjects.functionLoad(luaScript));
     assertThat(loadResult, equalTo("mylib"));
 
-    Object result = exec(commandObjects.fcall("dummy".getBytes(), new ArrayList<>(),
-      new ArrayList<>()));
+    Object result = exec(commandObjects.fcall(
+        "dummy".getBytes(), new ArrayList<>(), new ArrayList<>()));
     assertThat(result, equalTo(42L));
 
-    String luaScriptChanged = "#!lua name=mylib\n"
-        + "redis.register_function('dummy', function(keys, args) return 52 end)";
+    String luaScriptChanged = "#!lua name=mylib\n" +
+        "redis.register_function('dummy', function(keys, args) return 52 end)";
     String replaceResult = exec(commandObjects.functionLoadReplace(luaScriptChanged));
     assertThat(replaceResult, equalTo("mylib"));
 
-    Object resultAfter = exec(commandObjects.fcall("dummy".getBytes(), new ArrayList<>(),
-      new ArrayList<>()));
+    Object resultAfter = exec(commandObjects.fcall(
+        "dummy".getBytes(), new ArrayList<>(), new ArrayList<>()));
     assertThat(resultAfter, equalTo(52L));
   }
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionReloadBinary() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('dummy', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('dummy', function(keys, args) return 42 end)";
     String loadResult = exec(commandObjects.functionLoad(luaScript.getBytes()));
     assertThat(loadResult, equalTo("mylib"));
 
-    Object result = exec(commandObjects.fcall(("dummy").getBytes(), new ArrayList<>(),
-      new ArrayList<>()));
+    Object result = exec(commandObjects.fcall((
+        "dummy").getBytes(), new ArrayList<>(), new ArrayList<>()));
     assertThat(result, equalTo(42L));
 
-    String luaScriptChanged = "#!lua name=mylib\n"
-        + "redis.register_function('dummy', function(keys, args) return 52 end)";
+    String luaScriptChanged = "#!lua name=mylib\n" +
+        "redis.register_function('dummy', function(keys, args) return 52 end)";
     String replaceResult = exec(commandObjects.functionLoadReplace(luaScriptChanged.getBytes()));
     assertThat(replaceResult, equalTo("mylib"));
 
-    Object resultAfter = exec(commandObjects.fcall("dummy".getBytes(), new ArrayList<>(),
-      new ArrayList<>()));
+    Object resultAfter = exec(commandObjects.fcall(
+        "dummy".getBytes(), new ArrayList<>(), new ArrayList<>()));
     assertThat(resultAfter, equalTo(52L));
   }
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionStats() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('dummy', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('dummy', function(keys, args) return 42 end)";
     String loadResult = exec(commandObjects.functionLoad(luaScript));
     assertThat(loadResult, equalTo("mylib"));
 
     for (int i = 0; i < 5; i++) {
-      Object result = exec(commandObjects.fcall("dummy".getBytes(), new ArrayList<>(),
-        new ArrayList<>()));
+      Object result = exec(commandObjects.fcall(
+          "dummy".getBytes(), new ArrayList<>(), new ArrayList<>()));
       assertThat(result, equalTo(42L));
     }
 
@@ -717,8 +756,8 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionDumpFlushRestore() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args) return 42 end)";
     exec(commandObjects.functionLoad(luaScript));
 
     String libraryName = "mylib";
@@ -751,8 +790,8 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionDumpFlushRestoreWithPolicy() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args) return 42 end)";
     exec(commandObjects.functionLoad(luaScript));
 
     String libraryName = "mylib";
@@ -785,8 +824,8 @@ public class CommandObjectsScriptingCommandsTest extends CommandObjectsStandalon
   @Test
   @SinceRedisVersion(value = "7.0.0")
   public void testFunctionFlushWithMode() {
-    String luaScript = "#!lua name=mylib\n"
-        + "redis.register_function('sumValues', function(keys, args) return 42 end)";
+    String luaScript = "#!lua name=mylib\n" +
+        "redis.register_function('sumValues', function(keys, args) return 42 end)";
     exec(commandObjects.functionLoad(luaScript));
 
     String libraryName = "mylib";

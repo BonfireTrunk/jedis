@@ -52,8 +52,7 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
     Path2 path = Path2.of("$.array");
     Object[] objects = { "one", "two", "three" };
 
-    when(commandObjects.jsonArrAppendWithEscape("myJson", path, objects)).thenReturn(
-      listLongCommandObject);
+    when(commandObjects.jsonArrAppendWithEscape("myJson", path, objects)).thenReturn(listLongCommandObject);
 
     Response<List<Long>> response = pipeliningBase.jsonArrAppendWithEscape("myJson", path, objects);
 
@@ -92,8 +91,7 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
     Path2 path = Path2.of("$.array");
     Object scalar = "two";
 
-    when(commandObjects.jsonArrIndexWithEscape("myJson", path, scalar)).thenReturn(
-      listLongCommandObject);
+    when(commandObjects.jsonArrIndexWithEscape("myJson", path, scalar)).thenReturn(listLongCommandObject);
 
     Response<List<Long>> response = pipeliningBase.jsonArrIndexWithEscape("myJson", path, scalar);
 
@@ -119,8 +117,7 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
     Path2 path = Path2.of("$.array");
     Object[] objects = { "one", "two", "three" };
 
-    when(commandObjects.jsonArrInsert("myJson", path, 1, objects))
-        .thenReturn(listLongCommandObject);
+    when(commandObjects.jsonArrInsert("myJson", path, 1, objects)).thenReturn(listLongCommandObject);
 
     Response<List<Long>> response = pipeliningBase.jsonArrInsert("myJson", path, 1, objects);
 
@@ -133,11 +130,9 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
     Path2 path = Path2.of("$.array");
     Object[] objects = { "one", "two", "three" };
 
-    when(commandObjects.jsonArrInsertWithEscape("myJson", path, 1, objects)).thenReturn(
-      listLongCommandObject);
+    when(commandObjects.jsonArrInsertWithEscape("myJson", path, 1, objects)).thenReturn(listLongCommandObject);
 
-    Response<List<Long>> response = pipeliningBase.jsonArrInsertWithEscape("myJson", path, 1,
-      objects);
+    Response<List<Long>> response = pipeliningBase.jsonArrInsertWithEscape("myJson", path, 1, objects);
 
     assertThat(commands, contains(listLongCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -227,8 +222,7 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
   public void testJsonArrPopWithClassPathAndIndex() {
     Path path = new Path("$.array");
 
-    when(commandObjects.jsonArrPop("myJson", MyBean.class, path, 1))
-        .thenReturn(myBeanCommandObject);
+    when(commandObjects.jsonArrPop("myJson", MyBean.class, path, 1)).thenReturn(myBeanCommandObject);
 
     Response<MyBean> response = pipeliningBase.jsonArrPop("myJson", MyBean.class, path, 1);
 
@@ -448,8 +442,7 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
   public void testJsonMGetWithPathAndClass() {
     Path path = new Path("$.field");
 
-    when(commandObjects.jsonMGet(path, MyBean.class, "key1", "key2")).thenReturn(
-      listMyBeanCommandObject);
+    when(commandObjects.jsonMGet(path, MyBean.class, "key1", "key2")).thenReturn(listMyBeanCommandObject);
 
     Response<List<MyBean>> response = pipeliningBase.jsonMGet(path, MyBean.class, "key1", "key2");
 
@@ -566,8 +559,7 @@ public class PipeliningBaseJsonCommandsTest extends PipeliningBaseMockedTestBase
     Object object = new JsonObject();
     JsonSetParams params = new JsonSetParams().nx();
 
-    when(commandObjects.jsonSetWithEscape("myJson", path, object, params)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.jsonSetWithEscape("myJson", path, object, params)).thenReturn(stringCommandObject);
 
     Response<String> response = pipeliningBase.jsonSetWithEscape("myJson", path, object, params);
 

@@ -7,12 +7,14 @@ import static org.hamcrest.Matchers.equalTo;
 import java.util.List;
 
 import io.redis.test.annotations.SinceRedisVersion;
+import io.redis.test.annotations.ConditionalOnEnv;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.args.BitCountOption;
 import redis.clients.jedis.args.BitOP;
 import redis.clients.jedis.params.BitPosParams;
+import redis.clients.jedis.util.TestEnvUtil;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=bitmap">Bitmap</a> commands.
@@ -81,8 +83,7 @@ public class CommandObjectsBitmapCommandsTest extends CommandObjectsStandaloneTe
     Long bitcountFirstSixBits = exec(commandObjects.bitcount(key, 0, 5, BitCountOption.BIT));
     assertThat(bitcountFirstSixBits, equalTo(2L));
 
-    Long bitcountFirstSixBitsBinary = exec(commandObjects.bitcount(keyBytes, 0, 5,
-      BitCountOption.BIT));
+    Long bitcountFirstSixBitsBinary = exec(commandObjects.bitcount(keyBytes, 0, 5, BitCountOption.BIT));
     assertThat(bitcountFirstSixBitsBinary, equalTo(2L));
   }
 
@@ -128,13 +129,14 @@ public class CommandObjectsBitmapCommandsTest extends CommandObjectsStandaloneTe
   public void testBitfield() {
     String key = "bitfieldKey";
 
-    List<Long> bitfieldResult = exec(commandObjects.bitfield(key, "INCRBY", "i5", "100", "7",
-      "GET", "i5", "100"));
+    List<Long> bitfieldResult = exec(commandObjects.bitfield(
+        key, "INCRBY", "i5", "100", "7", "GET", "i5", "100"));
 
     // Contains the result of the INCRBY operation, and the result of the GET operation.
     assertThat(bitfieldResult, contains(7L, 7L));
 
-    List<Long> bitfieldRoResult = exec(commandObjects.bitfieldReadonly(key, "GET", "i4", "100"));
+    List<Long> bitfieldRoResult = exec(commandObjects.bitfieldReadonly(
+        key, "GET", "i4", "100"));
     assertThat(bitfieldRoResult, contains(3L));
   }
 
@@ -142,19 +144,20 @@ public class CommandObjectsBitmapCommandsTest extends CommandObjectsStandaloneTe
   public void testBitfieldBinary() {
     byte[] key = "bitfieldKeyBytes".getBytes();
 
-    List<Long> bitfieldResult = exec(commandObjects.bitfield(key, "INCRBY".getBytes(),
-      "i5".getBytes(), "100".getBytes(), "7".getBytes(), "GET".getBytes(), "i5".getBytes(),
-      "100".getBytes()));
+    List<Long> bitfieldResult = exec(commandObjects.bitfield(key,
+        "INCRBY".getBytes(), "i5".getBytes(), "100".getBytes(), "7".getBytes(),
+        "GET".getBytes(), "i5".getBytes(), "100".getBytes()));
 
     // Contains the result of the INCRBY operation, and the result of the GET operation.
     assertThat(bitfieldResult, contains(7L, 7L));
 
-    List<Long> bitfieldRoResult = exec(commandObjects.bitfieldReadonly(key, "GET".getBytes(),
-      "i4".getBytes(), "100".getBytes()));
+    List<Long> bitfieldRoResult = exec(commandObjects.bitfieldReadonly(key,
+        "GET".getBytes(), "i4".getBytes(), "100".getBytes()));
     assertThat(bitfieldRoResult, contains(3L));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testBitop() {
     String srcKey1 = "srcKey1";
     String srcKey2 = "srcKey2";
@@ -177,6 +180,7 @@ public class CommandObjectsBitmapCommandsTest extends CommandObjectsStandaloneTe
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testBitopBinary() {
     byte[] srcKey1 = "srcKey1".getBytes();
     byte[] srcKey2 = "srcKey2".getBytes();

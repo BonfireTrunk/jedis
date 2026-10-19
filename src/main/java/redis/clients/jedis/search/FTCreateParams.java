@@ -57,6 +57,7 @@ public class FTCreateParams implements IParams {
 
   /**
    * This method can be chained to add multiple prefixes.
+   *
    * @see FTCreateParams#prefix(java.lang.String...)
    */
   public FTCreateParams addPrefix(String prefix) {
@@ -100,8 +101,8 @@ public class FTCreateParams implements IParams {
   }
 
   /**
-   * Document attribute that you use as the document rank based on the user ranking. Ranking must be
-   * between 0.0 and 1.0.
+   * Document attribute that you use as the document rank based on the user ranking.
+   * Ranking must be between 0.0 and 1.0.
    */
   public FTCreateParams scoreField(String scoreField) {
     this.scoreField = scoreField;

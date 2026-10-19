@@ -10,11 +10,133 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.args.ListDirection;
+import redis.clients.jedis.args.ListMoveOrder;
 import redis.clients.jedis.args.ListPosition;
+import redis.clients.jedis.params.LMoveMParams;
 import redis.clients.jedis.params.LPosParams;
 import redis.clients.jedis.util.KeyValue;
 
 public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase {
+
+  @Test
+  public void testLmovem() {
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+
+    when(commandObjects.lmovem("srcKey", "dstKey", from, to)).thenReturn(listStringCommandObject);
+
+    Response<List<String>> response = pipeliningBase.lmovem("srcKey", "dstKey", from, to);
+
+    assertThat(commands, contains(listStringCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testLmovemBinary() {
+    byte[] srcKey = "srcKey".getBytes();
+    byte[] dstKey = "dstKey".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+
+    when(commandObjects.lmovem(srcKey, dstKey, from, to)).thenReturn(listBytesCommandObject);
+
+    Response<List<byte[]>> response = pipeliningBase.lmovem(srcKey, dstKey, from, to);
+
+    assertThat(commands, contains(listBytesCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testLmovemWithParams() {
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.LEFT;
+    LMoveMParams params = LMoveMParams.lMoveMParams().count(2, ListMoveOrder.OBO);
+
+    when(commandObjects.lmovem("srcKey", "dstKey", from, to, params)).thenReturn(listStringCommandObject);
+
+    Response<List<String>> response = pipeliningBase.lmovem("srcKey", "dstKey", from, to, params);
+
+    assertThat(commands, contains(listStringCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testLmovemWithParamsBinary() {
+    byte[] srcKey = "srcKey".getBytes();
+    byte[] dstKey = "dstKey".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.LEFT;
+    LMoveMParams params = LMoveMParams.lMoveMParams().exactly(2, ListMoveOrder.BULK);
+
+    when(commandObjects.lmovem(srcKey, dstKey, from, to, params)).thenReturn(listBytesCommandObject);
+
+    Response<List<byte[]>> response = pipeliningBase.lmovem(srcKey, dstKey, from, to, params);
+
+    assertThat(commands, contains(listBytesCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testBlmovem() {
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 1.0;
+
+    when(commandObjects.blmovem("srcKey", "dstKey", from, to, timeout)).thenReturn(listStringCommandObject);
+
+    Response<List<String>> response = pipeliningBase.blmovem("srcKey", "dstKey", from, to, timeout);
+
+    assertThat(commands, contains(listStringCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testBlmovemWithParams() {
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 1.0;
+    LMoveMParams params = LMoveMParams.lMoveMParams().count(2, ListMoveOrder.BULK);
+
+    when(commandObjects.blmovem("srcKey", "dstKey", from, to, timeout, params)).thenReturn(listStringCommandObject);
+
+    Response<List<String>> response = pipeliningBase.blmovem("srcKey", "dstKey", from, to, timeout, params);
+
+    assertThat(commands, contains(listStringCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testBlmovemBinary() {
+    byte[] srcKey = "srcKey".getBytes();
+    byte[] dstKey = "dstKey".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 10.5;
+
+    when(commandObjects.blmovem(srcKey, dstKey, from, to, timeout)).thenReturn(listBytesCommandObject);
+
+    Response<List<byte[]>> response = pipeliningBase.blmovem(srcKey, dstKey, from, to, timeout);
+
+    assertThat(commands, contains(listBytesCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testBlmovemWithParamsBinary() {
+    byte[] srcKey = "srcKey".getBytes();
+    byte[] dstKey = "dstKey".getBytes();
+    ListDirection from = ListDirection.LEFT;
+    ListDirection to = ListDirection.RIGHT;
+    double timeout = 10.5;
+    LMoveMParams params = LMoveMParams.lMoveMParams().exactly(2, ListMoveOrder.OBO);
+
+    when(commandObjects.blmovem(srcKey, dstKey, from, to, timeout, params)).thenReturn(listBytesCommandObject);
+
+    Response<List<byte[]>> response = pipeliningBase.blmovem(srcKey, dstKey, from, to, timeout, params);
+
+    assertThat(commands, contains(listBytesCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
 
   @Test
   public void testBlmove() {
@@ -22,8 +144,7 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     ListDirection to = ListDirection.RIGHT;
     double timeout = 1.0;
 
-    when(commandObjects.blmove("srcKey", "dstKey", from, to, timeout)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.blmove("srcKey", "dstKey", from, to, timeout)).thenReturn(stringCommandObject);
 
     Response<String> response = pipeliningBase.blmove("srcKey", "dstKey", from, to, timeout);
 
@@ -52,11 +173,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     double timeout = 1.0;
     ListDirection direction = ListDirection.LEFT;
 
-    when(commandObjects.blmpop(timeout, direction, "key1", "key2")).thenReturn(
-      keyValueStringListStringCommandObject);
+    when(commandObjects.blmpop(timeout, direction, "key1", "key2")).thenReturn(keyValueStringListStringCommandObject);
 
-    Response<KeyValue<String, List<String>>> response = pipeliningBase.blmpop(timeout, direction,
-      "key1", "key2");
+    Response<KeyValue<String, List<String>>> response = pipeliningBase.blmpop(timeout, direction, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListStringCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -69,11 +188,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     byte[] key1 = "key1".getBytes();
     byte[] key2 = "key2".getBytes();
 
-    when(commandObjects.blmpop(timeout, direction, key1, key2)).thenReturn(
-      keyValueBytesListBytesCommandObject);
+    when(commandObjects.blmpop(timeout, direction, key1, key2)).thenReturn(keyValueBytesListBytesCommandObject);
 
-    Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.blmpop(timeout, direction,
-      key1, key2);
+    Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.blmpop(timeout, direction, key1, key2);
 
     assertThat(commands, contains(keyValueBytesListBytesCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -85,11 +202,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     ListDirection direction = ListDirection.LEFT;
     int count = 2;
 
-    when(commandObjects.blmpop(timeout, direction, count, "key1", "key2")).thenReturn(
-      keyValueStringListStringCommandObject);
+    when(commandObjects.blmpop(timeout, direction, count, "key1", "key2")).thenReturn(keyValueStringListStringCommandObject);
 
-    Response<KeyValue<String, List<String>>> response = pipeliningBase.blmpop(timeout, direction,
-      count, "key1", "key2");
+    Response<KeyValue<String, List<String>>> response = pipeliningBase.blmpop(timeout, direction, count, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListStringCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -103,11 +218,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     byte[] key1 = "key1".getBytes();
     byte[] key2 = "key2".getBytes();
 
-    when(commandObjects.blmpop(timeout, direction, count, key1, key2)).thenReturn(
-      keyValueBytesListBytesCommandObject);
+    when(commandObjects.blmpop(timeout, direction, count, key1, key2)).thenReturn(keyValueBytesListBytesCommandObject);
 
-    Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.blmpop(timeout, direction,
-      count, key1, key2);
+    Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.blmpop(timeout, direction, count, key1, key2);
 
     assertThat(commands, contains(keyValueBytesListBytesCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -377,11 +490,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
   public void testLmpop() {
     ListDirection direction = ListDirection.LEFT;
 
-    when(commandObjects.lmpop(direction, "key1", "key2")).thenReturn(
-      keyValueStringListStringCommandObject);
+    when(commandObjects.lmpop(direction, "key1", "key2")).thenReturn(keyValueStringListStringCommandObject);
 
-    Response<KeyValue<String, List<String>>> response = pipeliningBase.lmpop(direction, "key1",
-      "key2");
+    Response<KeyValue<String, List<String>>> response = pipeliningBase.lmpop(direction, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListStringCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -393,8 +504,7 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     byte[] key1 = "key1".getBytes();
     byte[] key2 = "key2".getBytes();
 
-    when(commandObjects.lmpop(direction, key1, key2)).thenReturn(
-      keyValueBytesListBytesCommandObject);
+    when(commandObjects.lmpop(direction, key1, key2)).thenReturn(keyValueBytesListBytesCommandObject);
 
     Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.lmpop(direction, key1, key2);
 
@@ -407,11 +517,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     ListDirection direction = ListDirection.LEFT;
     int count = 2;
 
-    when(commandObjects.lmpop(direction, count, "key1", "key2")).thenReturn(
-      keyValueStringListStringCommandObject);
+    when(commandObjects.lmpop(direction, count, "key1", "key2")).thenReturn(keyValueStringListStringCommandObject);
 
-    Response<KeyValue<String, List<String>>> response = pipeliningBase.lmpop(direction, count,
-      "key1", "key2");
+    Response<KeyValue<String, List<String>>> response = pipeliningBase.lmpop(direction, count, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListStringCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -424,11 +532,9 @@ public class PipeliningBaseListCommandsTest extends PipeliningBaseMockedTestBase
     byte[] key1 = "key1".getBytes();
     byte[] key2 = "key2".getBytes();
 
-    when(commandObjects.lmpop(direction, count, key1, key2)).thenReturn(
-      keyValueBytesListBytesCommandObject);
+    when(commandObjects.lmpop(direction, count, key1, key2)).thenReturn(keyValueBytesListBytesCommandObject);
 
-    Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.lmpop(direction, count,
-      key1, key2);
+    Response<KeyValue<byte[], List<byte[]>>> response = pipeliningBase.lmpop(direction, count, key1, key2);
 
     assertThat(commands, contains(keyValueBytesListBytesCommandObject));
     assertThat(response, is(predefinedResponse));

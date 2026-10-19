@@ -14,12 +14,9 @@ import io.redis.test.annotations.SinceRedisVersion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import redis.clients.jedis.DefaultJedisClientConfig;
-import redis.clients.jedis.HostAndPorts;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.commands.unified.SortedSetCommandsTestBase;
@@ -27,9 +24,7 @@ import redis.clients.jedis.params.ZAddParams;
 import redis.clients.jedis.params.ZParams;
 import redis.clients.jedis.params.ZRangeParams;
 import redis.clients.jedis.resps.Tuple;
-import redis.clients.jedis.util.EnabledOnCommandCondition;
 import redis.clients.jedis.util.KeyValue;
-import redis.clients.jedis.util.RedisVersionCondition;
 
 @ParameterizedClass
 @MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
@@ -41,15 +36,6 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
   final byte[] ba = { 0x0A };
   final byte[] bb = { 0x0B };
   final byte[] bc = { 0x0C };
-
-  @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(
-          HostAndPorts.getStableClusterServers().get(0),
-          DefaultJedisClientConfig.builder().password("cluster").build());
-  @RegisterExtension
-  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(
-          HostAndPorts.getStableClusterServers().get(0),
-          DefaultJedisClientConfig.builder().password("cluster").build());
 
   public ClusterSortedSetCommandsTest(RedisProtocol protocol) {
     super(protocol);
@@ -77,10 +63,14 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     params.weights(2, 2.5);
     params.aggregate(ZParams.Aggregate.SUM);
 
-    assertThat(jedis.zunion(params, "{:}foo", "{:}bar"), containsInAnyOrder("a", "b"));
+    assertThat(jedis.zunion(params, "{:}foo", "{:}bar"),
+        containsInAnyOrder("a", "b"));
 
     assertThat(jedis.zunionWithScores(params, "{:}foo", "{:}bar"),
-      containsInAnyOrder(new Tuple("b", new Double(9)), new Tuple("a", new Double(7))));
+        containsInAnyOrder(
+            new Tuple("b", new Double(9)),
+            new Tuple("a", new Double(7))
+        ));
   }
 
   @Test
@@ -129,10 +119,11 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     ZParams params = new ZParams();
     params.weights(2, 2.5);
     params.aggregate(ZParams.Aggregate.SUM);
-    assertThat(jedis.zinter(params, "foo{:}", "bar{:}"), containsInAnyOrder("a"));
+    assertThat(jedis.zinter(params, "foo{:}", "bar{:}"),
+        containsInAnyOrder("a"));
 
-    assertThat(jedis.zinterWithScores(params, "foo{:}", "bar{:}"), containsInAnyOrder(new Tuple(
-        "a", new Double(7))));
+    assertThat(jedis.zinterWithScores(params, "foo{:}", "bar{:}"),
+        containsInAnyOrder(new Tuple("a", new Double(7))));
   }
 
   @Test
@@ -145,7 +136,7 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     assertEquals(1, jedis.zinterstore("dst{:}", "foo{:}", "bar{:}"));
 
     assertEquals(Collections.singletonList(new Tuple("a", new Double(3))),
-      jedis.zrangeWithScores("dst{:}", 0, 100));
+        jedis.zrangeWithScores("dst{:}", 0, 100));
   }
 
   @Test
@@ -162,7 +153,50 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     assertEquals(1, jedis.zinterstore("dst{:}", params, "foo{:}", "bar{:}"));
 
     assertEquals(Collections.singletonList(new Tuple("a", new Double(7))),
-      jedis.zrangeWithScores("dst{:}", 0, 100));
+        jedis.zrangeWithScores("dst{:}", 0, 100));
+  }
+
+  @Test
+  @Override
+  @SinceRedisVersion(value = "8.7.225")
+  public void zunionInterAggregateCount() {
+    jedis.zadd("s1{:}", 1, "foo");
+    jedis.zadd("s1{:}", 1, "bar");
+    jedis.zadd("s2{:}", 2, "foo");
+    jedis.zadd("s2{:}", 2, "bar");
+    jedis.zadd("s3{:}", 3, "foo");
+
+    ZParams params = new ZParams().aggregate(ZParams.Aggregate.COUNT);
+
+    assertEquals(2, jedis.zunionstore("dst{:}", params, "s1{:}", "s2{:}", "s3{:}"));
+    List<Tuple> expectedUnion = new ArrayList<>();
+    expectedUnion.add(new Tuple("bar", 2d));
+    expectedUnion.add(new Tuple("foo", 3d));
+    assertEquals(expectedUnion, jedis.zrangeWithScores("dst{:}", 0, -1));
+
+    assertEquals(1, jedis.zinterstore("dst{:}", params, "s1{:}", "s2{:}", "s3{:}"));
+    assertEquals(Collections.singletonList(new Tuple("foo", 3d)),
+        jedis.zrangeWithScores("dst{:}", 0, -1));
+
+    assertEquals(expectedUnion, jedis.zunionWithScores(params, "s1{:}", "s2{:}", "s3{:}"));
+    assertEquals(Collections.singletonList(new Tuple("foo", 3d)),
+        jedis.zinterWithScores(params, "s1{:}", "s2{:}", "s3{:}"));
+
+    ZParams paramsW = new ZParams().weights(10, 5, 3).aggregate(ZParams.Aggregate.COUNT);
+
+    assertEquals(2, jedis.zunionstore("dst{:}", paramsW, "s1{:}", "s2{:}", "s3{:}"));
+    List<Tuple> expectedUnionW = new ArrayList<>();
+    expectedUnionW.add(new Tuple("bar", 15d));
+    expectedUnionW.add(new Tuple("foo", 18d));
+    assertEquals(expectedUnionW, jedis.zrangeWithScores("dst{:}", 0, -1));
+
+    assertEquals(1, jedis.zinterstore("dst{:}", paramsW, "s1{:}", "s2{:}", "s3{:}"));
+    assertEquals(Collections.singletonList(new Tuple("foo", 18d)),
+        jedis.zrangeWithScores("dst{:}", 0, -1));
+
+    assertEquals(expectedUnionW, jedis.zunionWithScores(paramsW, "s1{:}", "s2{:}", "s3{:}"));
+    assertEquals(Collections.singletonList(new Tuple("foo", 18d)),
+        jedis.zinterWithScores(paramsW, "s1{:}", "s2{:}", "s3{:}"));
   }
 
   @Test
@@ -173,8 +207,7 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     jedis.zadd("f{:}oo", 1d, "a", ZAddParams.zAddParams().nx());
     jedis.zadd("f{:}oo", 10d, "b", ZAddParams.zAddParams().nx());
     jedis.zadd("b{:}ar", 0.1d, "c", ZAddParams.zAddParams().nx());
-    assertEquals(new KeyValue<>("f{:}oo", new Tuple("b", 10d)),
-      jedis.bzpopmax(0, "f{:}oo", "b{:}ar"));
+    assertEquals(new KeyValue<>("f{:}oo", new Tuple("b", 10d)), jedis.bzpopmax(0, "f{:}oo", "b{:}ar"));
   }
 
   @Test
@@ -185,8 +218,7 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     jedis.zadd("fo{:}o", 1d, "a", ZAddParams.zAddParams().nx());
     jedis.zadd("fo{:}o", 10d, "b", ZAddParams.zAddParams().nx());
     jedis.zadd("ba{:}r", 0.1d, "c", ZAddParams.zAddParams().nx());
-    assertEquals(new KeyValue<>("ba{:}r", new Tuple("c", 0.1d)),
-      jedis.bzpopmin(0, "ba{:}r", "fo{:}o"));
+    assertEquals(new KeyValue<>("ba{:}r", new Tuple("c", 0.1d)), jedis.bzpopmin(0, "ba{:}r", "fo{:}o"));
   }
 
   @Test
@@ -198,9 +230,11 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
 
     assertEquals(0, jedis.zdiff("{bar}1", "{bar}2").size());
 
-    assertThat(jedis.zdiff("{:}foo", "{:}bar"), containsInAnyOrder("b"));
+    assertThat(jedis.zdiff("{:}foo", "{:}bar"),
+        containsInAnyOrder("b"));
 
-    assertThat(jedis.zdiffWithScores("{:}foo", "{:}bar"), containsInAnyOrder(new Tuple("b", 2.0d)));
+    assertThat(jedis.zdiffWithScores("{:}foo", "{:}bar"),
+        containsInAnyOrder(new Tuple("b", 2.0d)));
   }
 
   @Test
@@ -236,8 +270,7 @@ public class ClusterSortedSetCommandsTest extends SortedSetCommandsTestBase {
     jedis.zadd(bfoo, 0.1d, bc);
     jedis.zadd(bfoo, 2d, ba);
 
-    long bstored = jedis.zrangestore(bfoo_same_hashslot, bfoo, ZRangeParams.zrangeParams(0, 1)
-        .rev());
+    long bstored = jedis.zrangestore(bfoo_same_hashslot, bfoo, ZRangeParams.zrangeParams(0, 1).rev());
     assertEquals(2, bstored);
 
     List<byte[]> brange = jedis.zrevrange(bfoo_same_hashslot, 0, 1);

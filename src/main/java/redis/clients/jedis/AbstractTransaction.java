@@ -5,11 +5,6 @@ import java.util.List;
 
 public abstract class AbstractTransaction extends PipeliningBase implements Closeable {
 
-  @Deprecated
-  protected AbstractTransaction() {
-    super(new CommandObjects());
-  }
-
   protected AbstractTransaction(CommandObjects commandObjects) {
     super(commandObjects);
   }
@@ -28,8 +23,7 @@ public abstract class AbstractTransaction extends PipeliningBase implements Clos
 
   public abstract String unwatch();
 
-  @Override
-  public abstract void close();
+  @Override public abstract void close();
 
   public abstract List<Object> exec();
 

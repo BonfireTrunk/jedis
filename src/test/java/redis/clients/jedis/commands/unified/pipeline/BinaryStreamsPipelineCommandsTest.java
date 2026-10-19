@@ -1,5 +1,7 @@
 package redis.clients.jedis.commands.unified.pipeline;
 
+import io.redis.test.annotations.EnabledOnCommand;
+import io.redis.test.annotations.SinceRedisVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedClass;
@@ -9,6 +11,7 @@ import redis.clients.jedis.Response;
 import redis.clients.jedis.StreamEntryID;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.XAddParams;
+import redis.clients.jedis.params.XCfgSetParams;
 import redis.clients.jedis.params.XReadGroupParams;
 import redis.clients.jedis.params.XReadParams;
 import redis.clients.jedis.resps.StreamEntryBinary;
@@ -87,10 +90,10 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
 
   @BeforeEach
   public void setUpTestStream() {
-    jedis.del(STREAM_KEY_1);
-    jedis.del(STREAM_KEY_2);
+    client.del(STREAM_KEY_1);
+    client.del(STREAM_KEY_2);
     try {
-      jedis.xgroupCreate(STREAM_KEY_1, GROUP_NAME,
+      client.xgroupCreate(STREAM_KEY_1, GROUP_NAME,
           StreamEntryID.XGROUP_LAST_ENTRY.toString().getBytes(), true);
     } catch (JedisDataException e) {
       if (!e.getMessage().contains("BUSYGROUP")) {
@@ -98,7 +101,7 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
       }
     }
     try {
-      jedis.xgroupCreate(STREAM_KEY_2, GROUP_NAME,
+      client.xgroupCreate(STREAM_KEY_2, GROUP_NAME,
           StreamEntryID.XGROUP_LAST_ENTRY.toString().getBytes(), true);
     } catch (JedisDataException e) {
       if (!e.getMessage().contains("BUSYGROUP")) {
@@ -111,7 +114,7 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
   public void xreadBinary() {
 
     stream1Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
 
     Response<List<Map.Entry<byte[], List<StreamEntryBinary>>>> response = pipe.xreadBinary(
         XReadParams.xReadParams(), offsets(STREAM_KEY_1, "0-0"));
@@ -128,7 +131,7 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
   public void xreadBinaryAsMap() {
 
     stream1Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
 
     Response<Map<byte[], List<StreamEntryBinary>>> response = pipe.xreadBinaryAsMap(
         XReadParams.xReadParams(), offsets(STREAM_KEY_1, "0-0"));
@@ -145,9 +148,9 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
 
     // Add entries to the streams
     stream1Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
     stream2Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_2, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_2, new XAddParams().id(entry.getID()), entry.getFields()));
 
     Response<Map<byte[], List<StreamEntryBinary>>> response = pipe.xreadBinaryAsMap(
         XReadParams.xReadParams(), offsets(STREAM_KEY_1, "0-0", STREAM_KEY_2, "0-0"));
@@ -165,7 +168,7 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
   public void xreadGroupBinary() {
     // Add entries to the streams
     stream1Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
 
     Response<List<Map.Entry<byte[], List<StreamEntryBinary>>>> response = pipe.xreadGroupBinary(
         GROUP_NAME, CONSUMER_NAME, XReadGroupParams.xReadGroupParams(),
@@ -185,7 +188,7 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
   @Test
   public void xreadGroupBinaryAsMap() {
     stream1Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
 
     Response<Map<byte[], List<StreamEntryBinary>>> response = pipe.xreadGroupBinaryAsMap(
         GROUP_NAME, CONSUMER_NAME, XReadGroupParams.xReadGroupParams(),
@@ -203,9 +206,9 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
   public void xreadGroupBinaryAsMapMultipleStreams() {
     // Add entries to the streams
     stream1Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_1, new XAddParams().id(entry.getID()), entry.getFields()));
     stream2Entries.forEach(
-        entry -> jedis.xadd(STREAM_KEY_2, new XAddParams().id(entry.getID()), entry.getFields()));
+        entry -> client.xadd(STREAM_KEY_2, new XAddParams().id(entry.getID()), entry.getFields()));
 
     Response<Map<byte[], List<StreamEntryBinary>>> response = pipe.xreadGroupBinaryAsMap(GROUP_NAME,
         CONSUMER_NAME, XReadGroupParams.xReadGroupParams(),
@@ -219,6 +222,21 @@ public class BinaryStreamsPipelineCommandsTest extends PipelineCommandsTestBase 
 
     assertThat(actualEntries.get(STREAM_KEY_1), equalsStreamEntries(stream1Entries));
     assertThat(actualEntries.get(STREAM_KEY_2), equalsStreamEntries(stream2Entries));
+  }
+
+  @Test
+  @EnabledOnCommand("XCFGSET")
+  public void xcfgset() {
+    // Add an entry to create the stream
+    client.xadd(STREAM_KEY_1, new XAddParams().id(StreamEntryID.NEW_ENTRY), HASH_1);
+
+    // Configure idempotent producer settings via pipeline
+    Response<byte[]> response = pipe.xcfgset(STREAM_KEY_1,
+        XCfgSetParams.xCfgSetParams().idmpDuration(1000).idmpMaxsize(500));
+
+    pipe.sync();
+
+    assertArrayEquals("OK".getBytes(), response.get());
   }
 
 }

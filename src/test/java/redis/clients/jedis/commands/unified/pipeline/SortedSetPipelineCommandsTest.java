@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import io.redis.test.annotations.SinceRedisVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
@@ -38,6 +39,7 @@ import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.AssertUtil;
 import redis.clients.jedis.util.KeyValue;
 import redis.clients.jedis.util.SafeEncoder;
+import redis.clients.jedis.util.TestEnvUtil;
 
 @ParameterizedClass
 @MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
@@ -77,7 +79,16 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd(bfoo, 0.1d, bc);
     pipe.zadd(bfoo, 2d, ba);
 
-    assertThat(pipe.syncAndReturnAll(), contains(1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        1L,
+        1L,
+        1L,
+        0L,
+        1L,
+        1L,
+        1L,
+        0L
+    ));
   }
 
   @Test
@@ -99,7 +110,14 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     // ch: return count of members not only added, but also updated
     pipe.zadd("foo", scoreMembers, ZAddParams.zAddParams().ch());
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 0L, 1L, 0L, 1d, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        0L,
+        1L,
+        0L,
+        1d,
+        2L
+    ));
 
     // lt: only update existing elements if the new score is less than the current score.
     pipe.zadd("foo", 3d, "a", ZAddParams.zAddParams().lt());
@@ -107,7 +125,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd("foo", 1d, "a", ZAddParams.zAddParams().lt());
     pipe.zscore("foo", "a");
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 2d, 0L, 1d));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        2d,
+        0L,
+        1d
+    ));
 
     // gt: only update existing elements if the new score is greater than the current score.
     pipe.zadd("foo", 0d, "b", ZAddParams.zAddParams().gt());
@@ -115,7 +138,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd("foo", 2d, "b", ZAddParams.zAddParams().gt());
     pipe.zscore("foo", "b");
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1d, 0L, 2d));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1d,
+        0L,
+        2d
+    ));
 
     // incr: don't update already existing elements.
     pipe.zaddIncr("foo", 1d, "b", ZAddParams.zAddParams().nx());
@@ -124,8 +152,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zaddIncr("foo", 1d, "b", ZAddParams.zAddParams().xx());
     pipe.zscore("foo", "b");
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(nullValue(), equalTo(2d), equalTo(3d), equalTo(3d)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        nullValue(),
+        equalTo(2d),
+        equalTo(3d),
+        equalTo(3d)
+    ));
 
     // binary
     pipe.del(bfoo);
@@ -145,7 +177,14 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     // ch: return count of members not only added, but also updated
     pipe.zadd(bfoo, binaryScoreMembers, ZAddParams.zAddParams().ch());
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 0L, 1L, 0L, 1d, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        0L,
+        1L,
+        0L,
+        1d,
+        2L
+    ));
 
     // lt: only update existing elements if the new score is less than the current score.
     pipe.zadd(bfoo, 3d, ba, ZAddParams.zAddParams().lt());
@@ -153,7 +192,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd(bfoo, 1d, ba, ZAddParams.zAddParams().lt());
     pipe.zscore(bfoo, ba);
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 2d, 0L, 1d));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        2d,
+        0L,
+        1d
+    ));
 
     // gt: only update existing elements if the new score is greater than the current score.
     pipe.zadd(bfoo, 0d, bb, ZAddParams.zAddParams().gt());
@@ -161,7 +205,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd(bfoo, 2d, bb, ZAddParams.zAddParams().gt());
     pipe.zscore(bfoo, bb);
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1d, 0L, 2d));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1d,
+        0L,
+        2d
+    ));
 
     // incr: don't update already existing elements.
     pipe.zaddIncr(bfoo, 1d, bb, ZAddParams.zAddParams().nx());
@@ -170,8 +219,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zaddIncr(bfoo, 1d, bb, ZAddParams.zAddParams().xx());
     pipe.zscore(bfoo, bb);
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(nullValue(), equalTo(2d), equalTo(3d), equalTo(3d)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        nullValue(),
+        equalTo(2d),
+        equalTo(3d),
+        equalTo(3d)
+    ));
   }
 
   @Test
@@ -337,6 +390,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zrangestore() {
     pipe.zadd("foo", 1, "aa");
     pipe.zadd("foo", 2, "c");
@@ -469,8 +523,13 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zrank("foo", "b");
     pipe.zrank("car", "b");
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(equalTo(1L), equalTo(1L), equalTo(0L), equalTo(1L), nullValue()));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        equalTo(1L),
+        equalTo(0L),
+        equalTo(1L),
+        nullValue()
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -480,8 +539,13 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zrank(bfoo, bb);
     pipe.zrank(bcar, bb);
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(equalTo(1L), equalTo(1L), equalTo(0L), equalTo(1L), nullValue()));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        equalTo(1L),
+        equalTo(0L),
+        equalTo(1L),
+        nullValue()
+    ));
   }
 
   @Test
@@ -523,8 +587,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zrevrank("foo", "a");
     pipe.zrevrank("foo", "b");
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(equalTo(1L), equalTo(1L), equalTo(1L), equalTo(0L)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        equalTo(1L),
+        equalTo(1L),
+        equalTo(0L)
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -532,8 +600,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zrevrank(bfoo, ba);
     pipe.zrevrank(bfoo, bb);
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(equalTo(1L), equalTo(1L), equalTo(1L), equalTo(0L)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        equalTo(1L),
+        equalTo(1L),
+        equalTo(0L)
+    ));
   }
 
   @Test
@@ -548,9 +620,15 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(range1.get(), contains(new Tuple("c", 0.1d), new Tuple("a", 2d)));
-    assertThat(range2.get(),
-      contains(new Tuple("c", 0.1d), new Tuple("a", 2d), new Tuple("b", 10d)));
+    assertThat(range1.get(), contains(
+        new Tuple("c", 0.1d),
+        new Tuple("a", 2d)
+    ));
+    assertThat(range2.get(), contains(
+        new Tuple("c", 0.1d),
+        new Tuple("a", 2d),
+        new Tuple("b", 10d)
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -563,8 +641,15 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(brange1.get(), contains(new Tuple(bc, 0.1d), new Tuple(ba, 2d)));
-    assertThat(brange2.get(), contains(new Tuple(bc, 0.1d), new Tuple(ba, 2d), new Tuple(bb, 10d)));
+    assertThat(brange1.get(), contains(
+        new Tuple(bc, 0.1d),
+        new Tuple(ba, 2d)
+    ));
+    assertThat(brange2.get(), contains(
+        new Tuple(bc, 0.1d),
+        new Tuple(ba, 2d),
+        new Tuple(bb, 10d)
+    ));
   }
 
   @Test
@@ -579,9 +664,15 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(range1.get(), contains(new Tuple("b", 10d), new Tuple("a", 2d)));
-    assertThat(range2.get(),
-      contains(new Tuple("b", 10d), new Tuple("a", 2d), new Tuple("c", 0.1d)));
+    assertThat(range1.get(), contains(
+        new Tuple("b", 10d),
+        new Tuple("a", 2d)
+    ));
+    assertThat(range2.get(), contains(
+        new Tuple("b", 10d),
+        new Tuple("a", 2d),
+        new Tuple("c", 0.1d)
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -594,8 +685,15 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(brange1.get(), contains(new Tuple(bb, 10d), new Tuple(ba, 2d)));
-    assertThat(brange2.get(), contains(new Tuple(bb, 10d), new Tuple(ba, 2d), new Tuple(bc, 0.1d)));
+    assertThat(brange1.get(), contains(
+        new Tuple(bb, 10d),
+        new Tuple(ba, 2d)
+    ));
+    assertThat(brange2.get(), contains(
+        new Tuple(bb, 10d),
+        new Tuple(ba, 2d),
+        new Tuple(bc, 0.1d)
+    ));
   }
 
   @Test
@@ -699,10 +797,13 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zpopmax("foo");
     pipe.zpopmax("foo");
 
-    assertThat(
-      pipe.syncAndReturnAll(),
-      contains(equalTo(new Tuple("b", 10d)), equalTo(new Tuple("d", 2d)),
-        equalTo(new Tuple("a", 1d)), equalTo(new Tuple("c", 0.1d)), nullValue()));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(new Tuple("b", 10d)),
+        equalTo(new Tuple("d", 2d)),
+        equalTo(new Tuple("a", 1d)),
+        equalTo(new Tuple("c", 0.1d)),
+        nullValue()
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -717,10 +818,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zpopmax(bfoo);
     pipe.zpopmax(bfoo);
 
-    assertThat(
-      pipe.syncAndReturnAll(),
-      contains(equalTo(new Tuple(bb, 10d)), equalTo(new Tuple(ba, 2d)),
-        equalTo(new Tuple(bc, 0.1d)), nullValue()));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(new Tuple(bb, 10d)),
+        equalTo(new Tuple(ba, 2d)),
+        equalTo(new Tuple(bc, 0.1d)),
+        nullValue()
+    ));
   }
 
   @Test
@@ -737,10 +840,16 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(actual1.get(), contains(new Tuple("b", 10d), new Tuple("d", 2d)));
+    assertThat(actual1.get(), contains(
+        new Tuple("b", 10d),
+        new Tuple("d", 2d)
+    ));
 
-    assertThat(actual2.get(),
-      contains(new Tuple("a", 1d), new Tuple("c", 0.1d), new Tuple("e", 0.03d)));
+    assertThat(actual2.get(), contains(
+        new Tuple("a", 1d),
+        new Tuple("c", 0.1d),
+        new Tuple("e", 0.03d)
+    ));
 
     assertThat(actual3.get(), empty());
 
@@ -757,11 +866,17 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(bactual1.get(), contains(new Tuple(bb, 10d)));
+    assertThat(bactual1.get(), contains(
+        new Tuple(bb, 10d)
+    ));
 
-    assertThat(bactual2.get(), contains(new Tuple(ba, 2d)));
+    assertThat(bactual2.get(), contains(
+        new Tuple(ba, 2d)
+    ));
 
-    assertThat(bactual3.get(), contains(new Tuple(bc, 0.1d)));
+    assertThat(bactual3.get(), contains(
+        new Tuple(bc, 0.1d)
+    ));
 
     assertThat(bactual4.get(), empty());
   }
@@ -778,7 +893,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(range.get(), contains(new Tuple("c", 0.1d), new Tuple("a", 1d)));
+    assertThat(range.get(), contains(
+        new Tuple("c", 0.1d),
+        new Tuple("a", 1d)
+    ));
 
     assertThat(item.get(), equalTo(new Tuple("b", 10d)));
 
@@ -794,7 +912,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(brange.get(), contains(new Tuple(bc, 0.1d), new Tuple(ba, 2d)));
+    assertThat(brange.get(), contains(
+        new Tuple(bc, 0.1d),
+        new Tuple(ba, 2d)
+    ));
 
     assertThat(bitem.get(), equalTo(new Tuple(bb, 10d)));
   }
@@ -811,7 +932,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zcount("foo", 0.01d, 2.1d);
     pipe.zcount("foo", "(0.01", "+inf");
 
-    assertThat(pipe.syncAndReturnAll(), contains(2L, 3L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        2L,
+        3L
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -824,7 +948,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zcount(bfoo, 0.01d, 2.1d);
     pipe.zcount(bfoo, SafeEncoder.encode("(0.01"), SafeEncoder.encode("+inf"));
 
-    assertThat(pipe.syncAndReturnAll(), contains(2L, 3L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        2L,
+        3L
+    ));
   }
 
   @Test
@@ -841,7 +968,12 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zlexcount("foo", "-", "(c");
     pipe.zlexcount("foo", "[aa", "+");
 
-    assertThat(pipe.syncAndReturnAll(), contains(2L, 4L, 3L, 3L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        2L,
+        4L,
+        3L,
+        3L
+    ));
   }
 
   @Test
@@ -856,7 +988,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zlexcount(bfoo, bInclusiveB, bExclusiveC);
     pipe.zlexcount(bfoo, bLexMinusInf, bLexPlusInf);
 
-    assertThat(pipe.syncAndReturnAll(), contains(1L, 3L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        1L,
+        3L
+    ));
   }
 
   @Test
@@ -887,8 +1022,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     Response<List<byte[]>> brange1 = pipe.zrangeByScore(bfoo, 0d, 2d);
     Response<List<byte[]>> brange2 = pipe.zrangeByScore(bfoo, 0d, 2d, 0, 1);
     Response<List<byte[]>> brange3 = pipe.zrangeByScore(bfoo, 0d, 2d, 1, 1);
-    Response<List<byte[]>> brange4 = pipe.zrangeByScore(bfoo, SafeEncoder.encode("-inf"),
-      SafeEncoder.encode("(2"));
+    Response<List<byte[]>> brange4 = pipe.zrangeByScore(bfoo, SafeEncoder.encode("-inf"), SafeEncoder.encode("(2"));
 
     pipe.sync();
 
@@ -906,12 +1040,9 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd("foo", 4.0d, "d");
     pipe.zadd("foo", 5.0d, "e");
 
-    Response<List<String>> range1 = pipe
-        .zrevrangeByScore("foo", 3d, Double.NEGATIVE_INFINITY, 0, 1);
-    Response<List<String>> range2 = pipe.zrevrangeByScore("foo", 3.5d, Double.NEGATIVE_INFINITY, 0,
-      2);
-    Response<List<String>> range3 = pipe.zrevrangeByScore("foo", 3.5d, Double.NEGATIVE_INFINITY, 1,
-      1);
+    Response<List<String>> range1 = pipe.zrevrangeByScore("foo", 3d, Double.NEGATIVE_INFINITY, 0, 1);
+    Response<List<String>> range2 = pipe.zrevrangeByScore("foo", 3.5d, Double.NEGATIVE_INFINITY, 0, 2);
+    Response<List<String>> range3 = pipe.zrevrangeByScore("foo", 3.5d, Double.NEGATIVE_INFINITY, 1, 1);
     Response<List<String>> range4 = pipe.zrevrangeByScore("foo", 4d, 2d);
     Response<List<String>> range5 = pipe.zrevrangeByScore("foo", "4", "2", 0, 2);
     Response<List<String>> range6 = pipe.zrevrangeByScore("foo", "+inf", "(4");
@@ -933,8 +1064,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     Response<List<byte[]>> brange1 = pipe.zrevrangeByScore(bfoo, 2d, 0d);
     Response<List<byte[]>> brange2 = pipe.zrevrangeByScore(bfoo, 2d, 0d, 0, 1);
-    Response<List<byte[]>> brange3 = pipe.zrevrangeByScore(bfoo, SafeEncoder.encode("+inf"),
-      SafeEncoder.encode("(2"));
+    Response<List<byte[]>> brange3 = pipe.zrevrangeByScore(bfoo, SafeEncoder.encode("+inf"), SafeEncoder.encode("(2"));
     Response<List<byte[]>> brange4 = pipe.zrevrangeByScore(bfoo, 2d, 0d, 1, 1);
 
     pipe.sync();
@@ -958,11 +1088,18 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(range1.get(), contains(new Tuple("c", 0.1d), new Tuple("a", 2d)));
+    assertThat(range1.get(), contains(
+        new Tuple("c", 0.1d),
+        new Tuple("a", 2d)
+    ));
 
-    assertThat(range2.get(), contains(new Tuple("c", 0.1d)));
+    assertThat(range2.get(), contains(
+        new Tuple("c", 0.1d)
+    ));
 
-    assertThat(range3.get(), contains(new Tuple("a", 2d)));
+    assertThat(range3.get(), contains(
+        new Tuple("a", 2d)
+    ));
 
     // Binary
 
@@ -977,11 +1114,18 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(brange1.get(), contains(new Tuple(bc, 0.1d), new Tuple(ba, 2d)));
+    assertThat(brange1.get(), contains(
+        new Tuple(bc, 0.1d),
+        new Tuple(ba, 2d)
+    ));
 
-    assertThat(brange2.get(), contains(new Tuple(bc, 0.1d)));
+    assertThat(brange2.get(), contains(
+        new Tuple(bc, 0.1d)
+    ));
 
-    assertThat(brange3.get(), contains(new Tuple(ba, 2d)));
+    assertThat(brange3.get(), contains(
+        new Tuple(ba, 2d)
+    ));
   }
 
   @Test
@@ -992,24 +1136,31 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.zadd("foo", 4.0d, "d");
     pipe.zadd("foo", 5.0d, "e");
 
-    Response<List<Tuple>> range1 = pipe.zrevrangeByScoreWithScores("foo", 3d,
-      Double.NEGATIVE_INFINITY, 0, 1);
-    Response<List<Tuple>> range2 = pipe.zrevrangeByScoreWithScores("foo", 3.5d,
-      Double.NEGATIVE_INFINITY, 0, 2);
-    Response<List<Tuple>> range3 = pipe.zrevrangeByScoreWithScores("foo", 3.5d,
-      Double.NEGATIVE_INFINITY, 1, 1);
+    Response<List<Tuple>> range1 = pipe.zrevrangeByScoreWithScores("foo", 3d, Double.NEGATIVE_INFINITY, 0, 1);
+    Response<List<Tuple>> range2 = pipe.zrevrangeByScoreWithScores("foo", 3.5d, Double.NEGATIVE_INFINITY, 0, 2);
+    Response<List<Tuple>> range3 = pipe.zrevrangeByScoreWithScores("foo", 3.5d, Double.NEGATIVE_INFINITY, 1, 1);
     Response<List<Tuple>> range4 = pipe.zrevrangeByScoreWithScores("foo", 4d, 2d);
 
     pipe.sync();
 
-    assertThat(range1.get(), contains(new Tuple("c", 3.0d)));
+    assertThat(range1.get(), contains(
+        new Tuple("c", 3.0d)
+    ));
 
-    assertThat(range2.get(), contains(new Tuple("c", 3.0d), new Tuple("b", 2.0d)));
+    assertThat(range2.get(), contains(
+        new Tuple("c", 3.0d),
+        new Tuple("b", 2.0d)
+    ));
 
-    assertThat(range3.get(), contains(new Tuple("b", 2.0d)));
+    assertThat(range3.get(), contains(
+        new Tuple("b", 2.0d)
+    ));
 
-    assertThat(range4.get(),
-      contains(new Tuple("d", 4.0d), new Tuple("c", 3.0d), new Tuple("b", 2.0d)));
+    assertThat(range4.get(), contains(
+        new Tuple("d", 4.0d),
+        new Tuple("c", 3.0d),
+        new Tuple("b", 2.0d)
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1d, ba);
@@ -1023,11 +1174,18 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     pipe.sync();
 
-    assertThat(brange1.get(), contains(new Tuple(ba, 2d), new Tuple(bc, 0.1d)));
+    assertThat(brange1.get(), contains(
+        new Tuple(ba, 2d),
+        new Tuple(bc, 0.1d)
+    ));
 
-    assertThat(brange2.get(), contains(new Tuple(ba, 2d)));
+    assertThat(brange2.get(), contains(
+        new Tuple(ba, 2d)
+    ));
 
-    assertThat(brange3.get(), contains(new Tuple(bc, 0.1d)));
+    assertThat(brange3.get(), contains(
+        new Tuple(bc, 0.1d)
+    ));
   }
 
   @Test
@@ -1146,6 +1304,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zunion() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1162,7 +1321,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.sync();
 
     assertThat(union1.get(), contains("a", "b"));
-    assertThat(union2.get(), contains(new Tuple("a", new Double(7)), new Tuple("b", new Double(9))));
+    assertThat(union2.get(), contains(
+        new Tuple("a", new Double(7)),
+        new Tuple("b", new Double(9))
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1, ba);
@@ -1176,10 +1338,14 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.sync();
 
     assertThat(bunion1.get(), contains(ba, bb));
-    assertThat(bunion2.get(), contains(new Tuple(ba, new Double(7)), new Tuple(bb, new Double(9))));
+    assertThat(bunion2.get(), contains(
+        new Tuple(ba, new Double(7)),
+        new Tuple(bb, new Double(9))
+    ));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zunionstore() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1192,7 +1358,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.sync();
 
     assertThat(result.get(), equalTo(2L));
-    assertThat(items.get(), contains(new Tuple("a", new Double(3)), new Tuple("b", new Double(4))));
+    assertThat(items.get(), contains(
+        new Tuple("a", new Double(3)),
+        new Tuple("b", new Double(4))
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1, ba);
@@ -1206,10 +1375,14 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.sync();
 
     assertThat(bresult.get(), equalTo(2L));
-    assertThat(bitems.get(), contains(new Tuple(ba, new Double(3)), new Tuple(bb, new Double(4))));
+    assertThat(bitems.get(), contains(
+        new Tuple(ba, new Double(3)),
+        new Tuple(bb, new Double(4))
+    ));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zunionstoreParams() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1226,7 +1399,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.sync();
 
     assertThat(result.get(), equalTo(2L));
-    assertThat(items.get(), contains(new Tuple("a", new Double(7)), new Tuple("b", new Double(9))));
+    assertThat(items.get(), contains(
+        new Tuple("a", new Double(7)),
+        new Tuple("b", new Double(9))
+    ));
 
     // Binary
     pipe.zadd(bfoo, 1, ba);
@@ -1244,10 +1420,14 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.sync();
 
     assertThat(bresult.get(), equalTo(2L));
-    assertThat(bitems.get(), contains(new Tuple(ba, new Double(7)), new Tuple(bb, new Double(9))));
+    assertThat(bitems.get(), contains(
+        new Tuple(ba, new Double(7)),
+        new Tuple(bb, new Double(9))
+    ));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zinter() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1284,6 +1464,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zinterstore() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1312,6 +1493,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zintertoreParams() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1349,6 +1531,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
   @Test
   @SinceRedisVersion(value="7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zintercard() {
     pipe.zadd("foo", 1, "a");
     pipe.zadd("foo", 2, "b");
@@ -1491,6 +1674,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void bzpopmax() {
     pipe.zadd("foo", 1d, "a", ZAddParams.zAddParams().nx());
     pipe.zadd("foo", 10d, "b", ZAddParams.zAddParams().nx());
@@ -1517,6 +1701,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void bzpopmin() {
     pipe.zadd("foo", 1d, "a", ZAddParams.zAddParams().nx());
     pipe.zadd("foo", 10d, "b", ZAddParams.zAddParams().nx());
@@ -1542,6 +1727,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zdiff() {
     pipe.zadd("foo", 1.0, "a");
     pipe.zadd("foo", 2.0, "b");
@@ -1574,6 +1760,7 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void zdiffstore() {
     pipe.zadd("foo", 1.0, "a");
     pipe.zadd("foo", 2.0, "b");
@@ -1688,7 +1875,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     assertThat(single.get().getValue(), contains(new Tuple("b", 10d)));
 
-    assertThat(range.get().getValue(), contains(new Tuple("c", 0.1d), new Tuple("a", 1d)));
+    assertThat(range.get().getValue(), contains(
+        new Tuple("c", 0.1d),
+        new Tuple("a", 1d)
+    ));
 
     assertThat(nullRange.get(), nullValue());
   }
@@ -1709,7 +1899,10 @@ public class SortedSetPipelineCommandsTest extends PipelineCommandsTestBase {
 
     assertThat(single.get().getValue(), contains(new Tuple("b", 10d)));
 
-    assertThat(range.get().getValue(), contains(new Tuple("c", 0.1d), new Tuple("a", 1d)));
+    assertThat(range.get().getValue(), contains(
+        new Tuple("c", 0.1d),
+        new Tuple("a", 1d)
+    ));
 
     assertThat(nullRange.get(), nullValue());
   }

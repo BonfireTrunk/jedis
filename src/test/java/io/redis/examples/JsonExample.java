@@ -8,7 +8,7 @@ import java.util.List;
 // REMOVE_END
 
 // HIDE_START
-import redis.clients.jedis.UnifiedJedis;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.json.Path2;
 
 import org.json.JSONArray;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class JsonExample {
     @Test
     public void run() {
-        UnifiedJedis jedis = new UnifiedJedis("redis://localhost:6379");
+        RedisClient jedis = RedisClient.create("redis://localhost:6379");
 // HIDE_END
 
         //REMOVE_START
@@ -463,8 +463,8 @@ public class JsonExample {
         // Tests for 'update_bikes' step.
         // REMOVE_START
         assertEquals("[1920,2072,3264,1475,3941]", res39.toString());
-        assertEquals("[1820,1972,3164,1375,3841]", res40.toString());
-        assertEquals("[1920,2072,3264,1475,3941]", res41.toString());
+        assertEquals("[1820,1972,3164,1375,3841]", res40.toString().replace(" ", ""));
+        assertEquals("[1920,2072,3264,1475,3941]", res41.toString().replace(" ", ""));
         // REMOVE_END
 
 

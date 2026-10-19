@@ -57,8 +57,7 @@ public class PipeliningBaseBloomFilterCommandsTest extends PipeliningBaseMockedT
 
   @Test
   public void testBfInsert() {
-    when(commandObjects.bfInsert("myBloomFilter", "item1", "item2")).thenReturn(
-      listBooleanCommandObject);
+    when(commandObjects.bfInsert("myBloomFilter", "item1", "item2")).thenReturn(listBooleanCommandObject);
 
     Response<List<Boolean>> response = pipeliningBase.bfInsert("myBloomFilter", "item1", "item2");
 
@@ -70,11 +69,9 @@ public class PipeliningBaseBloomFilterCommandsTest extends PipeliningBaseMockedT
   public void testBfInsertWithParams() {
     BFInsertParams insertParams = new BFInsertParams().capacity(10000L).error(0.01);
 
-    when(commandObjects.bfInsert("myBloomFilter", insertParams, "item1", "item2")).thenReturn(
-      listBooleanCommandObject);
+    when(commandObjects.bfInsert("myBloomFilter", insertParams, "item1", "item2")).thenReturn(listBooleanCommandObject);
 
-    Response<List<Boolean>> response = pipeliningBase.bfInsert("myBloomFilter", insertParams,
-      "item1", "item2");
+    Response<List<Boolean>> response = pipeliningBase.bfInsert("myBloomFilter", insertParams, "item1", "item2");
 
     assertThat(commands, contains(listBooleanCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -94,8 +91,7 @@ public class PipeliningBaseBloomFilterCommandsTest extends PipeliningBaseMockedT
 
   @Test
   public void testBfMAdd() {
-    when(commandObjects.bfMAdd("myBloomFilter", "item1", "item2")).thenReturn(
-      listBooleanCommandObject);
+    when(commandObjects.bfMAdd("myBloomFilter", "item1", "item2")).thenReturn(listBooleanCommandObject);
 
     Response<List<Boolean>> response = pipeliningBase.bfMAdd("myBloomFilter", "item1", "item2");
 
@@ -105,8 +101,7 @@ public class PipeliningBaseBloomFilterCommandsTest extends PipeliningBaseMockedT
 
   @Test
   public void testBfMExists() {
-    when(commandObjects.bfMExists("myBloomFilter", "item1", "item2")).thenReturn(
-      listBooleanCommandObject);
+    when(commandObjects.bfMExists("myBloomFilter", "item1", "item2")).thenReturn(listBooleanCommandObject);
 
     Response<List<Boolean>> response = pipeliningBase.bfMExists("myBloomFilter", "item1", "item2");
 
@@ -119,8 +114,7 @@ public class PipeliningBaseBloomFilterCommandsTest extends PipeliningBaseMockedT
     double errorRate = 0.01;
     long capacity = 10000L;
 
-    when(commandObjects.bfReserve("myBloomFilter", errorRate, capacity)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.bfReserve("myBloomFilter", errorRate, capacity)).thenReturn(stringCommandObject);
 
     Response<String> response = pipeliningBase.bfReserve("myBloomFilter", errorRate, capacity);
 
@@ -134,11 +128,9 @@ public class PipeliningBaseBloomFilterCommandsTest extends PipeliningBaseMockedT
     long capacity = 10000L;
 
     BFReserveParams reserveParams = new BFReserveParams().expansion(2);
-    when(commandObjects.bfReserve("myBloomFilter", errorRate, capacity, reserveParams)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.bfReserve("myBloomFilter", errorRate, capacity, reserveParams)).thenReturn(stringCommandObject);
 
-    Response<String> response = pipeliningBase.bfReserve("myBloomFilter", errorRate, capacity,
-      reserveParams);
+    Response<String> response = pipeliningBase.bfReserve("myBloomFilter", errorRate, capacity, reserveParams);
 
     assertThat(commands, contains(stringCommandObject));
     assertThat(response, is(predefinedResponse));

@@ -23,8 +23,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeoadd() {
-    when(commandObjects.geoadd("key", 13.361389, 38.115556, "member"))
-        .thenReturn(longCommandObject);
+    when(commandObjects.geoadd("key", 13.361389, 38.115556, "member")).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.geoadd("key", 13.361389, 38.115556, "member");
 
@@ -182,8 +181,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeopos() {
-    when(commandObjects.geopos("key", "member1", "member2")).thenReturn(
-      listGeoCoordinateCommandObject);
+    when(commandObjects.geopos("key", "member1", "member2")).thenReturn(listGeoCoordinateCommandObject);
 
     Response<List<GeoCoordinate>> response = pipeliningBase.geopos("key", "member1", "member2");
 
@@ -206,11 +204,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeoradius() {
-    when(commandObjects.georadius("key", 15.0, 37.0, 100.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadius("key", 15.0, 37.0, 100.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadius("key", 15.0, 37.0, 100.0,
-      GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response =
+        pipeliningBase.georadius("key", 15.0, 37.0, 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -224,11 +222,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.georadius(key, longitude, latitude, radius, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadius(key, longitude, latitude, radius, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadius(key, longitude, latitude,
-      radius, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadius(key, longitude, latitude, radius, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -236,11 +232,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeoradiusReadonly() {
-    when(commandObjects.georadiusReadonly("key", 15.0, 37.0, 100.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusReadonly("key", 15.0, 37.0, 100.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusReadonly("key", 15.0,
-      37.0, 100.0, GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response =
+        pipeliningBase.georadiusReadonly("key", 15.0, 37.0, 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -254,11 +250,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusReadonly(key, longitude,
-      latitude, radius, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusReadonly(key, longitude, latitude, radius, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -268,11 +262,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeoradiusWithParam() {
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadius("key", 15.0, 37.0, 100.0, GeoUnit.KM, param)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadius("key", 15.0, 37.0, 100.0, GeoUnit.KM, param))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadius("key", 15.0, 37.0, 100.0,
-      GeoUnit.KM, param);
+    Response<List<GeoRadiusResponse>> response =
+        pipeliningBase.georadius("key", 15.0, 37.0, 100.0, GeoUnit.KM, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -287,11 +281,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoUnit unit = GeoUnit.KM;
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadius(key, longitude, latitude, radius, unit, param)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadius(key, longitude, latitude, radius, unit, param)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadius(key, longitude, latitude,
-      radius, unit, param);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadius(key, longitude, latitude, radius, unit, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -301,11 +293,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeoradiusReadonlyWithParam() {
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadiusReadonly("key", 15.0, 37.0, 100.0, GeoUnit.KM, param)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusReadonly("key", 15.0, 37.0, 100.0, GeoUnit.KM, param))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusReadonly("key", 15.0,
-      37.0, 100.0, GeoUnit.KM, param);
+    Response<List<GeoRadiusResponse>> response =
+        pipeliningBase.georadiusReadonly("key", 15.0, 37.0, 100.0, GeoUnit.KM, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -320,11 +312,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoUnit unit = GeoUnit.KM;
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit, param))
-        .thenReturn(listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusReadonly(key, longitude, latitude, radius, unit, param)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusReadonly(key, longitude,
-      latitude, radius, unit, param);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusReadonly(key, longitude, latitude, radius, unit, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -332,11 +322,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeoradiusByMember() {
-    when(commandObjects.georadiusByMember("key", "member", 100.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMember("key", "member", 100.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMember("key", "member",
-      100.0, GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response =
+        pipeliningBase.georadiusByMember("key", "member", 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -349,11 +339,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.georadiusByMember(key, member, radius, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMember(key, member, radius, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMember(key, member,
-      radius, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMember(key, member, radius, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -361,11 +349,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeoradiusByMemberReadonly() {
-    when(commandObjects.georadiusByMemberReadonly("key", "member", 100.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMemberReadonly("key", "member", 100.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMemberReadonly("key",
-      "member", 100.0, GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response =
+        pipeliningBase.georadiusByMemberReadonly("key", "member", 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -378,11 +366,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.georadiusByMemberReadonly(key, member, radius, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMemberReadonly(key, member, radius, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMemberReadonly(key,
-      member, radius, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMemberReadonly(key, member, radius, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -392,11 +378,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeoradiusByMemberWithParam() {
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadiusByMember("key", "member", 100.0, GeoUnit.KM, param)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMember("key", "member", 100.0, GeoUnit.KM, param))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMember("key", "member",
-      100.0, GeoUnit.KM, param);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase
+        .georadiusByMember("key", "member", 100.0, GeoUnit.KM, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -410,11 +396,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoUnit unit = GeoUnit.KM;
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadiusByMember(key, member, radius, unit, param)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMember(key, member, radius, unit, param)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMember(key, member,
-      radius, unit, param);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMember(key, member, radius, unit, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -427,8 +411,8 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     when(commandObjects.georadiusByMemberReadonly("key", "member", 100.0, GeoUnit.KM, param))
         .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMemberReadonly("key",
-      "member", 100.0, GeoUnit.KM, param);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase
+        .georadiusByMemberReadonly("key", "member", 100.0, GeoUnit.KM, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -442,11 +426,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoUnit unit = GeoUnit.KM;
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
 
-    when(commandObjects.georadiusByMemberReadonly(key, member, radius, unit, param)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.georadiusByMemberReadonly(key, member, radius, unit, param)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMemberReadonly(key,
-      member, radius, unit, param);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.georadiusByMemberReadonly(key, member, radius, unit, param);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -460,8 +442,8 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     when(commandObjects.georadiusStore("key", 15.0, 37.0, 100.0, GeoUnit.KM, param, storeParam))
         .thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.georadiusStore("key", 15.0, 37.0, 100.0, GeoUnit.KM,
-      param, storeParam);
+    Response<Long> response = pipeliningBase
+        .georadiusStore("key", 15.0, 37.0, 100.0, GeoUnit.KM, param, storeParam);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -477,11 +459,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
     GeoRadiusStoreParam storeParam = GeoRadiusStoreParam.geoRadiusStoreParam().store("storeKey");
 
-    when(commandObjects.georadiusStore(key, longitude, latitude, radius, unit, param, storeParam))
-        .thenReturn(longCommandObject);
+    when(commandObjects.georadiusStore(key, longitude, latitude, radius, unit, param, storeParam)).thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.georadiusStore(key, longitude, latitude, radius, unit,
-      param, storeParam);
+    Response<Long> response = pipeliningBase.georadiusStore(key, longitude, latitude, radius, unit, param, storeParam);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -492,12 +472,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
     GeoRadiusStoreParam storeParam = GeoRadiusStoreParam.geoRadiusStoreParam().store("storeKey");
 
-    when(
-      commandObjects.georadiusByMemberStore("key", "member", 100.0, GeoUnit.KM, param, storeParam))
+    when(commandObjects.georadiusByMemberStore("key", "member", 100.0, GeoUnit.KM, param, storeParam))
         .thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.georadiusByMemberStore("key", "member", 100.0,
-      GeoUnit.KM, param, storeParam);
+    Response<Long> response = pipeliningBase
+        .georadiusByMemberStore("key", "member", 100.0, GeoUnit.KM, param, storeParam);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -512,11 +491,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     GeoRadiusParam param = GeoRadiusParam.geoRadiusParam();
     GeoRadiusStoreParam storeParam = GeoRadiusStoreParam.geoRadiusStoreParam().store("storeKey");
 
-    when(commandObjects.georadiusByMemberStore(key, member, radius, unit, param, storeParam))
-        .thenReturn(longCommandObject);
+    when(commandObjects.georadiusByMemberStore(key, member, radius, unit, param, storeParam)).thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.georadiusByMemberStore(key, member, radius, unit,
-      param, storeParam);
+    Response<Long> response = pipeliningBase.georadiusByMemberStore(key, member, radius, unit, param, storeParam);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -524,11 +501,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeosearchByMemberRadius() {
-    when(commandObjects.geosearch("key", "member", 100.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch("key", "member", 100.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch("key", "member", 100.0,
-      GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase
+        .geosearch("key", "member", 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -541,11 +518,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearch(key, member, radius, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch(key, member, radius, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase
-        .geosearch(key, member, radius, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch(key, member, radius, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -555,11 +530,10 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeosearchByCoordRadius() {
     GeoCoordinate coord = new GeoCoordinate(15.0, 37.0);
 
-    when(commandObjects.geosearch("key", coord, 100.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch("key", coord, 100.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch("key", coord, 100.0,
-      GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch("key", coord, 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -572,8 +546,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearch(key, coord, radius, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch(key, coord, radius, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
     Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch(key, coord, radius, unit);
 
@@ -583,11 +556,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeosearchByMemberBox() {
-    when(commandObjects.geosearch("key", "member", 50.0, 50.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch("key", "member", 50.0, 50.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch("key", "member", 50.0,
-      50.0, GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase
+        .geosearch("key", "member", 50.0, 50.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -601,11 +574,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double height = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearch(key, member, width, height, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch(key, member, width, height, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch(key, member, width,
-      height, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch(key, member, width, height, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -615,11 +586,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeosearchByCoordBox() {
     GeoCoordinate coord = new GeoCoordinate(15.0, 37.0);
 
-    when(commandObjects.geosearch("key", coord, 50.0, 50.0, GeoUnit.KM)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch("key", coord, 50.0, 50.0, GeoUnit.KM))
+        .thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch("key", coord, 50.0, 50.0,
-      GeoUnit.KM);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase
+        .geosearch("key", coord, 50.0, 50.0, GeoUnit.KM);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -633,11 +604,9 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double height = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearch(key, coord, width, height, unit)).thenReturn(
-      listGeoRadiusResponseCommandObject);
+    when(commandObjects.geosearch(key, coord, width, height, unit)).thenReturn(listGeoRadiusResponseCommandObject);
 
-    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch(key, coord, width,
-      height, unit);
+    Response<List<GeoRadiusResponse>> response = pipeliningBase.geosearch(key, coord, width, height, unit);
 
     assertThat(commands, contains(listGeoRadiusResponseCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -670,11 +639,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
 
   @Test
   public void testGeosearchStoreByMemberRadius() {
-    when(commandObjects.geosearchStore("dest", "src", "member", 100.0, GeoUnit.KM)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore("dest", "src", "member", 100.0, GeoUnit.KM))
+        .thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.geosearchStore("dest", "src", "member", 100.0,
-      GeoUnit.KM);
+    Response<Long> response = pipeliningBase
+        .geosearchStore("dest", "src", "member", 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -688,8 +657,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearchStore(dest, src, member, radius, unit)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore(dest, src, member, radius, unit)).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.geosearchStore(dest, src, member, radius, unit);
 
@@ -701,11 +669,10 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeosearchStoreByCoordRadius() {
     GeoCoordinate coord = new GeoCoordinate(15.0, 37.0);
 
-    when(commandObjects.geosearchStore("dest", "src", coord, 100.0, GeoUnit.KM)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore("dest", "src", coord, 100.0, GeoUnit.KM))
+        .thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase
-        .geosearchStore("dest", "src", coord, 100.0, GeoUnit.KM);
+    Response<Long> response = pipeliningBase.geosearchStore("dest", "src", coord, 100.0, GeoUnit.KM);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -719,8 +686,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double radius = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearchStore(dest, src, coord, radius, unit)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore(dest, src, coord, radius, unit)).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.geosearchStore(dest, src, coord, radius, unit);
 
@@ -733,8 +699,8 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     when(commandObjects.geosearchStore("dest", "src", "member", 50.0, 50.0, GeoUnit.KM))
         .thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.geosearchStore("dest", "src", "member", 50.0, 50.0,
-      GeoUnit.KM);
+    Response<Long> response = pipeliningBase
+        .geosearchStore("dest", "src", "member", 50.0, 50.0, GeoUnit.KM);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -749,8 +715,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double height = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearchStore(dest, src, member, width, height, unit)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore(dest, src, member, width, height, unit)).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.geosearchStore(dest, src, member, width, height, unit);
 
@@ -762,11 +727,11 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeosearchStoreByCoordBox() {
     GeoCoordinate coord = new GeoCoordinate(15.0, 37.0);
 
-    when(commandObjects.geosearchStore("dest", "src", coord, 50.0, 50.0, GeoUnit.KM)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore("dest", "src", coord, 50.0, 50.0, GeoUnit.KM))
+        .thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.geosearchStore("dest", "src", coord, 50.0, 50.0,
-      GeoUnit.KM);
+    Response<Long> response = pipeliningBase
+        .geosearchStore("dest", "src", coord, 50.0, 50.0, GeoUnit.KM);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -781,8 +746,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
     double height = 100;
     GeoUnit unit = GeoUnit.KM;
 
-    when(commandObjects.geosearchStore(dest, src, coord, width, height, unit)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStore(dest, src, coord, width, height, unit)).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.geosearchStore(dest, src, coord, width, height, unit);
 
@@ -820,8 +784,7 @@ public class PipeliningBaseGeospatialCommandsTest extends PipeliningBaseMockedTe
   public void testGeosearchStoreStoreDist() {
     GeoSearchParam params = new GeoSearchParam();
 
-    when(commandObjects.geosearchStoreStoreDist("dest", "src", params)).thenReturn(
-      longCommandObject);
+    when(commandObjects.geosearchStoreStoreDist("dest", "src", params)).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.geosearchStoreStoreDist("dest", "src", params);
 

@@ -1,12 +1,17 @@
 package redis.clients.jedis.mcf;
 
-import redis.clients.jedis.*;
+import redis.clients.jedis.Endpoint;
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.JedisClientConfig;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.MultiDbConfig.StrategySupplier;
+import redis.clients.jedis.util.PlainPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 public class PingStrategy implements HealthCheckStrategy {
   private static final int MAX_HEALTH_CHECK_POOL_SIZE = 2;
 
-  private final UnifiedJedis jedis;
+  private final RedisClient jedis;
   private final HealthCheckStrategy.Config config;
 
   public PingStrategy(HostAndPort hostAndPort, JedisClientConfig jedisClientConfig) {
@@ -15,9 +20,10 @@ public class PingStrategy implements HealthCheckStrategy {
 
   public PingStrategy(HostAndPort hostAndPort, JedisClientConfig jedisClientConfig,
       HealthCheckStrategy.Config config) {
-    var poolConfig = JedisPoolConfig.builder();
-    poolConfig.maxPoolSize(MAX_HEALTH_CHECK_POOL_SIZE);
-    this.jedis = new JedisPooled(hostAndPort, jedisClientConfig, poolConfig.build());
+    SimpleObjectPoolConfig poolConfig = PlainPoolConfig.builder()
+        .maxPoolSize(MAX_HEALTH_CHECK_POOL_SIZE).build();
+    this.jedis = RedisClient.builder().hostAndPort(hostAndPort).clientConfig(jedisClientConfig)
+        .poolConfig(poolConfig).build();
     this.config = config;
   }
 

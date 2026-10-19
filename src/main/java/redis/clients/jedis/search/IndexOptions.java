@@ -10,6 +10,7 @@ import redis.clients.jedis.search.SearchProtocol.SearchKeyword;
 /**
  * IndexOptions encapsulates flags for index creation and should be given to the client on index
  * creation
+ *
  * @since 2.0
  */
 public class IndexOptions implements IParams {
@@ -32,8 +33,7 @@ public class IndexOptions implements IParams {
    */
   public static final int KEEP_TERM_FREQUENCIES = 0x08;
 
-  public static final int DEFAULT_FLAGS = USE_TERM_OFFSETS | KEEP_FIELD_FLAGS
-      | KEEP_TERM_FREQUENCIES;
+  public static final int DEFAULT_FLAGS = USE_TERM_OFFSETS | KEEP_FIELD_FLAGS | KEEP_TERM_FREQUENCIES;
 
   private final int flags;
   private List<String> stopwords;
@@ -42,6 +42,7 @@ public class IndexOptions implements IParams {
 
   /**
    * Default constructor
+   *
    * @param flags flag mask
    */
   public IndexOptions(int flags) {
@@ -57,6 +58,7 @@ public class IndexOptions implements IParams {
 
   /**
    * Set a custom stopword list
+   *
    * @param stopwords the list of stopwords
    * @return the options object itself, for builder-style construction
    */
@@ -67,6 +69,7 @@ public class IndexOptions implements IParams {
 
   /**
    * Set the index to contain no stopwords, overriding the default list
+   *
    * @return the options object itself, for builder-style constructions
    */
   public IndexOptions setNoStopwords() {
@@ -76,6 +79,7 @@ public class IndexOptions implements IParams {
 
   /**
    * Temporary
+   *
    * @param expire
    * @return IndexOptions
    */

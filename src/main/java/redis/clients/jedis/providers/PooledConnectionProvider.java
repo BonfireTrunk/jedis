@@ -1,5 +1,10 @@
 package redis.clients.jedis.providers;
 
+import java.util.Collections;
+import java.util.Map;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.Connection;
 import redis.clients.jedis.ConnectionFactory;
@@ -9,11 +14,6 @@ import redis.clients.jedis.JedisClientConfig;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.util.Pool;
-import today.bonfire.oss.sop.PooledObjectFactory;
-import today.bonfire.oss.sop.SimpleObjectPoolConfig;
-
-import java.util.Collections;
-import java.util.Map;
 
 public class PooledConnectionProvider implements ConnectionProvider {
 
@@ -31,8 +31,7 @@ public class PooledConnectionProvider implements ConnectionProvider {
   }
 
   @Experimental
-  public PooledConnectionProvider(HostAndPort hostAndPort, JedisClientConfig clientConfig,
-      Cache clientSideCache) {
+  public PooledConnectionProvider(HostAndPort hostAndPort, JedisClientConfig clientConfig, Cache clientSideCache) {
     this(new ConnectionPool(hostAndPort, clientConfig, clientSideCache));
     this.connectionMapKey = hostAndPort;
   }
@@ -44,8 +43,8 @@ public class PooledConnectionProvider implements ConnectionProvider {
   }
 
   @Experimental
-  public PooledConnectionProvider(HostAndPort hostAndPort, JedisClientConfig clientConfig,
-      Cache clientSideCache, SimpleObjectPoolConfig poolConfig) {
+  public PooledConnectionProvider(HostAndPort hostAndPort, JedisClientConfig clientConfig, Cache clientSideCache,
+      SimpleObjectPoolConfig poolConfig) {
     this(new ConnectionPool(hostAndPort, clientConfig, clientSideCache, poolConfig));
     this.connectionMapKey = hostAndPort;
   }
@@ -86,6 +85,11 @@ public class PooledConnectionProvider implements ConnectionProvider {
 
   @Override
   public Map<?, Pool<Connection>> getConnectionMap() {
+    return Collections.singletonMap(connectionMapKey, pool);
+  }
+
+  @Override
+  public Map<?, Pool<Connection>> getPrimaryNodesConnectionMap() {
     return Collections.singletonMap(connectionMapKey, pool);
   }
 }

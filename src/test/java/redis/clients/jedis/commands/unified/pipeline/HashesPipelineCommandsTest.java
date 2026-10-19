@@ -1,14 +1,18 @@
 package redis.clients.jedis.commands.unified.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static redis.clients.jedis.util.AssertUtil.assertPipelineSyncAll;
 
 import java.util.*;
 
+import io.redis.test.annotations.EnabledOnCommand;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import redis.clients.jedis.HashImport;
 import redis.clients.jedis.RedisProtocol;
+import redis.clients.jedis.Response;
 
 @ParameterizedClass
 @MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
@@ -36,7 +40,9 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hset(bfoo, bbar, bcar);
     pipe.hset(bfoo, bbar, bfoo);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(1L, 0L, 1L, 0L), pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(1L, 0L, 1L, 0L),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -52,8 +58,11 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hget(bfoo, bcar);
     pipe.hget(bfoo, bbar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(1L, null, null, "car", 1L, null, null, bcar),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(
+            1L, null, null, "car",
+            1L, null, null, bcar),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -78,8 +87,10 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hget(bfoo, bcar);
 
     assertPipelineSyncAll(
-      Arrays.<Object> asList(1L, "car", 0L, "car", 1L, "bar", 1L, bcar, 0L, bcar, 1L, bbar),
-      pipe.syncAndReturnAll());
+        Arrays.<Object>asList(
+            1L, "car", 0L, "car", 1L, "bar",
+            1L, bcar, 0L, bcar, 1L, bbar),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -99,8 +110,9 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hget(bfoo, bbar);
     pipe.hget(bfoo, bcar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList("OK", "car", "bar", "OK", bcar, bbar),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList("OK", "car", "bar", "OK", bcar, bbar),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -120,8 +132,9 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hget(bfoo, bbar);
     pipe.hget(bfoo, bcar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(2L, "car", "bar", 2L, bcar, bbar),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(2L, "car", "bar", 2L, bcar, bbar),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -150,8 +163,10 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     bexpected.add(null);
 
     assertPipelineSyncAll(
-      Arrays.<Object> asList("OK", Arrays.asList("car", "bar", null), "OK",
-        Arrays.asList(bcar, bbar, null)), pipe.syncAndReturnAll());
+        Arrays.<Object>asList(
+            "OK", Arrays.asList("car", "bar", null),
+            "OK", Arrays.asList(bcar, bbar, null)),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -165,8 +180,9 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hincrBy(bfoo, bbar, -1);
     pipe.hincrBy(bfoo, bbar, -10);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(1L, 0L, -10L, 1L, 0L, -10L),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(1L, 0L, -10L, 1L, 0L, -10L),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -180,8 +196,9 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hincrByFloat(bfoo, bbar, -1.5d);
     pipe.hincrByFloat(bfoo, bbar, -10.7d);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(1.5, 0d, -10.7, 1.5, 0d, -10.7),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(1.5, 0d, -10.7, 1.5, 0d, -10.7),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -205,8 +222,11 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hexists(bfoo, bfoo);
     pipe.hexists(bfoo, bbar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(2L, false, false, true, 2L, false, false, true),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(
+            2L, false, false, true,
+            2L, false, false, true),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -232,8 +252,11 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hdel(bfoo, bbar);
     pipe.hget(bfoo, bbar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(2L, 0L, 0L, 1L, null, 2L, 0L, 0L, 1L, null),
-      pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(
+            2L, 0L, 0L, 1L, null,
+            2L, 0L, 0L, 1L, null),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -255,7 +278,9 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hlen(bbar);
     pipe.hlen(bfoo);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(2L, 0L, 2L, 2L, 0L, 2L), pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(2L, 0L, 2L, 2L, 0L, 2L),
+        pipe.syncAndReturnAll());
   }
 
   @Test
@@ -281,15 +306,18 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     bexpected.add(bbar);
     bexpected.add(bcar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(2L, new HashSet<>(Arrays.asList("bar", "car")),
-      2L, new HashSet<>(Arrays.asList(bbar, bcar))), pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(
+            2L, new HashSet<>(Arrays.asList("bar", "car")),
+            2L, new HashSet<>(Arrays.asList(bbar, bcar))),
+        pipe.syncAndReturnAll());
   }
 
   @Test
   public void hvals() {
     Map<String, String> hash = new LinkedHashMap<>();
     hash.put("bar", "car");
-    // hash.put("car", "bar");
+    //hash.put("car", "bar");
     pipe.hset("foo", hash);
 
     pipe.hvals("foo");
@@ -297,22 +325,25 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     // Binary
     Map<byte[], byte[]> bhash = new LinkedHashMap<>();
     bhash.put(bbar, bcar);
-    // bhash.put(bcar, bbar);
+    //bhash.put(bcar, bbar);
     pipe.hset(bfoo, bhash);
 
     pipe.hvals(bfoo);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(
-    // 2L, Arrays.asList("bar", "car"),
-    // 2L, Arrays.asList(bbar, bcar)),
-      1L, Arrays.asList("car"), 1L, Arrays.asList(bcar)), pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(
+            //2L, Arrays.asList("bar", "car"),
+            //2L, Arrays.asList(bbar, bcar)),
+            1L, Arrays.asList("car"),
+            1L, Arrays.asList(bcar)),
+        pipe.syncAndReturnAll());
   }
 
   @Test
   public void hgetAll() {
     Map<String, String> hash = new HashMap<>();
     hash.put("bar", "car");
-    // hash.put("car", "bar");
+    //hash.put("car", "bar");
     pipe.hset("foo", hash);
 
     pipe.hgetAll("foo");
@@ -320,16 +351,16 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     // Binary
     Map<byte[], byte[]> bhash = new HashMap<>();
     bhash.put(bbar, bcar);
-    // bhash.put(bcar, bbar);
+    //bhash.put(bcar, bbar);
     pipe.hset(bfoo, bhash);
 
     pipe.hgetAll(bfoo);
 
-    // assertPipelineSyncAll(
-    // Arrays.<Object>asList(
-    // 1L, hash,
-    // 1L, bhash),
-    // pipe.syncAndReturnAll());
+//    assertPipelineSyncAll(
+//        Arrays.<Object>asList(
+//            1L, hash,
+//            1L, bhash),
+//        pipe.syncAndReturnAll());
     pipe.syncAndReturnAll();
   }
 
@@ -343,6 +374,35 @@ public class HashesPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.hset(bfoo, bbar, bcar);
     pipe.hstrlen(bfoo, bbar);
 
-    assertPipelineSyncAll(Arrays.<Object> asList(0L, 1L, 5L, 0L, 1L, 4L), pipe.syncAndReturnAll());
+    assertPipelineSyncAll(
+        Arrays.<Object>asList(0L, 1L, 5L, 0L, 1L, 4L),
+        pipe.syncAndReturnAll());
+  }
+
+  @Test
+  @EnabledOnCommand("HIMPORT")
+  public void himportSet() {
+    HashImport fs = HashImport.of("name", "age");
+    // Second call on the same fieldset reuses the PREPARE already buffered on this connection.
+    Response<String> r1 = pipe.himportSet("himport:p:1", fs, "alice", "25");
+    Response<String> r2 = pipe.himportSet("himport:p:2", fs, "bob", "30");
+    Response<String> rb = pipe.himportSet(bfoo, HashImport.of(bbar1, bbar2), bcar, bbar3);
+    pipe.sync();
+
+    assertEquals("OK", r1.get());
+    assertEquals("OK", r2.get());
+    assertEquals("OK", rb.get());
+  }
+
+  @Test
+  @EnabledOnCommand("HIMPORT")
+  public void himportSetSyncAndReturnAllExcludesInternalPrepare() {
+    HashImport fs = HashImport.of("f");
+    pipe.himportSet("himport:p:all:1", fs, "v1");
+    pipe.himportSet("himport:p:all:2", fs, "v2");
+    pipe.hget("himport:p:all:1", "f");
+
+    // one result per user command; the internally injected PREPARE is not surfaced
+    assertEquals(Arrays.<Object> asList("OK", "OK", "v1"), pipe.syncAndReturnAll());
   }
 }

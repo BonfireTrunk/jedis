@@ -18,16 +18,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.SafeEncoder;
+import redis.clients.jedis.util.TestEnvUtil;
 
 @Tag("integration")
 public class TransactionV2Test {
+
+  @RegisterExtension
+  public static EnvCondition envCondition = new EnvCondition();
 
   final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };
   final byte[] bbar = { 0x05, 0x06, 0x07, 0x08 };
@@ -37,18 +45,23 @@ public class TransactionV2Test {
 
   final byte[] bmykey = { 0x42, 0x02, 0x03, 0x04 };
 
-  private static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0");
+  private static EndpointConfig endpoint;
+
+  @BeforeAll
+  public static void prepare() {
+    endpoint = Endpoints.getRedisEndpoint("standalone0");
+  }
 
   private Connection conn;
   private Jedis nj;
 
   @BeforeEach
   public void setUp() throws Exception {
-    conn = new Connection(endpoint.getHostAndPort(), endpoint.getClientConfigBuilder()
-        .timeoutMillis(500).build());
+    conn = new Connection(endpoint.getHostAndPort(),
+        endpoint.getClientConfigBuilder().timeoutMillis(500).build());
 
-    nj = new Jedis(endpoint.getHostAndPort(), endpoint.getClientConfigBuilder().timeoutMillis(500)
-        .build());
+    nj = new Jedis(endpoint.getHostAndPort(),
+        endpoint.getClientConfigBuilder().serverDefaultProtocol().timeoutMillis(500).build());
 
     nj.flushAll();
   }
@@ -92,6 +105,7 @@ public class TransactionV2Test {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void watch() {
     Transaction t = new Transaction(conn, false);
     assertEquals("OK", t.watch("mykey", "somekey"));
@@ -153,6 +167,7 @@ public class TransactionV2Test {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void transactionResponse() {
     nj.set("string", "foo");
     nj.lpush("list", "foo");
@@ -176,6 +191,7 @@ public class TransactionV2Test {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void transactionResponseBinary() {
     nj.set("string", "foo");
     nj.lpush("list", "foo");
@@ -230,7 +246,7 @@ public class TransactionV2Test {
     // A command may fail to be queued, so there may be an error before EXEC is called.
     // For instance the command may be syntactically wrong (wrong number of arguments, wrong command name, ...)
     CommandObject<String> invalidCommand =
-        new CommandObject<>(new CommandObjects().commandArguments(SET), BuilderFactory.STRING);
+        new CommandObject<>(new CommandObjects(RedisProtocol.RESP2).commandArguments(SET), BuilderFactory.STRING);
 
     Transaction t = new Transaction(conn);
     t.appendCommand(invalidCommand);
@@ -260,6 +276,7 @@ public class TransactionV2Test {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testTransactionWithGeneralCommand() {
     Transaction t = new Transaction(conn);
     t.set("string", "foo");
@@ -286,6 +303,7 @@ public class TransactionV2Test {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void transactionResponseWithErrorWithGeneralCommand() {
     Transaction t = new Transaction(conn);
     t.set("foo", "bar");
@@ -384,7 +402,7 @@ public class TransactionV2Test {
 
     t = new Transaction(conn);
     Response<List<byte[]>> brange2 = t.zrevrangeByScore(bfoo, SafeEncoder.encode("+inf"),
-      SafeEncoder.encode("(2"));
+        SafeEncoder.encode("(2"));
     t.exec();
 
     bexpected = new ArrayList<byte[]>();

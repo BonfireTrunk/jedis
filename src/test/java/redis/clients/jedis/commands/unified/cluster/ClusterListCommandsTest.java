@@ -5,25 +5,23 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import io.redis.test.annotations.EnabledOnCommand;
 import io.redis.test.annotations.SinceRedisVersion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.DefaultJedisClientConfig;
-import redis.clients.jedis.HostAndPorts;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.args.ListDirection;
+import redis.clients.jedis.args.ListMoveOrder;
 import redis.clients.jedis.commands.unified.ListCommandsTestBase;
-import redis.clients.jedis.util.EnabledOnCommandCondition;
+import redis.clients.jedis.params.LMoveMParams;
 import redis.clients.jedis.util.KeyValue;
-import redis.clients.jedis.util.RedisVersionCondition;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,15 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 public class ClusterListCommandsTest extends ListCommandsTestBase {
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
-
-  @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(
-          HostAndPorts.getStableClusterServers().get(0),
-          DefaultJedisClientConfig.builder().password("cluster").build());
-  @RegisterExtension
-  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(
-          HostAndPorts.getStableClusterServers().get(0),
-          DefaultJedisClientConfig.builder().password("cluster").build());
 
   public ClusterListCommandsTest(RedisProtocol protocol) {
     super(protocol);
@@ -277,6 +266,85 @@ public class ClusterListCommandsTest extends ListCommandsTestBase {
   }
 
   @Test
+  @Override
+  @EnabledOnCommand("LMOVEM")
+  public void lmovem() {
+    // Hash-tag the per-test prefix so the source and destination share a cluster slot.
+    String src = keys.key("{%test%}:src");
+    String dst = keys.key("{%test%}:dst");
+
+    jedis.rpush(src, "1", "2");
+    assertEquals(Collections.singletonList("2"),
+        jedis.lmovem(src, dst, ListDirection.RIGHT, ListDirection.LEFT));
+    assertEquals(Collections.singletonList("2"), jedis.lrange(dst, 0, -1));
+
+    // Missing source returns null.
+    assertNull(jedis.lmovem(keys.key("{%test%}:nope1"), keys.key("{%test%}:nope2"),
+        ListDirection.LEFT, ListDirection.LEFT));
+  }
+
+  @Test
+  @Override
+  @EnabledOnCommand("LMOVEM")
+  public void lmovemWithParams() {
+    // Hash-tag the per-test prefix so the source and destination share a cluster slot.
+    String l1 = keys.key("{%test%}:l1");
+    String l2 = keys.key("{%test%}:l2");
+
+    jedis.rpush(l1, "1", "2", "3", "4");
+    jedis.rpush(l2, "5", "6", "7");
+    assertEquals(Arrays.asList("2", "1"),
+        jedis.lmovem(l1, l2, ListDirection.LEFT, ListDirection.LEFT,
+            LMoveMParams.lMoveMParams().count(2, ListMoveOrder.OBO)));
+    assertEquals(Arrays.asList("2", "1", "5", "6", "7"), jedis.lrange(l2, 0, -1));
+
+    // EXACTLY that cannot be satisfied returns null and leaves the source untouched.
+    String e1 = keys.key("{%test%}:e1");
+    jedis.rpush(e1, "1", "2");
+    assertNull(jedis.lmovem(e1, keys.key("{%test%}:e2"), ListDirection.LEFT, ListDirection.LEFT,
+        LMoveMParams.lMoveMParams().exactly(3, ListMoveOrder.BULK)));
+    assertEquals(Arrays.asList("1", "2"), jedis.lrange(e1, 0, -1));
+  }
+
+  @Test
+  @Override
+  @EnabledOnCommand("BLMOVEM")
+  public void blmovem() {
+    // Hash-tag the per-test prefix so the source and destination share a cluster slot.
+    String src = keys.key("{%test%}:src");
+    String dst = keys.key("{%test%}:dst");
+
+    // Source already populated: returns immediately with a single element.
+    jedis.rpush(src, "1", "2");
+    assertEquals(Collections.singletonList("1"),
+        jedis.blmovem(src, dst, ListDirection.LEFT, ListDirection.RIGHT, 1));
+    assertEquals(Collections.singletonList("1"), jedis.lrange(dst, 0, -1));
+
+    // Empty source times out and returns null.
+    assertNull(jedis.blmovem(keys.key("{%test%}:empty"), dst, ListDirection.LEFT,
+        ListDirection.RIGHT, 0.5));
+  }
+
+  @Test
+  @Override
+  @EnabledOnCommand("BLMOVEM")
+  public void blmovemWithParams() {
+    // Hash-tag the per-test prefix so the source and destination share a cluster slot.
+    String src = keys.key("{%test%}:src");
+    String dst = keys.key("{%test%}:dst");
+
+    jedis.rpush(src, "1", "2", "3");
+    assertEquals(Arrays.asList("1", "2"),
+        jedis.blmovem(src, dst, ListDirection.LEFT, ListDirection.RIGHT, 1,
+            LMoveMParams.lMoveMParams().count(2, ListMoveOrder.BULK)));
+    assertEquals(Arrays.asList("1", "2"), jedis.lrange(dst, 0, -1));
+
+    // Empty source times out and returns null.
+    assertNull(jedis.blmovem(keys.key("{%test%}:empty"), dst, ListDirection.LEFT,
+        ListDirection.RIGHT, 0.1, LMoveMParams.lMoveMParams().count(2, ListMoveOrder.OBO)));
+  }
+
+  @Test
   @SinceRedisVersion(value="7.0.0")
   public void lmpop() {
     String mylist1 = "mylist1{.}";
@@ -312,8 +380,7 @@ public class ClusterListCommandsTest extends ListCommandsTestBase {
     jedis.lpush(mylist1, "one", "two", "three", "four", "five");
     jedis.lpush(mylist2, "one", "two", "three", "four", "five");
 
-    KeyValue<String, List<String>> elements = jedis
-        .blmpop(1L, ListDirection.LEFT, mylist1, mylist2);
+    KeyValue<String, List<String>> elements = jedis.blmpop(1L, ListDirection.LEFT, mylist1, mylist2);
     assertEquals(mylist1, elements.getKey());
     assertEquals(1, elements.getValue().size());
 

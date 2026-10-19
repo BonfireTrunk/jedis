@@ -30,13 +30,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double timeout = 2.0;
     SortedSetOption option = SortedSetOption.MAX;
     String[] keys = { "zset1", "zset2" };
-    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1",
-        Collections.singletonList(new Tuple("member1", 1.0)));
+    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1", Collections.singletonList(new Tuple("member1", 1.0)));
 
-    when(commandObjects.bzmpop(timeout, option, keys)).thenReturn(
-      keyValueStringListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandObjects.bzmpop(timeout, option, keys)).thenReturn(keyValueStringListTupleCommandObject);
+    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<String, List<Tuple>> result = jedis.bzmpop(timeout, option, keys);
 
@@ -51,13 +48,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double timeout = 2.0;
     SortedSetOption option = SortedSetOption.MAX;
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
-    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(),
-        Collections.singletonList(new Tuple("member1", 1.0)));
+    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(), Collections.singletonList(new Tuple("member1", 1.0)));
 
-    when(commandObjects.bzmpop(timeout, option, keys)).thenReturn(
-      keyValueBytesListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandObjects.bzmpop(timeout, option, keys)).thenReturn(keyValueBytesListTupleCommandObject);
+    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<byte[], List<Tuple>> result = jedis.bzmpop(timeout, option, keys);
 
@@ -73,13 +67,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     SortedSetOption option = SortedSetOption.MAX;
     int count = 2;
     String[] keys = { "zset1", "zset2" };
-    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1", Arrays.asList(
-      new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
+    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1", Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
 
-    when(commandObjects.bzmpop(timeout, option, count, keys)).thenReturn(
-      keyValueStringListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandObjects.bzmpop(timeout, option, count, keys)).thenReturn(keyValueStringListTupleCommandObject);
+    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<String, List<Tuple>> result = jedis.bzmpop(timeout, option, count, keys);
 
@@ -95,13 +86,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     SortedSetOption option = SortedSetOption.MAX;
     int count = 2;
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
-    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(),
-        Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
+    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(), Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
 
-    when(commandObjects.bzmpop(timeout, option, count, keys)).thenReturn(
-      keyValueBytesListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandObjects.bzmpop(timeout, option, count, keys)).thenReturn(keyValueBytesListTupleCommandObject);
+    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<byte[], List<Tuple>> result = jedis.bzmpop(timeout, option, count, keys);
 
@@ -119,8 +107,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     KeyValue<String, Tuple> expectedKeyValue = new KeyValue<>("zset1", expectedTuple);
 
     when(commandObjects.bzpopmax(timeout, keys)).thenReturn(keyValueStringTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringTupleCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringTupleCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, Tuple> result = jedis.bzpopmax(timeout, keys);
 
@@ -138,8 +125,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     KeyValue<byte[], Tuple> expectedKeyValue = new KeyValue<>("zset1".getBytes(), expectedTuple);
 
     when(commandObjects.bzpopmax(timeout, keys)).thenReturn(keyValueBytesTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesTupleCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueBytesTupleCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], Tuple> result = jedis.bzpopmax(timeout, keys);
 
@@ -157,8 +143,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     KeyValue<String, Tuple> expectedKeyValue = new KeyValue<>("zset1", expectedTuple);
 
     when(commandObjects.bzpopmin(timeout, keys)).thenReturn(keyValueStringTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringTupleCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueStringTupleCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<String, Tuple> result = jedis.bzpopmin(timeout, keys);
 
@@ -176,8 +161,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     KeyValue<byte[], Tuple> expectedKeyValue = new KeyValue<>("zset1".getBytes(), expectedTuple);
 
     when(commandObjects.bzpopmin(timeout, keys)).thenReturn(keyValueBytesTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesTupleCommandObject)).thenReturn(
-      expectedKeyValue);
+    when(commandExecutor.executeCommand(keyValueBytesTupleCommandObject)).thenReturn(expectedKeyValue);
 
     KeyValue<byte[], Tuple> result = jedis.bzpopmin(timeout, keys);
 
@@ -516,12 +500,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   @Test
   public void testZdiffWithScores() {
     String[] keys = { "zset1", "zset2", "zset3" };
-    List<Tuple> expectedDifferenceWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member3", 3.0));
+    List<Tuple> expectedDifferenceWithScores = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member3", 3.0)
+    );
 
     when(commandObjects.zdiffWithScores(keys)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedDifferenceWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedDifferenceWithScores);
 
     List<Tuple> result = jedis.zdiffWithScores(keys);
 
@@ -534,12 +519,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   @Test
   public void testZdiffWithScoresBinary() {
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes(), "zset3".getBytes() };
-    List<Tuple> expectedDifferenceWithScores = Arrays.asList(new Tuple("member1".getBytes(), 1.0),
-      new Tuple("member3".getBytes(), 3.0));
+    List<Tuple> expectedDifferenceWithScores = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member3".getBytes(), 3.0)
+    );
 
     when(commandObjects.zdiffWithScores(keys)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedDifferenceWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedDifferenceWithScores);
 
     List<Tuple> result = jedis.zdiffWithScores(keys);
 
@@ -659,8 +645,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double increment = 1.5;
     String member = "member1";
     ZIncrByParams params = ZIncrByParams.zIncrByParams().xx();
-    Double expectedNewScore = 4.5; // Assuming the member's score was incremented to 4.5 with XX
-                                   // flag
+    Double expectedNewScore = 4.5; // Assuming the member's score was incremented to 4.5 with XX flag
 
     when(commandObjects.zincrby(key, increment, member, params)).thenReturn(doubleCommandObject);
     when(commandExecutor.executeCommand(doubleCommandObject)).thenReturn(expectedNewScore);
@@ -679,8 +664,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double increment = 1.5;
     byte[] member = "member1".getBytes();
     ZIncrByParams params = ZIncrByParams.zIncrByParams().xx();
-    Double expectedNewScore = 4.5; // Assuming the member's score was incremented to 4.5 with XX
-                                   // flag
+    Double expectedNewScore = 4.5; // Assuming the member's score was incremented to 4.5 with XX flag
 
     when(commandObjects.zincrby(key, increment, member, params)).thenReturn(doubleCommandObject);
     when(commandExecutor.executeCommand(doubleCommandObject)).thenReturn(expectedNewScore);
@@ -731,12 +715,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZinterWithScores() {
     ZParams params = new ZParams().weights(2, 3).aggregate(ZParams.Aggregate.SUM);
     String[] keys = { "zset1", "zset2" };
-    List<Tuple> expectedIntersectionWithScores = Arrays.asList(new Tuple("member1", 5.0),
-      new Tuple("member2", 9.0));
+    List<Tuple> expectedIntersectionWithScores = Arrays.asList(
+        new Tuple("member1", 5.0),
+        new Tuple("member2", 9.0)
+    );
 
     when(commandObjects.zinterWithScores(params, keys)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedIntersectionWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedIntersectionWithScores);
 
     List<Tuple> result = jedis.zinterWithScores(params, keys);
 
@@ -750,12 +735,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZinterWithScoresBinary() {
     ZParams params = new ZParams().weights(1, 2).aggregate(ZParams.Aggregate.MAX);
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
-    List<Tuple> expectedIntersectionWithScores = Arrays.asList(new Tuple("member1", 1.0),
-      new Tuple("member2", 2.0));
+    List<Tuple> expectedIntersectionWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0));
 
     when(commandObjects.zinterWithScores(params, keys)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedIntersectionWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedIntersectionWithScores);
 
     List<Tuple> result = jedis.zinterWithScores(params, keys);
 
@@ -821,8 +804,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     long expectedIntersectionCardinality = 5L;
 
     when(commandObjects.zintercard(limit, keys)).thenReturn(longCommandObject);
-    when(commandExecutor.executeCommand(longCommandObject)).thenReturn(
-      expectedIntersectionCardinality);
+    when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedIntersectionCardinality);
 
     long result = jedis.zintercard(limit, keys);
 
@@ -871,8 +853,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String dstkey = "zsetInter";
     ZParams params = new ZParams().weights(2, 3).aggregate(ZParams.Aggregate.SUM);
     String[] sets = { "zset1", "zset2" };
-    long expectedStoredCount = 3L; // Assuming 3 elements were stored with the specified weights and
-                                   // aggregation
+    long expectedStoredCount = 3L; // Assuming 3 elements were stored with the specified weights and aggregation
 
     when(commandObjects.zinterstore(dstkey, params, sets)).thenReturn(longCommandObject);
     when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedStoredCount);
@@ -890,8 +871,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] dstkey = "zsetInter".getBytes();
     ZParams params = new ZParams().weights(2, 3).aggregate(ZParams.Aggregate.SUM);
     byte[][] sets = { "zset1".getBytes(), "zset2".getBytes() };
-    long expectedStoredCount = 3L; // Assuming 3 elements were stored with the specified weights and
-                                   // aggregation
+    long expectedStoredCount = 3L; // Assuming 3 elements were stored with the specified weights and aggregation
 
     when(commandObjects.zinterstore(dstkey, params, sets)).thenReturn(longCommandObject);
     when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedStoredCount);
@@ -944,12 +924,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZmpop() {
     SortedSetOption option = SortedSetOption.MAX;
     String[] keys = { "zset1", "zset2" };
-    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1",
-        Collections.singletonList(new Tuple("member1", 1.0)));
+    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1", Collections.singletonList(new Tuple("member1", 1.0)));
 
     when(commandObjects.zmpop(option, keys)).thenReturn(keyValueStringListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<String, List<Tuple>> result = jedis.zmpop(option, keys);
 
@@ -963,12 +941,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZmpopBinary() {
     SortedSetOption option = SortedSetOption.MAX;
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
-    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(),
-        Collections.singletonList(new Tuple("member1", 1.0)));
+    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(), Collections.singletonList(new Tuple("member1", 1.0)));
 
     when(commandObjects.zmpop(option, keys)).thenReturn(keyValueBytesListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<byte[], List<Tuple>> result = jedis.zmpop(option, keys);
 
@@ -983,13 +959,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     SortedSetOption option = SortedSetOption.MAX;
     int count = 2;
     String[] keys = { "zset1", "zset2" };
-    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1", Arrays.asList(
-      new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
+    KeyValue<String, List<Tuple>> expectedPopResult = new KeyValue<>("zset1", Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
 
-    when(commandObjects.zmpop(option, count, keys))
-        .thenReturn(keyValueStringListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandObjects.zmpop(option, count, keys)).thenReturn(keyValueStringListTupleCommandObject);
+    when(commandExecutor.executeCommand(keyValueStringListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<String, List<Tuple>> result = jedis.zmpop(option, count, keys);
 
@@ -1004,12 +977,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     SortedSetOption option = SortedSetOption.MAX;
     int count = 2;
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
-    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(),
-        Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
+    KeyValue<byte[], List<Tuple>> expectedPopResult = new KeyValue<>("zset1".getBytes(), Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0)));
 
     when(commandObjects.zmpop(option, count, keys)).thenReturn(keyValueBytesListTupleCommandObject);
-    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(
-      expectedPopResult);
+    when(commandExecutor.executeCommand(keyValueBytesListTupleCommandObject)).thenReturn(expectedPopResult);
 
     KeyValue<byte[], List<Tuple>> result = jedis.zmpop(option, count, keys);
 
@@ -1023,8 +994,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZmscore() {
     String key = "zsetKey";
     String[] members = { "member1", "member2" };
-    List<Double> expectedScores = Arrays.asList(1.0, 2.0); // Assuming the members have scores of
-                                                           // 1.0 and 2.0 respectively
+    List<Double> expectedScores = Arrays.asList(1.0, 2.0); // Assuming the members have scores of 1.0 and 2.0 respectively
 
     when(commandObjects.zmscore(key, members)).thenReturn(listDoubleCommandObject);
     when(commandExecutor.executeCommand(listDoubleCommandObject)).thenReturn(expectedScores);
@@ -1041,8 +1011,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZmscoreBinary() {
     byte[] key = "zsetKey".getBytes();
     byte[][] members = { "member1".getBytes(), "member2".getBytes() };
-    List<Double> expectedScores = Arrays.asList(1.0, 2.0); // Assuming the members have scores of
-                                                           // 1.0 and 2.0 respectively
+    List<Double> expectedScores = Arrays.asList(1.0, 2.0); // Assuming the members have scores of 1.0 and 2.0 respectively
 
     when(commandObjects.zmscore(key, members)).thenReturn(listDoubleCommandObject);
     when(commandExecutor.executeCommand(listDoubleCommandObject)).thenReturn(expectedScores);
@@ -1074,8 +1043,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   @Test
   public void testZpopmaxBinary() {
     byte[] key = "zsetKey".getBytes();
-    Tuple expectedTuple = new Tuple("member1".getBytes(), 2.0); // Assuming this member has the
-                                                                // highest score
+    Tuple expectedTuple = new Tuple("member1".getBytes(), 2.0); // Assuming this member has the highest score
 
     when(commandObjects.zpopmax(key)).thenReturn(tupleCommandObject);
     when(commandExecutor.executeCommand(tupleCommandObject)).thenReturn(expectedTuple);
@@ -1092,9 +1060,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZpopmaxWithCount() {
     String key = "zsetKey";
     int count = 2;
-    List<Tuple> expectedTuples = Arrays
-        .asList(new Tuple("member1", 2.0), new Tuple("member2", 1.5)); // Assuming these members
-                                                                       // have the highest scores
+    List<Tuple> expectedTuples = Arrays.asList(
+        new Tuple("member1", 2.0),
+        new Tuple("member2", 1.5)
+    ); // Assuming these members have the highest scores
 
     when(commandObjects.zpopmax(key, count)).thenReturn(listTupleCommandObject);
     when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedTuples);
@@ -1111,8 +1080,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZpopmaxWithCountBinary() {
     byte[] key = "zsetKey".getBytes();
     int count = 2;
-    List<Tuple> expectedTuples = Arrays.asList(new Tuple("member1".getBytes(), 2.0), new Tuple(
-        "member2".getBytes(), 1.5)); // Assuming these members have the highest scores
+    List<Tuple> expectedTuples = Arrays.asList(
+        new Tuple("member1".getBytes(), 2.0),
+        new Tuple("member2".getBytes(), 1.5)
+    ); // Assuming these members have the highest scores
 
     when(commandObjects.zpopmax(key, count)).thenReturn(listTupleCommandObject);
     when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedTuples);
@@ -1144,8 +1115,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   @Test
   public void testZpopminBinary() {
     byte[] key = "zsetKey".getBytes();
-    Tuple expectedTuple = new Tuple("member1".getBytes(), 1.0); // Assuming this member has the
-                                                                // lowest score
+    Tuple expectedTuple = new Tuple("member1".getBytes(), 1.0); // Assuming this member has the lowest score
 
     when(commandObjects.zpopmin(key)).thenReturn(tupleCommandObject);
     when(commandExecutor.executeCommand(tupleCommandObject)).thenReturn(expectedTuple);
@@ -1162,9 +1132,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZpopminWithCount() {
     String key = "zsetKey";
     int count = 2;
-    List<Tuple> expectedTuples = Arrays
-        .asList(new Tuple("member1", 1.0), new Tuple("member2", 1.5)); // Assuming these members
-                                                                       // have the lowest scores
+    List<Tuple> expectedTuples = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 1.5)
+    ); // Assuming these members have the lowest scores
 
     when(commandObjects.zpopmin(key, count)).thenReturn(listTupleCommandObject);
     when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedTuples);
@@ -1181,8 +1152,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZpopminWithCountBinary() {
     byte[] key = "zsetKey".getBytes();
     int count = 2;
-    List<Tuple> expectedTuples = Arrays.asList(new Tuple("member1".getBytes(), 1.0), new Tuple(
-        "member2".getBytes(), 1.5)); // Assuming these members have the lowest scores
+    List<Tuple> expectedTuples = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 1.5)
+    ); // Assuming these members have the lowest scores
 
     when(commandObjects.zpopmin(key, count)).thenReturn(listTupleCommandObject);
     when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedTuples);
@@ -1231,8 +1204,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrandmemberWithCount() {
     String key = "zsetKey";
     long count = 2;
-    List<String> expectedMembers = Arrays.asList("member1", "member2"); // Assuming these members
-                                                                        // are randomly selected
+    List<String> expectedMembers = Arrays.asList("member1", "member2"); // Assuming these members are randomly selected
 
     when(commandObjects.zrandmember(key, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
@@ -1249,12 +1221,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrandmemberBytesWithCount() {
     byte[] key = "zsetKey".getBytes();
     long count = 2;
-    List<byte[]> expectedMembers = Arrays.asList("member1".getBytes(), "member2".getBytes()); // Assuming
-                                                                                              // these
-                                                                                              // members
-                                                                                              // are
-                                                                                              // randomly
-                                                                                              // selected
+    List<byte[]> expectedMembers = Arrays.asList("member1".getBytes(), "member2".getBytes()); // Assuming these members are randomly selected
 
     when(commandObjects.zrandmember(key, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
@@ -1273,12 +1240,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrandmemberWithScores() {
     String key = "zsetKey";
     long count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0)); // Assuming these members with scores are randomly selected
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 2.0)
+    ); // Assuming these members with scores are randomly selected
 
     when(commandObjects.zrandmemberWithScores(key, count)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrandmemberWithScores(key, count);
 
@@ -1292,13 +1260,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrandmemberWithScoresBinary() {
     byte[] key = "zsetKey".getBytes();
     long count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1".getBytes(), 1.0),
-      new Tuple("member2".getBytes(), 2.0)); // Assuming these members with scores are randomly
-                                             // selected
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 2.0)
+    ); // Assuming these members with scores are randomly selected
 
     when(commandObjects.zrandmemberWithScores(key, count)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrandmemberWithScores(key, count);
 
@@ -1331,8 +1299,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     long start = 0;
     long stop = -1; // This typically means all elements in the sorted set
-    List<byte[]> expectedMembers = Arrays.asList("member1".getBytes(), "member2".getBytes(),
-      "member3".getBytes());
+    List<byte[]> expectedMembers = Arrays.asList("member1".getBytes(), "member2".getBytes(), "member3".getBytes());
 
     when(commandObjects.zrange(key, start, stop)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
@@ -1350,12 +1317,14 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String key = "zsetKey";
     long start = 0;
     long stop = -1; // This typically means all elements in the sorted set with their scores
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0), new Tuple("member3", 3.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 2.0),
+        new Tuple("member3", 3.0)
+    );
 
     when(commandObjects.zrangeWithScores(key, start, stop)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeWithScores(key, start, stop);
 
@@ -1370,12 +1339,14 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     long start = 0;
     long stop = -1; // This typically means all elements in the sorted set with their scores
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1".getBytes(), 1.0),
-      new Tuple("member2".getBytes(), 2.0), new Tuple("member3".getBytes(), 3.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member3".getBytes(), 3.0)
+    );
 
     when(commandObjects.zrangeWithScores(key, start, stop)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeWithScores(key, start, stop);
 
@@ -1423,12 +1394,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrangeWithScoresWithZRangeParams() {
     String key = "zsetKey";
     ZRangeParams zRangeParams = ZRangeParams.zrangeParams(1, 3);
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 2.0)
+    );
 
     when(commandObjects.zrangeWithScores(key, zRangeParams)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeWithScores(key, zRangeParams);
 
@@ -1442,12 +1414,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrangeWithScoresWithZRangeParamsBinary() {
     byte[] key = "zsetKey".getBytes();
     ZRangeParams zRangeParams = ZRangeParams.zrangeParams(1, 3);
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1".getBytes(), 1.0),
-      new Tuple("member2".getBytes(), 2.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 2.0)
+    );
 
     when(commandObjects.zrangeWithScores(key, zRangeParams)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeWithScores(key, zRangeParams);
 
@@ -1502,8 +1475,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<String> expectedMembers = Arrays.asList("beta", "gamma");
 
-    when(commandObjects.zrangeByLex(key, min, max, offset, count)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrangeByLex(key, min, max, offset, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
 
     List<String> result = jedis.zrangeByLex(key, min, max, offset, count);
@@ -1523,8 +1495,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<byte[]> expectedMembers = Arrays.asList("beta".getBytes(), "gamma".getBytes());
 
-    when(commandObjects.zrangeByLex(key, min, max, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrangeByLex(key, min, max, offset, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
 
     List<byte[]> result = jedis.zrangeByLex(key, min, max, offset, count);
@@ -1616,8 +1587,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<String> expectedMembers = Arrays.asList("member2", "member3");
 
-    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
 
     List<String> result = jedis.zrangeByScore(key, min, max, offset, count);
@@ -1637,8 +1607,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<byte[]> expectedMembers = Arrays.asList("member2".getBytes(), "member3".getBytes());
 
-    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
 
     List<byte[]> result = jedis.zrangeByScore(key, min, max, offset, count);
@@ -1658,8 +1627,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<String> expectedMembers = Arrays.asList("member2", "member3");
 
-    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
 
     List<String> result = jedis.zrangeByScore(key, min, max, offset, count);
@@ -1679,8 +1647,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<byte[]> expectedMembers = Arrays.asList("member2".getBytes(), "member3".getBytes());
 
-    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
 
     List<byte[]> result = jedis.zrangeByScore(key, min, max, offset, count);
@@ -1696,12 +1663,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String key = "zsetKey";
     String min = "1";
     String max = "3";
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 2.0)
+    );
 
     when(commandObjects.zrangeByScoreWithScores(key, min, max)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max);
 
@@ -1716,12 +1684,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     byte[] min = "1".getBytes();
     byte[] max = "3".getBytes();
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1".getBytes(), 1.0),
-      new Tuple("member2".getBytes(), 2.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 2.0)
+    );
 
     when(commandObjects.zrangeByScoreWithScores(key, min, max)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max);
 
@@ -1736,12 +1705,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String key = "zsetKey";
     double min = 1.0;
     double max = 3.0;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 2.0)
+    );
 
     when(commandObjects.zrangeByScoreWithScores(key, min, max)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max);
 
@@ -1756,12 +1726,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     double min = 1.0;
     double max = 3.0;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member1".getBytes(), 1.0),
-      new Tuple("member2".getBytes(), 2.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 2.0)
+    );
 
     when(commandObjects.zrangeByScoreWithScores(key, min, max)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max);
 
@@ -1778,13 +1749,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String max = "3";
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2", 2.0), new Tuple(
-        "member3", 3.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2", 2.0),
+        new Tuple("member3", 3.0)
+    );
 
-    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max, offset, count);
 
@@ -1801,13 +1772,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] max = "3".getBytes();
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2".getBytes(), 2.0),
-      new Tuple("member3".getBytes(), 3.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member3".getBytes(), 3.0)
+    );
 
-    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max, offset, count);
 
@@ -1824,13 +1795,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double max = 3.0;
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2", 2.0), new Tuple(
-        "member3", 3.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2", 2.0),
+        new Tuple("member3", 3.0)
+    );
 
-    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max, offset, count);
 
@@ -1847,13 +1818,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double max = 3.0;
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2".getBytes(), 2.0),
-      new Tuple("member3".getBytes(), 3.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member3".getBytes(), 3.0)
+    );
 
-    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrangeByScoreWithScores(key, min, max, offset, count);
 
@@ -1937,13 +1908,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrankWithScore() {
     String key = "zsetKey";
     String member = "member1";
-    KeyValue<Long, Double> expectedRankWithScore = new KeyValue<>(0L, 1.0); // Assuming the member
-                                                                            // is the first with a
-                                                                            // score of 1.0
+    KeyValue<Long, Double> expectedRankWithScore = new KeyValue<>(0L, 1.0); // Assuming the member is the first with a score of 1.0
 
     when(commandObjects.zrankWithScore(key, member)).thenReturn(keyValueLongDoubleCommandObject);
-    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(
-      expectedRankWithScore);
+    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(expectedRankWithScore);
 
     KeyValue<Long, Double> result = jedis.zrankWithScore(key, member);
 
@@ -1957,13 +1925,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrankWithScoreBinary() {
     byte[] key = "zsetKey".getBytes();
     byte[] member = "member1".getBytes();
-    KeyValue<Long, Double> expectedRankWithScore = new KeyValue<>(0L, 1.0); // Assuming the member
-                                                                            // is the first with a
-                                                                            // score of 1.0
+    KeyValue<Long, Double> expectedRankWithScore = new KeyValue<>(0L, 1.0); // Assuming the member is the first with a score of 1.0
 
     when(commandObjects.zrankWithScore(key, member)).thenReturn(keyValueLongDoubleCommandObject);
-    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(
-      expectedRankWithScore);
+    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(expectedRankWithScore);
 
     KeyValue<Long, Double> result = jedis.zrankWithScore(key, member);
 
@@ -2174,8 +2139,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     long start = 0;
     long stop = -1; // This typically means all elements in the sorted set, in reverse order
-    List<byte[]> expectedMembers = Arrays.asList("member3".getBytes(), "member2".getBytes(),
-      "member1".getBytes());
+    List<byte[]> expectedMembers = Arrays.asList("member3".getBytes(), "member2".getBytes(), "member1".getBytes());
 
     when(commandObjects.zrevrange(key, start, stop)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
@@ -2192,14 +2156,15 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrevrangeWithScores() {
     String key = "zsetKey";
     long start = 0;
-    long stop = -1; // This typically means all elements in the sorted set with their scores, in
-                    // reverse order
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member3", 3.0), new Tuple(
-        "member2", 2.0), new Tuple("member1", 1.0));
+    long stop = -1; // This typically means all elements in the sorted set with their scores, in reverse order
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member3", 3.0),
+        new Tuple("member2", 2.0),
+        new Tuple("member1", 1.0)
+    );
 
     when(commandObjects.zrevrangeWithScores(key, start, stop)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeWithScores(key, start, stop);
 
@@ -2213,13 +2178,14 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrevrangeWithScoresBinary() {
     byte[] key = "zsetKey".getBytes();
     long start = 0;
-    long stop = -1; // This typically means all elements in the sorted set with their scores, in
-                    // reverse order
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member3".getBytes(), 3.0),
-      new Tuple("member2".getBytes(), 2.0), new Tuple("member1".getBytes(), 1.0));
+    long stop = -1; // This typically means all elements in the sorted set with their scores, in reverse order
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member3".getBytes(), 3.0),
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member1".getBytes(), 1.0)
+    );
     when(commandObjects.zrevrangeWithScores(key, start, stop)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeWithScores(key, start, stop);
 
@@ -2252,8 +2218,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     byte[] max = "[z".getBytes();
     byte[] min = "[a".getBytes();
-    List<byte[]> expectedMembers = Arrays.asList("omega".getBytes(), "mu".getBytes(),
-      "alpha".getBytes());
+    List<byte[]> expectedMembers = Arrays.asList("omega".getBytes(), "mu".getBytes(), "alpha".getBytes());
 
     when(commandObjects.zrevrangeByLex(key, max, min)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
@@ -2275,8 +2240,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<String> expectedMembers = Arrays.asList("mu", "alpha");
 
-    when(commandObjects.zrevrangeByLex(key, max, min, offset, count)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrevrangeByLex(key, max, min, offset, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
 
     List<String> result = jedis.zrevrangeByLex(key, max, min, offset, count);
@@ -2296,8 +2260,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<byte[]> expectedMembers = Arrays.asList("mu".getBytes(), "alpha".getBytes());
 
-    when(commandObjects.zrevrangeByLex(key, max, min, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrevrangeByLex(key, max, min, offset, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
 
     List<byte[]> result = jedis.zrevrangeByLex(key, max, min, offset, count);
@@ -2389,8 +2352,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<String> expectedMembers = Arrays.asList("member2", "member1");
 
-    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
 
     List<String> result = jedis.zrevrangeByScore(key, max, min, offset, count);
@@ -2410,8 +2372,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<byte[]> expectedMembers = Arrays.asList("member2".getBytes(), "member1".getBytes());
 
-    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
 
     List<byte[]> result = jedis.zrevrangeByScore(key, max, min, offset, count);
@@ -2427,13 +2388,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String key = "zsetKey";
     double max = 3.0;
     double min = 1.0;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2", 2.0), new Tuple(
-        "member1", 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2", 2.0),
+        new Tuple("member1", 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min);
 
@@ -2448,13 +2409,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     double max = 3.0;
     double min = 1.0;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2".getBytes(), 2.0),
-      new Tuple("member1".getBytes(), 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member1".getBytes(), 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min);
 
@@ -2473,8 +2434,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<String> expectedMembers = Arrays.asList("member2", "member1");
 
-    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(listStringCommandObject);
     when(commandExecutor.executeCommand(listStringCommandObject)).thenReturn(expectedMembers);
 
     List<String> result = jedis.zrevrangeByScore(key, max, min, offset, count);
@@ -2494,8 +2454,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     int count = 2;
     List<byte[]> expectedMembers = Arrays.asList("member2".getBytes(), "member1".getBytes());
 
-    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(listBytesCommandObject);
     when(commandExecutor.executeCommand(listBytesCommandObject)).thenReturn(expectedMembers);
 
     List<byte[]> result = jedis.zrevrangeByScore(key, max, min, offset, count);
@@ -2511,13 +2470,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String key = "zsetKey";
     String max = "3";
     String min = "1";
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2", 2.0), new Tuple(
-        "member1", 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2", 2.0),
+        new Tuple("member1", 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min);
 
@@ -2532,13 +2491,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     byte[] max = "3".getBytes();
     byte[] min = "1".getBytes();
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2".getBytes(), 2.0),
-      new Tuple("member1".getBytes(), 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member1".getBytes(), 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min);
 
@@ -2555,13 +2514,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String min = "1";
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2", 2.0), new Tuple(
-        "member1", 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2", 2.0),
+        new Tuple("member1", 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min, offset, count);
 
@@ -2578,13 +2537,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] min = "1".getBytes();
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2".getBytes(), 2.0),
-      new Tuple("member1".getBytes(), 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member1".getBytes(), 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min, offset, count);
 
@@ -2601,13 +2560,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double min = 1.0;
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2", 2.0), new Tuple(
-        "member1", 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2", 2.0),
+        new Tuple("member1", 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min, offset, count);
 
@@ -2624,13 +2583,13 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     double min = 1.0;
     int offset = 1;
     int count = 2;
-    List<Tuple> expectedMembersWithScores = Arrays.asList(new Tuple("member2".getBytes(), 2.0),
-      new Tuple("member1".getBytes(), 1.0));
+    List<Tuple> expectedMembersWithScores = Arrays.asList(
+        new Tuple("member2".getBytes(), 2.0),
+        new Tuple("member1".getBytes(), 1.0)
+    );
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(
-      listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(
-      expectedMembersWithScores);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(listTupleCommandObject);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedMembersWithScores);
 
     List<Tuple> result = jedis.zrevrangeByScoreWithScores(key, max, min, offset, count);
 
@@ -2644,8 +2603,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrevrank() {
     String key = "zsetKey";
     String member = "member1";
-    Long expectedRevRank = 10L; // Assuming the member is the eleventh from the end in the sorted
-                                // set
+    Long expectedRevRank = 10L; // Assuming the member is the eleventh from the end in the sorted set
 
     when(commandObjects.zrevrank(key, member)).thenReturn(longCommandObject);
     when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedRevRank);
@@ -2662,8 +2620,7 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrevrankBinary() {
     byte[] key = "zsetKey".getBytes();
     byte[] member = "member1".getBytes();
-    Long expectedRevRank = 10L; // Assuming the member is the eleventh from the end in the sorted
-                                // set
+    Long expectedRevRank = 10L; // Assuming the member is the eleventh from the end in the sorted set
 
     when(commandObjects.zrevrank(key, member)).thenReturn(longCommandObject);
     when(commandExecutor.executeCommand(longCommandObject)).thenReturn(expectedRevRank);
@@ -2680,15 +2637,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrevrankWithScore() {
     String key = "zsetKey";
     String member = "member1";
-    KeyValue<Long, Double> expectedRevRankWithScore = new KeyValue<>(10L, 1.0); // Assuming the
-                                                                                // member is the
-                                                                                // eleventh from the
-                                                                                // end with a score
-                                                                                // of 1.0
+    KeyValue<Long, Double> expectedRevRankWithScore = new KeyValue<>(10L, 1.0); // Assuming the member is the eleventh from the end with a score of 1.0
 
     when(commandObjects.zrevrankWithScore(key, member)).thenReturn(keyValueLongDoubleCommandObject);
-    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(
-      expectedRevRankWithScore);
+    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(expectedRevRankWithScore);
 
     KeyValue<Long, Double> result = jedis.zrevrankWithScore(key, member);
 
@@ -2702,15 +2654,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZrevrankWithScoreBinary() {
     byte[] key = "zsetKey".getBytes();
     byte[] member = "member1".getBytes();
-    KeyValue<Long, Double> expectedRevRankWithScore = new KeyValue<>(10L, 1.0); // Assuming the
-                                                                                // member is the
-                                                                                // eleventh from the
-                                                                                // end with a score
-                                                                                // of 1.0
+    KeyValue<Long, Double> expectedRevRankWithScore = new KeyValue<>(10L, 1.0); // Assuming the member is the eleventh from the end with a score of 1.0
 
     when(commandObjects.zrevrankWithScore(key, member)).thenReturn(keyValueLongDoubleCommandObject);
-    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(
-      expectedRevRankWithScore);
+    when(commandExecutor.executeCommand(keyValueLongDoubleCommandObject)).thenReturn(expectedRevRankWithScore);
 
     KeyValue<Long, Double> result = jedis.zrevrankWithScore(key, member);
 
@@ -2725,13 +2672,14 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     String key = "zsetKey";
     String cursor = "0";
     ScanParams params = new ScanParams().match("*").count(10);
-    List<Tuple> expectedTuples = Arrays
-        .asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0));
+    List<Tuple> expectedTuples = Arrays.asList(
+        new Tuple("member1", 1.0),
+        new Tuple("member2", 2.0)
+    );
     ScanResult<Tuple> expectedScanResult = new ScanResult<>(cursor, expectedTuples);
 
     when(commandObjects.zscan(key, cursor, params)).thenReturn(scanResultTupleCommandObject);
-    when(commandExecutor.executeCommand(scanResultTupleCommandObject)).thenReturn(
-      expectedScanResult);
+    when(commandExecutor.executeCommand(scanResultTupleCommandObject)).thenReturn(expectedScanResult);
 
     ScanResult<Tuple> result = jedis.zscan(key, cursor, params);
 
@@ -2746,13 +2694,14 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
     byte[] key = "zsetKey".getBytes();
     byte[] cursor = "0".getBytes();
     ScanParams params = new ScanParams().match("*").count(10);
-    List<Tuple> expectedTuples = Arrays.asList(new Tuple("member1".getBytes(), 1.0), new Tuple(
-        "member2".getBytes(), 2.0));
+    List<Tuple> expectedTuples = Arrays.asList(
+        new Tuple("member1".getBytes(), 1.0),
+        new Tuple("member2".getBytes(), 2.0)
+    );
     ScanResult<Tuple> expectedScanResult = new ScanResult<>(cursor, expectedTuples);
 
     when(commandObjects.zscan(key, cursor, params)).thenReturn(scanResultTupleCommandObject);
-    when(commandExecutor.executeCommand(scanResultTupleCommandObject)).thenReturn(
-      expectedScanResult);
+    when(commandExecutor.executeCommand(scanResultTupleCommandObject)).thenReturn(expectedScanResult);
 
     ScanResult<Tuple> result = jedis.zscan(key, cursor, params);
 
@@ -2834,12 +2783,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZunionWithScores() {
     ZParams params = new ZParams().weights(1, 2).aggregate(ZParams.Aggregate.MAX);
     String[] keys = { "zset1", "zset2" };
-    List<Tuple> expectedUnionWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0));
+    List<Tuple> expectedUnionWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0));
 
     when(commandObjects.zunionWithScores(params, keys)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject))
-        .thenReturn(expectedUnionWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedUnionWithScores);
 
     List<Tuple> result = jedis.zunionWithScores(params, keys);
 
@@ -2853,12 +2800,10 @@ public class UnifiedJedisSortedSetCommandsTest extends UnifiedJedisMockedTestBas
   public void testZunionWithScoresBinary() {
     ZParams params = new ZParams().weights(1, 2).aggregate(ZParams.Aggregate.MAX);
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
-    List<Tuple> expectedUnionWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple(
-        "member2", 2.0));
+    List<Tuple> expectedUnionWithScores = Arrays.asList(new Tuple("member1", 1.0), new Tuple("member2", 2.0));
 
     when(commandObjects.zunionWithScores(params, keys)).thenReturn(listTupleCommandObject);
-    when(commandExecutor.executeCommand(listTupleCommandObject))
-        .thenReturn(expectedUnionWithScores);
+    when(commandExecutor.executeCommand(listTupleCommandObject)).thenReturn(expectedUnionWithScores);
 
     List<Tuple> result = jedis.zunionWithScores(params, keys);
 

@@ -4,12 +4,14 @@ import redis.clients.jedis.MultiDbConfig.DatabaseConfig;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.builders.MultiDbClientBuilder;
 import redis.clients.jedis.csc.Cache;
+import redis.clients.jedis.exceptions.JedisValidationException;
 import redis.clients.jedis.executors.CommandExecutor;
 import redis.clients.jedis.mcf.MultiDbCommandExecutor;
 import redis.clients.jedis.mcf.MultiDbPipeline;
 import redis.clients.jedis.mcf.MultiDbTransaction;
 import redis.clients.jedis.providers.ConnectionProvider;
 import redis.clients.jedis.mcf.MultiDbConnectionProvider;
+import redis.clients.jedis.mcf.MultiDbConnectionProvider.Database;
 
 import java.util.Set;
 
@@ -31,6 +33,13 @@ import java.util.Set;
  * recovered endpoints</li>
  * <li><strong>Retry Logic:</strong> Configurable retry mechanisms with exponential backoff</li>
  * </ul>
+ * <p>
+ * <strong>Prolonged outages:</strong> while no endpoint is available, commands fail with
+ * {@code JedisTemporarilyNotAvailableException} and the client keeps trying to recover. Once the
+ * configured failover attempts are exhausted they fail with
+ * {@code JedisPermanentlyNotAvailableException}, and Jedis gives no guarantee of automatic
+ * recovery: create a new client.
+ * </p>
  * <p>
  * <strong>Usage Example:</strong>
  * </p>
@@ -96,13 +105,13 @@ public class MultiDbClient extends UnifiedJedis {
    * </p>
    * @param commandExecutor the command executor (typically MultiDbCommandExecutor)
    * @param connectionProvider the connection provider (typically MultiDbConnectionProvider)
-   * @param commandObjects the command objects
-   * @param redisProtocol the Redis protocol version
+   * @param clientConfig the {@link JedisClientConfig} used to derive the protocol and
+   *          command-object knobs (may be null)
    * @param cache the client-side cache (may be null)
    */
   MultiDbClient(CommandExecutor commandExecutor, ConnectionProvider connectionProvider,
-      CommandObjects commandObjects, RedisProtocol redisProtocol, Cache cache) {
-    super(commandExecutor, connectionProvider, commandObjects, redisProtocol, cache);
+      JedisClientConfig clientConfig, Cache cache) {
+    super(commandExecutor, connectionProvider, clientConfig, cache);
   }
 
   /**
@@ -184,6 +193,41 @@ public class MultiDbClient extends UnifiedJedis {
    */
   public boolean isHealthy(Endpoint endpoint) {
     return getMultiDbConnectionProvider().isHealthy(endpoint);
+  }
+
+  /**
+   * Returns the weight of the specified database.
+   * <p>
+   * This method provides the current weight of a specific endpoint.
+   * </p>
+   * @param endpoint the endpoint to check
+   * @throws redis.clients.jedis.exceptions.JedisValidationException if the endpoint doesn't exist
+   * @return the weight of the endpoint
+   */
+  public float getWeight(Endpoint endpoint) {
+    Database db = getMultiDbConnectionProvider().getDatabase(endpoint);
+    if (db == null) {
+      throw new JedisValidationException("Endpoint " + endpoint + " does not exist.");
+    }
+    return db.getWeight();
+  }
+
+  /**
+   * Sets the weight of the specified database.
+   * <p>
+   * This method allows changing the weight of a specific endpoint at runtime. The weight determines
+   * the priority of the endpoint during failover operations.
+   * </p>
+   * @param endpoint the endpoint to change
+   * @param weight the new weight for the endpoint
+   * @throws redis.clients.jedis.exceptions.JedisValidationException if the endpoint doesn't exist
+   */
+  public void setWeight(Endpoint endpoint, float weight) {
+    Database db = getMultiDbConnectionProvider().getDatabase(endpoint);
+    if (db == null) {
+      throw new JedisValidationException("Endpoint " + endpoint + " does not exist.");
+    }
+    db.setWeight(weight);
   }
 
   /**
@@ -280,8 +324,7 @@ public class MultiDbClient extends UnifiedJedis {
 
     @Override
     protected MultiDbClient createClient() {
-      return new MultiDbClient(commandExecutor, connectionProvider, commandObjects,
-          clientConfig.getRedisProtocol(), cache);
+      return new MultiDbClient(commandExecutor, connectionProvider, clientConfig, cache);
     }
   }
 

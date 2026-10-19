@@ -16,6 +16,7 @@ import redis.clients.jedis.params.RestoreParams;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.params.SortingParams;
 import redis.clients.jedis.resps.ScanResult;
+import redis.clients.jedis.util.CompareCondition;
 import redis.clients.jedis.util.KeyValue;
 
 public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestBase {
@@ -88,6 +89,56 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
     Response<Long> response = pipeliningBase.del(key1, key2);
 
     assertThat(commands, contains(longCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testDelexBinary() {
+    byte[] key = "key".getBytes();
+    CompareCondition condition = CompareCondition.valueEq("value");
+
+    when(commandObjects.delex(key, condition)).thenReturn(longCommandObject);
+
+    Response<Long> response = pipeliningBase.delex(key, condition);
+
+    assertThat(commands, contains(longCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testDelex() {
+    String key = "key";
+    CompareCondition condition = CompareCondition.valueEq("value");
+
+    when(commandObjects.delex(key, condition)).thenReturn(longCommandObject);
+
+    Response<Long> response = pipeliningBase.delex(key, condition);
+
+    assertThat(commands, contains(longCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testDigestKeyBinary() {
+    byte[] key = "key".getBytes();
+
+    when(commandObjects.digestKey(key)).thenReturn(bytesCommandObject);
+
+    Response<byte[]> response = pipeliningBase.digestKey(key);
+
+    assertThat(commands, contains(bytesCommandObject));
+    assertThat(response, is(predefinedResponse));
+  }
+
+  @Test
+  public void testDigestKey() {
+    String key = "key";
+
+    when(commandObjects.digestKey(key)).thenReturn(stringCommandObject);
+
+    Response<String> response = pipeliningBase.digestKey(key);
+
+    assertThat(commands, contains(stringCommandObject));
     assertThat(response, is(predefinedResponse));
   }
 
@@ -347,8 +398,7 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
     byte[] key1 = "key1".getBytes();
     byte[] key2 = "key2".getBytes();
 
-    when(commandObjects.migrate(host, port, timeout, params, key1, key2)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.migrate(host, port, timeout, params, key1, key2)).thenReturn(stringCommandObject);
 
     Response<String> response = pipeliningBase.migrate(host, port, timeout, params, key1, key2);
 
@@ -542,11 +592,9 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
   public void testPexpireAtWithExpiryOption() {
     long millisecondsTimestamp = 1609459200000L;
 
-    when(commandObjects.pexpireAt("key", millisecondsTimestamp, ExpiryOption.NX)).thenReturn(
-      longCommandObject);
+    when(commandObjects.pexpireAt("key", millisecondsTimestamp, ExpiryOption.NX)).thenReturn(longCommandObject);
 
-    Response<Long> response = pipeliningBase.pexpireAt("key", millisecondsTimestamp,
-      ExpiryOption.NX);
+    Response<Long> response = pipeliningBase.pexpireAt("key", millisecondsTimestamp, ExpiryOption.NX);
 
     assertThat(commands, contains(longCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -558,8 +606,7 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
     long millisecondsTimestamp = 1625097600000L;
     ExpiryOption expiryOption = ExpiryOption.NX;
 
-    when(commandObjects.pexpireAt(key, millisecondsTimestamp, expiryOption)).thenReturn(
-      longCommandObject);
+    when(commandObjects.pexpireAt(key, millisecondsTimestamp, expiryOption)).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.pexpireAt(key, millisecondsTimestamp, expiryOption);
 
@@ -679,7 +726,7 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
 
   @Test
   public void testRestore() {
-    byte[] serializedValue = new byte[] { 1, 2, 3 };
+    byte[] serializedValue = new byte[]{ 1, 2, 3 };
     long ttl = 1000L;
 
     when(commandObjects.restore("key", ttl, serializedValue)).thenReturn(stringCommandObject);
@@ -706,12 +753,11 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
 
   @Test
   public void testRestoreWithParams() {
-    byte[] serializedValue = new byte[] { 1, 2, 3 };
+    byte[] serializedValue = new byte[]{ 1, 2, 3 };
     long ttl = 1000L;
     RestoreParams params = new RestoreParams();
 
-    when(commandObjects.restore("key", ttl, serializedValue, params)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.restore("key", ttl, serializedValue, params)).thenReturn(stringCommandObject);
 
     Response<String> response = pipeliningBase.restore("key", ttl, serializedValue, params);
 
@@ -1099,11 +1145,9 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
     long numReplicas = 1L;
     long timeout = 1000L;
 
-    when(commandObjects.waitAOF("key", numLocal, numReplicas, timeout)).thenReturn(
-      keyValueLongLongCommandObject);
+    when(commandObjects.waitAOF("key", numLocal, numReplicas, timeout)).thenReturn(keyValueLongLongCommandObject);
 
-    Response<KeyValue<Long, Long>> response = pipeliningBase.waitAOF("key", numLocal, numReplicas,
-      timeout);
+    Response<KeyValue<Long, Long>> response = pipeliningBase.waitAOF("key", numLocal, numReplicas, timeout);
 
     assertThat(commands, contains(keyValueLongLongCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1116,11 +1160,9 @@ public class PipeliningBaseGenericCommandsTest extends PipeliningBaseMockedTestB
     long numReplicas = 1;
     long timeout = 1000;
 
-    when(commandObjects.waitAOF(sampleKey, numLocal, numReplicas, timeout)).thenReturn(
-      keyValueLongLongCommandObject);
+    when(commandObjects.waitAOF(sampleKey, numLocal, numReplicas, timeout)).thenReturn(keyValueLongLongCommandObject);
 
-    Response<KeyValue<Long, Long>> response = pipeliningBase.waitAOF(sampleKey, numLocal,
-      numReplicas, timeout);
+    Response<KeyValue<Long, Long>> response = pipeliningBase.waitAOF(sampleKey, numLocal, numReplicas, timeout);
 
     assertThat(commands, contains(keyValueLongLongCommandObject));
     assertThat(response, is(predefinedResponse));

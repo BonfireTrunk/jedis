@@ -63,6 +63,7 @@ class TSArithByParams<T extends TSArithByParams<?>> implements IParams {
 
   /**
    * Set label-value pairs
+   *
    * @param labels label-value pairs
    * @return the object itself
    */
@@ -128,12 +129,12 @@ class TSArithByParams<T extends TSArithByParams<?>> implements IParams {
     }
 
     TSArithByParams<?> that = (TSArithByParams<?>) o;
-    return ignore == that.ignore && ignoreMaxTimediff == that.ignoreMaxTimediff
-        && Double.compare(ignoreMaxValDiff, that.ignoreMaxValDiff) == 0
-        && Objects.equals(timestamp, that.timestamp)
-        && Objects.equals(retentionPeriod, that.retentionPeriod) && encoding == that.encoding
-        && Objects.equals(chunkSize, that.chunkSize) && duplicatePolicy == that.duplicatePolicy
-        && Objects.equals(labels, that.labels);
+    return ignore == that.ignore && ignoreMaxTimediff == that.ignoreMaxTimediff &&
+        Double.compare(ignoreMaxValDiff, that.ignoreMaxValDiff) == 0 &&
+        Objects.equals(timestamp, that.timestamp) &&
+        Objects.equals(retentionPeriod, that.retentionPeriod) &&
+        encoding == that.encoding && Objects.equals(chunkSize, that.chunkSize) &&
+        duplicatePolicy == that.duplicatePolicy && Objects.equals(labels, that.labels);
   }
 
   @Override

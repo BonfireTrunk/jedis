@@ -45,13 +45,39 @@ public interface RedisTimeSeriesPipelineCommands {
 
   Response<List<TSElement>> tsRevRange(String key, TSRangeParams rangeParams);
 
-  Response<Map<String, TSMRangeElements>> tsMRange(long fromTimestamp, long toTimestamp,
-      String... filters);
+  Response<List<TSElement>> tsRead(String key, long timestamp);
+
+  Response<List<TSElement>> tsRead(String key, TSReadParams readParams);
+
+  /**
+   * Pipeline variant of {@link RedisTimeSeriesCommands#tsNRange(String[], long, long)}.
+   * @since 8.0
+   */
+  Response<List<TSElement>> tsNRange(String[] keys, long fromTimestamp, long toTimestamp);
+
+  /**
+   * Pipeline variant of {@link RedisTimeSeriesCommands#tsNRange(String[], TSNRangeParams)}.
+   * @since 8.0
+   */
+  Response<List<TSElement>> tsNRange(String[] keys, TSNRangeParams nrangeParams);
+
+  /**
+   * Pipeline variant of {@link RedisTimeSeriesCommands#tsNRevRange(String[], long, long)}.
+   * @since 8.0
+   */
+  Response<List<TSElement>> tsNRevRange(String[] keys, long fromTimestamp, long toTimestamp);
+
+  /**
+   * Pipeline variant of {@link RedisTimeSeriesCommands#tsNRevRange(String[], TSNRangeParams)}.
+   * @since 8.0
+   */
+  Response<List<TSElement>> tsNRevRange(String[] keys, TSNRangeParams nrangeParams);
+
+  Response<Map<String, TSMRangeElements>> tsMRange(long fromTimestamp, long toTimestamp, String... filters);
 
   Response<Map<String, TSMRangeElements>> tsMRange(TSMRangeParams multiRangeParams);
 
-  Response<Map<String, TSMRangeElements>> tsMRevRange(long fromTimestamp, long toTimestamp,
-      String... filters);
+  Response<Map<String, TSMRangeElements>> tsMRevRange(long fromTimestamp, long toTimestamp, String... filters);
 
   Response<Map<String, TSMRangeElements>> tsMRevRange(TSMRangeParams multiRangeParams);
 
@@ -61,15 +87,27 @@ public interface RedisTimeSeriesPipelineCommands {
 
   Response<Map<String, TSMGetElement>> tsMGet(TSMGetParams multiGetParams, String... filters);
 
-  Response<String> tsCreateRule(String sourceKey, String destKey, AggregationType aggregationType,
-      long timeBucket);
+  Response<String> tsCreateRule(String sourceKey, String destKey, AggregationType aggregationType, long timeBucket);
 
-  Response<String> tsCreateRule(String sourceKey, String destKey, AggregationType aggregationType,
-      long bucketDuration, long alignTimestamp);
+  Response<String> tsCreateRule(String sourceKey, String destKey, AggregationType aggregationType, long bucketDuration, long alignTimestamp);
 
   Response<String> tsDeleteRule(String sourceKey, String destKey);
 
   Response<List<String>> tsQueryIndex(String... filters);
+
+  /**
+   * Pipeline variant of {@link RedisTimeSeriesCommands#tsQueryLabels(String...)}.
+   *
+   * @since 8.0
+   */
+  Response<List<String>> tsQueryLabels(String... filters);
+
+  /**
+   * Pipeline variant of {@link RedisTimeSeriesCommands#tsQueryLabelValues(String, String...)}.
+   *
+   * @since 8.0
+   */
+  Response<List<String>> tsQueryLabelValues(String label, String... filters);
 
   Response<TSInfo> tsInfo(String key);
 

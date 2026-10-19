@@ -4,20 +4,31 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeAll;
 
 import redis.clients.jedis.*;
 import redis.clients.jedis.util.EnabledOnCommandCondition;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.RedisVersionCondition;
 
 @Tag("integration")
 public abstract class JedisCommandsTestBase {
 
-  @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(endpoint);
-  @RegisterExtension
-  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(endpoint);
+  protected static EndpointConfig endpoint;
 
-  protected static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0");
+  @RegisterExtension
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(
+      () -> Endpoints.getRedisEndpoint("standalone0"));
+  @RegisterExtension
+  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(
+      () -> Endpoints.getRedisEndpoint("standalone0"));
+  @RegisterExtension
+  public static EnvCondition envCondition = new EnvCondition();
+
+  @BeforeAll
+  public static void prepareEndpoint() {
+    endpoint = Endpoints.getRedisEndpoint("standalone0");
+  }
 
   protected final RedisProtocol protocol;
 
@@ -39,17 +50,22 @@ public abstract class JedisCommandsTestBase {
   @BeforeEach
   public void setUp() throws Exception {
     jedis = new Jedis(endpoint.getHostAndPort(), endpoint.getClientConfigBuilder()
-        .protocol(protocol).timeoutMillis(500).build());
+        .protocol(protocol).autoNegotiateProtocol(false).timeoutMillis(500).build());
     jedis.flushAll();
   }
 
   @AfterEach
   public void tearDown() throws Exception {
+    try {
+      jedis.flushAll();
+    } catch (RuntimeException e) {
+      // ignore — cleanup only
+    }
     jedis.close();
   }
 
   protected Jedis createJedis() {
     return new Jedis(endpoint.getHostAndPort(), endpoint.getClientConfigBuilder()
-        .protocol(protocol).build());
+        .protocol(protocol).autoNegotiateProtocol(false).build());
   }
 }

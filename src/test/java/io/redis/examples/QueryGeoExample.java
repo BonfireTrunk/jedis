@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.stream.Stream;
 
-import redis.clients.jedis.UnifiedJedis;
+import redis.clients.jedis.RedisClient;
 import redis.clients.jedis.search.*;
 import redis.clients.jedis.search.schemafields.*;
 import redis.clients.jedis.search.schemafields.GeoShapeField.CoordinateSystem;
@@ -25,11 +25,13 @@ public class QueryGeoExample {
 
     @Test
     public void run() {
-        UnifiedJedis jedis = new UnifiedJedis("redis://localhost:6379");
+        RedisClient jedis = RedisClient.create("redis://localhost:6379");
 
         //REMOVE_START
         // Clear any keys here before using them in tests.
         try { jedis.ftDropIndex("idx:bicycle"); } catch (JedisDataException j) {}
+        jedis.del("bicycle:0", "bicycle:1", "bicycle:2", "bicycle:3", "bicycle:4",
+            "bicycle:5", "bicycle:6", "bicycle:7", "bicycle:8", "bicycle:9");
         //REMOVE_END
 // HIDE_END
 

@@ -45,8 +45,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ActiveActiveLocalFailoverTest {
   private static final Logger log = LoggerFactory.getLogger(ActiveActiveLocalFailoverTest.class);
 
-  private static final EndpointConfig endpoint1 = HostAndPorts.getRedisEndpoint("redis-failover-1");
-  private static final EndpointConfig endpoint2 = HostAndPorts.getRedisEndpoint("redis-failover-2");
+  private static EndpointConfig endpoint1;
+  private static EndpointConfig endpoint2;
   private static final ToxiproxyClient tp = new ToxiproxyClient("localhost", 8474);
   public static final int ENDPOINT_PAUSE_TIME_MS = 10000;
   private static Proxy redisProxy1;
@@ -54,6 +54,8 @@ public class ActiveActiveLocalFailoverTest {
 
   @BeforeAll
   public static void setupAdminClients() throws IOException {
+    endpoint1 = Endpoints.getRedisEndpoint("redis-failover-1");
+    endpoint2 = Endpoints.getRedisEndpoint("redis-failover-2");
     if (tp.getProxyOrNull("redis-1") != null) {
       tp.getProxy("redis-1").delete();
     }
@@ -253,7 +255,7 @@ public class ActiveActiveLocalFailoverTest {
 
     log.info("Triggering issue on endpoint1");
     try (Jedis jedis = new Jedis(endpoint1.getHostAndPort(),
-        endpoint1.getClientConfigBuilder().build())) {
+        endpoint1.getClientConfigBuilder().serverDefaultProtocol().build())) {
       jedis.clientPause(ENDPOINT_PAUSE_TIME_MS);
     }
 
@@ -314,7 +316,8 @@ public class ActiveActiveLocalFailoverTest {
 
   private static void ensureEndpointAvailability(HostAndPort endpoint, JedisClientConfig config) {
     await().atMost(Duration.ofSeconds(ENDPOINT_PAUSE_TIME_MS)).until(() -> {
-      try (Jedis jedis = new Jedis(endpoint, config)) {
+      try (RedisClient jedis = RedisClient.builder().hostAndPort(endpoint).clientConfig(config)
+          .build()) {
         return "PONG".equals(jedis.ping());
       } catch (Exception e) {
         log.info("Waiting for endpoint {} to become available...", endpoint);

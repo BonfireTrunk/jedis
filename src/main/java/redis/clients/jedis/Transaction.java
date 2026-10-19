@@ -20,8 +20,6 @@ public class Transaction extends AbstractTransaction {
 
   private final Queue<Response<?>> pipelinedResponses = new LinkedList<>();
 
-  private Jedis jedis = null;
-
   protected final Connection connection;
   private final boolean closeConnection;
 
@@ -29,16 +27,11 @@ public class Transaction extends AbstractTransaction {
   private boolean inWatch = false;
   private boolean inMulti = false;
 
-  // Legacy - to support Jedis.multi()
-  // TODO: Should be package private ??
-  public Transaction(Jedis jedis) {
-    this(jedis.getConnection());
-    this.jedis = jedis;
-  }
-
   /**
-   * Creates a new transaction. A MULTI command will be added to be sent to server.
-   * WATCH/UNWATCH/MULTI commands must not be called with this object.
+   * Creates a new transaction.
+   * 
+   * A MULTI command will be added to be sent to server. WATCH/UNWATCH/MULTI commands must not be
+   * called with this object.
    * @param connection connection
    */
   public Transaction(Connection connection) {
@@ -46,8 +39,11 @@ public class Transaction extends AbstractTransaction {
   }
 
   /**
-   * Creates a new transaction. A user wanting to WATCH/UNWATCH keys followed by a call to MULTI (
-   * {@link #multi()}) it should be {@code doMulti=false}.
+   * Creates a new transaction.
+   *
+   * A user wanting to WATCH/UNWATCH keys followed by a call to MULTI ({@link #multi()}) it should
+   * be {@code doMulti=false}.
+   *
    * @param connection connection
    * @param doMulti {@code false} should be set to enable manual WATCH, UNWATCH and MULTI
    */
@@ -56,8 +52,11 @@ public class Transaction extends AbstractTransaction {
   }
 
   /**
-   * Creates a new transaction. A user wanting to WATCH/UNWATCH keys followed by a call to MULTI (
-   * {@link #multi()}) it should be {@code doMulti=false}.
+   * Creates a new transaction.
+   *
+   * A user wanting to WATCH/UNWATCH keys followed by a call to MULTI ({@link #multi()}) it should
+   * be {@code doMulti=false}.
+   *
    * @param connection connection
    * @param doMulti {@code false} should be set to enable manual WATCH, UNWATCH and MULTI
    * @param closeConnection should the 'connection' be closed when 'close()' is called?
@@ -67,8 +66,11 @@ public class Transaction extends AbstractTransaction {
   }
 
   /**
-   * Creates a new transaction. A user wanting to WATCH/UNWATCH keys followed by a call to MULTI (
-   * {@link #multi()}) it should be {@code doMulti=false}.
+   * Creates a new transaction.
+   *
+   * A user wanting to WATCH/UNWATCH keys followed by a call to MULTI ({@link #multi()}) it should
+   * be {@code doMulti=false}.
+   *
    * @param connection connection
    * @param commandObjects command objects
    * @param doMulti {@code false} should be set to enable manual WATCH, UNWATCH and MULTI
@@ -82,10 +84,7 @@ public class Transaction extends AbstractTransaction {
   }
 
   private static CommandObjects createCommandObjects(Connection connection) {
-    CommandObjects commandObjects = new CommandObjects();
-    RedisProtocol proto = connection.getRedisProtocol();
-    if (proto != null) commandObjects.setProtocol(proto);
-    return commandObjects;
+    return new CommandObjects(RedisProtocol.orServerDefault(connection.getRedisProtocol()));
   }
 
   @Override
@@ -119,10 +118,25 @@ public class Transaction extends AbstractTransaction {
 
   @Override
   protected final <T> Response<T> appendCommand(CommandObject<T> commandObject) {
-    connection.sendCommand(commandObject.getArguments());
-    // processAppendStatus(); // do nothing
-    Response<T> response = new Response<>(commandObject.getBuilder());
-    pipelinedResponses.add(response);
+    Response<T> response = null;
+    if (!inMulti) {
+      response = execute(commandObject);
+    } else {
+      connection.sendCommand(commandObject.getArguments());
+      response = new Response<>(commandObject.getBuilder());
+      pipelinedResponses.add(response);
+    }
+    return response;
+  }
+
+  private <T> Response<T> execute(CommandObject<T> commandObject) {
+    Response<T> response;
+    try {
+      T result =  connection.executeCommand(commandObject);
+      response = Response.of(result);
+    } catch (JedisDataException e) {
+      response = Response.error(e);
+    }
     return response;
   }
 
@@ -137,8 +151,7 @@ public class Transaction extends AbstractTransaction {
     }
   }
 
-  @Deprecated
-  // TODO: private
+  @Deprecated // TODO: private
   public final void clear() {
     if (broken) {
       return;
@@ -201,9 +214,7 @@ public class Transaction extends AbstractTransaction {
       inMulti = false;
       inWatch = false;
       pipelinedResponses.clear();
-      if (jedis != null) {
-        jedis.resetState();
-      }
+      onAfterExec();
     }
   }
 
@@ -228,9 +239,23 @@ public class Transaction extends AbstractTransaction {
       inMulti = false;
       inWatch = false;
       pipelinedResponses.clear();
-      if (jedis != null) {
-        jedis.resetState();
-      }
+      onAfterDiscard();
     }
+  }
+
+  /**
+   * Hook method called after exec() completes (successfully or with error).
+   * Subclasses can override this to perform cleanup actions.
+   */
+  protected void onAfterExec() {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Hook method called after discard() completes (successfully or with error).
+   * Subclasses can override this to perform cleanup actions.
+   */
+  protected void onAfterDiscard() {
+    // Default implementation does nothing
   }
 }

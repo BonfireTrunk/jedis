@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.redis.test.annotations.SinceRedisVersion;
+import io.redis.test.annotations.ConditionalOnEnv;
 import io.redis.test.utils.RedisVersion;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -26,10 +27,7 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisNoScriptException;
 import redis.clients.jedis.resps.FunctionStats;
 import redis.clients.jedis.resps.LibraryInfo;
-import redis.clients.jedis.util.ClientKillerUtil;
-import redis.clients.jedis.util.KeyValue;
-import redis.clients.jedis.util.RedisVersionUtil;
-import redis.clients.jedis.util.SafeEncoder;
+import redis.clients.jedis.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @ParameterizedClass
-@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#jedisRespVersions")
 @Tag("integration")
 public class ScriptingCommandsTest extends JedisCommandsTestBase {
 
@@ -71,6 +69,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
 
   @SuppressWarnings("unchecked")
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void evalMultiBulk() {
     String script = "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2],ARGV[3]}";
     List<String> keys = new ArrayList<String>();
@@ -94,6 +93,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
 
   @SuppressWarnings("unchecked")
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void evalMultiBulkWithBinaryJedis() {
     String script = "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2],ARGV[3]}";
     List<byte[]> keys = new ArrayList<byte[]>();
@@ -188,7 +188,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
     jedis.set("foo", "bar");
     jedis.eval("return redis.call('get','foo')");
     String result = (String) jedis.evalshaReadonly("6b1bf486c81ceb7edf3c093f4c48582e38c0e791",
-      Collections.emptyList(), Collections.emptyList());
+            Collections.emptyList(), Collections.emptyList());
 
     assertEquals("bar", result);
   }
@@ -208,9 +208,8 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
   public void evalshaReadonlyBinary() {
     jedis.set(SafeEncoder.encode("foo"), SafeEncoder.encode("bar"));
     jedis.eval(SafeEncoder.encode("return redis.call('get','foo')"));
-    byte[] result = (byte[]) jedis.evalshaReadonly(
-      SafeEncoder.encode("6b1bf486c81ceb7edf3c093f4c48582e38c0e791"), Collections.emptyList(),
-      Collections.emptyList());
+    byte[] result = (byte[]) jedis.evalshaReadonly(SafeEncoder.encode("6b1bf486c81ceb7edf3c093f4c48582e38c0e791"),
+            Collections.emptyList(), Collections.emptyList());
 
     assertArrayEquals(SafeEncoder.encode("bar"), result);
   }
@@ -281,6 +280,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void scriptEvalReturnNullValues() {
     jedis.del("key1");
     jedis.del("key2");
@@ -293,6 +293,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void scriptEvalShaReturnNullValues() {
     jedis.del("key1");
     jedis.del("key2");
@@ -306,29 +307,28 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void scriptEvalShaReturnValues() {
     jedis.hset("foo", "foo1", "bar1");
     jedis.hset("foobar", "foo2", "bar2");
 
     String script = "return {redis.call('hget',KEYS[1],ARGV[1]),redis.call('hget',KEYS[2],ARGV[2])}";
     String sha = jedis.scriptLoad(script);
-    List<String> results = (List<String>) jedis.evalsha(sha, Arrays.asList("foo", "foobar"),
-      Arrays.asList("foo1", "foo2"));
+    List<String> results = (List<String>) jedis.evalsha(sha, Arrays.asList("foo", "foobar"), Arrays.asList("foo1", "foo2"));
     assertEquals(2, results.size());
     assertEquals("bar1", results.get(0));
     assertEquals("bar2", results.get(1));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void scriptEvalShaReturnValuesBinary() {
     jedis.hset(bfoo, bfoo1, bbar1);
     jedis.hset(bfoobar, bfoo2, bbar2);
 
-    byte[] script = "return {redis.call('hget',KEYS[1],ARGV[1]),redis.call('hget',KEYS[2],ARGV[2])}"
-        .getBytes();
+    byte[] script = "return {redis.call('hget',KEYS[1],ARGV[1]),redis.call('hget',KEYS[2],ARGV[2])}".getBytes();
     byte[] sha = jedis.scriptLoad(script);
-    List<byte[]> results = (List<byte[]>) jedis.evalsha(sha, Arrays.asList(bfoo, bfoobar),
-      Arrays.asList(bfoo1, bfoo2));
+    List<byte[]> results = (List<byte[]>) jedis.evalsha(sha, Arrays.asList(bfoo, bfoobar), Arrays.asList(bfoo1, bfoo2));
     assertEquals(2, results.size());
     assertArrayEquals(bbar1, results.get(0));
     assertArrayEquals(bbar2, results.get(1));
@@ -496,32 +496,29 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
     assertNull(stats.getRunningScript());
     assertEquals(1, stats.getEngines().size());
   }
-
-  //
-  // @Test
-  // public void functionStatsWithRunning() throws InterruptedException {
-  // jedis.functionFlush();
-  // function =
-  // "redis.register_function('myfunc', function(keys, args)\n local a = 1 while true do a = a + 1 end \nend)";
-  //
-  // jedis.functionLoad(String.format("#!%s name=%s \n %s", engine, library, function));
-  // jedis.fcall("myfunc", new ArrayList<>(), new ArrayList<>());
-  // stats = jedis.functionStats();
-  // assertNotNull(stats.getScript());
-  // assertEquals("myfunc", stats.getScript().getName());
-  // }
-  //
-  // @Test
-  // public void functionKill() {
-  // String engine = "Lua";
-  // String library = "mylib";
-  // String function =
-  // "redis.register_function('myfunc', function(keys, args)\n local a = 1 while true do a = a + 1 end \nend)";
-  //
-  // jedis.functionLoad(String.format("#!%s name=%s \n %s", engine, library, function));
-  // jedis.fcall("myfunc", Collections.emptyList(), Collections.emptyList());
-  // assertEquals("OK", jedis.functionKill());
-  // }
+//
+//  @Test
+//  public void functionStatsWithRunning() throws InterruptedException {
+//    jedis.functionFlush();
+//    function = "redis.register_function('myfunc', function(keys, args)\n local a = 1 while true do a = a + 1 end \nend)";
+//
+//    jedis.functionLoad(String.format("#!%s name=%s \n %s", engine, library, function));
+//    jedis.fcall("myfunc", new ArrayList<>(), new ArrayList<>());
+//    stats = jedis.functionStats();
+//    assertNotNull(stats.getScript());
+//    assertEquals("myfunc", stats.getScript().getName());
+//  }
+//
+//  @Test
+//  public void functionKill() {
+//    String engine = "Lua";
+//    String library = "mylib";
+//    String function = "redis.register_function('myfunc', function(keys, args)\n local a = 1 while true do a = a + 1 end \nend)";
+//
+//    jedis.functionLoad(String.format("#!%s name=%s \n %s", engine, library, function));
+//    jedis.fcall("myfunc", Collections.emptyList(), Collections.emptyList());
+//    assertEquals("OK", jedis.functionKill());
+//  }
 
   @Test
   @SinceRedisVersion(value = "7.0.0")
@@ -560,8 +557,7 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
 
     jedis.functionLoad(String.format("#!%s name=%s \n %s", engine, library, function));
     List<byte[]> bargs = Arrays.asList("hello".getBytes());
-    assertArrayEquals("hello".getBytes(),
-      (byte[]) jedis.fcall("myfunc".getBytes(), Collections.emptyList(), bargs));
+    assertArrayEquals("hello".getBytes(), (byte[]) jedis.fcall("myfunc".getBytes(), Collections.emptyList(), bargs));
   }
 
   @Test
@@ -572,11 +568,9 @@ public class ScriptingCommandsTest extends JedisCommandsTestBase {
     String function = "redis.register_function{function_name='noop', callback=function() return 1 end, flags={ 'no-writes' }}";
     jedis.functionLoad(String.format("#!%s name=%s \n %s", engine, library, function));
 
-    assertEquals(Long.valueOf(1),
-      jedis.fcallReadonly("noop", Collections.emptyList(), Collections.emptyList()));
+    assertEquals(Long.valueOf(1), jedis.fcallReadonly("noop", Collections.emptyList(), Collections.emptyList()));
 
     // Binary
-    assertEquals(Long.valueOf(1),
-      jedis.fcallReadonly("noop".getBytes(), Collections.emptyList(), Collections.emptyList()));
+    assertEquals(Long.valueOf(1), jedis.fcallReadonly("noop".getBytes(), Collections.emptyList(), Collections.emptyList()));
   }
 }

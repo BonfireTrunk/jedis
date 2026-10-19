@@ -27,11 +27,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
   public void testBzmpop() {
     SortedSetOption option = SortedSetOption.MAX;
 
-    when(commandObjects.bzmpop(1.0, option, "key1", "key2")).thenReturn(
-      keyValueStringListTupleCommandObject);
+    when(commandObjects.bzmpop(1.0, option, "key1", "key2")).thenReturn(keyValueStringListTupleCommandObject);
 
-    Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.bzmpop(1.0, option, "key1",
-      "key2");
+    Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.bzmpop(1.0, option, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -43,8 +41,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     SortedSetOption option = SortedSetOption.MAX;
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
 
-    when(commandObjects.bzmpop(timeout, option, keys)).thenReturn(
-      keyValueBytesListTupleCommandObject);
+    when(commandObjects.bzmpop(timeout, option, keys)).thenReturn(keyValueBytesListTupleCommandObject);
 
     Response<KeyValue<byte[], List<Tuple>>> response = pipeliningBase.bzmpop(timeout, option, keys);
 
@@ -57,11 +54,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     SortedSetOption option = SortedSetOption.MAX;
     int count = 2;
 
-    when(commandObjects.bzmpop(1.0, option, count, "key1", "key2")).thenReturn(
-      keyValueStringListTupleCommandObject);
+    when(commandObjects.bzmpop(1.0, option, count, "key1", "key2")).thenReturn(keyValueStringListTupleCommandObject);
 
-    Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.bzmpop(1.0, option, count,
-      "key1", "key2");
+    Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.bzmpop(1.0, option, count, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -74,11 +69,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int count = 2;
     byte[][] keys = { "zset1".getBytes(), "zset2".getBytes() };
 
-    when(commandObjects.bzmpop(timeout, option, count, keys)).thenReturn(
-      keyValueBytesListTupleCommandObject);
+    when(commandObjects.bzmpop(timeout, option, count, keys)).thenReturn(keyValueBytesListTupleCommandObject);
 
-    Response<KeyValue<byte[], List<Tuple>>> response = pipeliningBase.bzmpop(timeout, option,
-      count, keys);
+    Response<KeyValue<byte[], List<Tuple>>> response = pipeliningBase.bzmpop(timeout, option, count, keys);
 
     assertThat(commands, contains(keyValueBytesListTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -512,8 +505,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
   public void testZinterWithScores() {
     ZParams params = new ZParams();
 
-    when(commandObjects.zinterWithScores(params, "key1", "key2"))
-        .thenReturn(listTupleCommandObject);
+    when(commandObjects.zinterWithScores(params, "key1", "key2")).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zinterWithScores(params, "key1", "key2");
 
@@ -608,8 +600,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
   public void testZinterstoreWithParams() {
     ZParams params = new ZParams();
 
-    when(commandObjects.zinterstore("dstKey", params, "set1", "set2"))
-        .thenReturn(longCommandObject);
+    when(commandObjects.zinterstore("dstKey", params, "set1", "set2")).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.zinterstore("dstKey", params, "set1", "set2");
 
@@ -659,8 +650,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
   public void testZmpop() {
     SortedSetOption option = SortedSetOption.MAX;
 
-    when(commandObjects.zmpop(option, "key1", "key2")).thenReturn(
-      keyValueStringListTupleCommandObject);
+    when(commandObjects.zmpop(option, "key1", "key2")).thenReturn(keyValueStringListTupleCommandObject);
 
     Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.zmpop(option, "key1", "key2");
 
@@ -686,11 +676,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     SortedSetOption option = SortedSetOption.MAX;
     int count = 2;
 
-    when(commandObjects.zmpop(option, count, "key1", "key2")).thenReturn(
-      keyValueStringListTupleCommandObject);
+    when(commandObjects.zmpop(option, count, "key1", "key2")).thenReturn(keyValueStringListTupleCommandObject);
 
-    Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.zmpop(option, count, "key1",
-      "key2");
+    Response<KeyValue<String, List<Tuple>>> response = pipeliningBase.zmpop(option, count, "key1", "key2");
 
     assertThat(commands, contains(keyValueStringListTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1039,8 +1027,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 10;
 
-    when(commandObjects.zrangeByLex(key, min, max, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrangeByLex(key, min, max, offset, count)).thenReturn(listBytesCommandObject);
 
     Response<List<byte[]>> response = pipeliningBase.zrangeByLex(key, min, max, offset, count);
 
@@ -1114,8 +1101,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(listBytesCommandObject);
 
     Response<List<byte[]>> response = pipeliningBase.zrangeByScore(key, min, max, offset, count);
 
@@ -1141,8 +1127,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrangeByScore(key, min, max, offset, count)).thenReturn(listBytesCommandObject);
 
     Response<List<byte[]>> response = pipeliningBase.zrangeByScore(key, min, max, offset, count);
 
@@ -1152,8 +1137,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrangeByScoreWithScores() {
-    when(commandObjects.zrangeByScoreWithScores("key", "1", "2"))
-        .thenReturn(listTupleCommandObject);
+    when(commandObjects.zrangeByScoreWithScores("key", "1", "2")).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores("key", "1", "2");
 
@@ -1177,8 +1161,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrangeByScoreWithScoresDouble() {
-    when(commandObjects.zrangeByScoreWithScores("key", 1.0, 2.0))
-        .thenReturn(listTupleCommandObject);
+    when(commandObjects.zrangeByScoreWithScores("key", 1.0, 2.0)).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores("key", 1.0, 2.0);
 
@@ -1202,8 +1185,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrangeByScoreWithScoresWithOffsetCount() {
-    when(commandObjects.zrangeByScoreWithScores("key", "1", "2", 0, 1)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrangeByScoreWithScores("key", "1", "2", 0, 1)).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores("key", "1", "2", 0, 1);
 
@@ -1219,11 +1201,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(listTupleCommandObject);
 
-    Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores(key, min, max, offset,
-      count);
+    Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores(key, min, max, offset, count);
 
     assertThat(commands, contains(listTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1231,8 +1211,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrangeByScoreWithScoresDoubleWithOffsetCount() {
-    when(commandObjects.zrangeByScoreWithScores("key", 1.0, 2.0, 0, 1)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrangeByScoreWithScores("key", 1.0, 2.0, 0, 1)).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores("key", 1.0, 2.0, 0, 1);
 
@@ -1248,11 +1227,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrangeByScoreWithScores(key, min, max, offset, count)).thenReturn(listTupleCommandObject);
 
-    Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores(key, min, max, offset,
-      count);
+    Response<List<Tuple>> response = pipeliningBase.zrangeByScoreWithScores(key, min, max, offset, count);
 
     assertThat(commands, contains(listTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1309,8 +1286,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrankWithScore() {
-    when(commandObjects.zrankWithScore("key", "member"))
-        .thenReturn(keyValueLongDoubleCommandObject);
+    when(commandObjects.zrankWithScore("key", "member")).thenReturn(keyValueLongDoubleCommandObject);
 
     Response<KeyValue<Long, Double>> response = pipeliningBase.zrankWithScore("key", "member");
 
@@ -1524,8 +1500,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByLexWithLimit() {
-    when(commandObjects.zrevrangeByLex("key", "[z", "[a", 0, 10)).thenReturn(
-      listStringCommandObject);
+    when(commandObjects.zrevrangeByLex("key", "[z", "[a", 0, 10)).thenReturn(listStringCommandObject);
 
     Response<List<String>> response = pipeliningBase.zrevrangeByLex("key", "[z", "[a", 0, 10);
 
@@ -1541,8 +1516,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 10;
 
-    when(commandObjects.zrevrangeByLex(key, max, min, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrevrangeByLex(key, max, min, offset, count)).thenReturn(listBytesCommandObject);
 
     Response<List<byte[]>> response = pipeliningBase.zrevrangeByLex(key, max, min, offset, count);
 
@@ -1600,8 +1574,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByScoreWithLimit() {
-    when(commandObjects.zrevrangeByScore("key", "2", "1", 0, 1))
-        .thenReturn(listStringCommandObject);
+    when(commandObjects.zrevrangeByScore("key", "2", "1", 0, 1)).thenReturn(listStringCommandObject);
 
     Response<List<String>> response = pipeliningBase.zrevrangeByScore("key", "2", "1", 0, 1);
 
@@ -1617,8 +1590,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(listBytesCommandObject);
 
     Response<List<byte[]>> response = pipeliningBase.zrevrangeByScore(key, max, min, offset, count);
 
@@ -1628,8 +1600,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByScoreDoubleWithLimit() {
-    when(commandObjects.zrevrangeByScore("key", 2.0, 1.0, 0, 1))
-        .thenReturn(listStringCommandObject);
+    when(commandObjects.zrevrangeByScore("key", 2.0, 1.0, 0, 1)).thenReturn(listStringCommandObject);
 
     Response<List<String>> response = pipeliningBase.zrevrangeByScore("key", 2.0, 1.0, 0, 1);
 
@@ -1645,8 +1616,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(
-      listBytesCommandObject);
+    when(commandObjects.zrevrangeByScore(key, max, min, offset, count)).thenReturn(listBytesCommandObject);
 
     Response<List<byte[]>> response = pipeliningBase.zrevrangeByScore(key, max, min, offset, count);
 
@@ -1656,8 +1626,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByScoreWithScores() {
-    when(commandObjects.zrevrangeByScoreWithScores("key", "2", "1")).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores("key", "2", "1")).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores("key", "2", "1");
 
@@ -1671,8 +1640,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     byte[] max = "2".getBytes();
     byte[] min = "1".getBytes();
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores(key, max, min);
 
@@ -1682,8 +1650,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByScoreWithScoresDouble() {
-    when(commandObjects.zrevrangeByScoreWithScores("key", 2.0, 1.0)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores("key", 2.0, 1.0)).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores("key", 2.0, 1.0);
 
@@ -1697,8 +1664,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     double max = 2.0;
     double min = 1.0;
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min)).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores(key, max, min);
 
@@ -1708,11 +1674,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByScoreWithScoresWithLimit() {
-    when(commandObjects.zrevrangeByScoreWithScores("key", "2", "1", 0, 1)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores("key", "2", "1", 0, 1)).thenReturn(listTupleCommandObject);
 
-    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores("key", "2", "1", 0,
-      1);
+    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores("key", "2", "1", 0, 1);
 
     assertThat(commands, contains(listTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1726,11 +1690,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(listTupleCommandObject);
 
-    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores(key, max, min,
-      offset, count);
+    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores(key, max, min, offset, count);
 
     assertThat(commands, contains(listTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1738,11 +1700,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrangeByScoreWithScoresDoubleWithLimit() {
-    when(commandObjects.zrevrangeByScoreWithScores("key", 2.0, 1.0, 0, 1)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores("key", 2.0, 1.0, 0, 1)).thenReturn(listTupleCommandObject);
 
-    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores("key", 2.0, 1.0, 0,
-      1);
+    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores("key", 2.0, 1.0, 0, 1);
 
     assertThat(commands, contains(listTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1756,11 +1716,9 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
     int offset = 0;
     int count = 2;
 
-    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(
-      listTupleCommandObject);
+    when(commandObjects.zrevrangeByScoreWithScores(key, max, min, offset, count)).thenReturn(listTupleCommandObject);
 
-    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores(key, max, min,
-      offset, count);
+    Response<List<Tuple>> response = pipeliningBase.zrevrangeByScoreWithScores(key, max, min, offset, count);
 
     assertThat(commands, contains(listTupleCommandObject));
     assertThat(response, is(predefinedResponse));
@@ -1791,8 +1749,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
 
   @Test
   public void testZrevrankWithScore() {
-    when(commandObjects.zrevrankWithScore("key", "member")).thenReturn(
-      keyValueLongDoubleCommandObject);
+    when(commandObjects.zrevrankWithScore("key", "member")).thenReturn(keyValueLongDoubleCommandObject);
 
     Response<KeyValue<Long, Double>> response = pipeliningBase.zrevrankWithScore("key", "member");
 
@@ -1891,8 +1848,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
   public void testZunionWithScores() {
     ZParams params = new ZParams();
 
-    when(commandObjects.zunionWithScores(params, "key1", "key2"))
-        .thenReturn(listTupleCommandObject);
+    when(commandObjects.zunionWithScores(params, "key1", "key2")).thenReturn(listTupleCommandObject);
 
     Response<List<Tuple>> response = pipeliningBase.zunionWithScores(params, "key1", "key2");
 
@@ -1940,8 +1896,7 @@ public class PipeliningBaseSortedSetCommandsTest extends PipeliningBaseMockedTes
   public void testZunionstoreWithParams() {
     ZParams params = new ZParams();
 
-    when(commandObjects.zunionstore("dstKey", params, "set1", "set2"))
-        .thenReturn(longCommandObject);
+    when(commandObjects.zunionstore("dstKey", params, "set1", "set2")).thenReturn(longCommandObject);
 
     Response<Long> response = pipeliningBase.zunionstore("dstKey", params, "set1", "set2");
 

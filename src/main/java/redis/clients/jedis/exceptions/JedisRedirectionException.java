@@ -4,6 +4,7 @@ import redis.clients.jedis.HostAndPort;
 
 /**
  * Umbrella exception class representing all redirection replies from Redis.
+ *
  * @see JedisAskDataException
  * @see JedisMovedDataException
  */

@@ -26,8 +26,7 @@ public class ScanParams implements IParams {
   }
 
   /**
-   * @see <a href="https://redis.io/commands/scan#the-match-option">MATCH option in Redis
-   *      documentation</a>
+   * @see <a href="https://redis.io/commands/scan#the-match-option">MATCH option in Redis documentation</a>
    */
   public ScanParams match(final String pattern) {
     params.put(MATCH, ByteBuffer.wrap(SafeEncoder.encode(pattern)));
@@ -35,8 +34,7 @@ public class ScanParams implements IParams {
   }
 
   /**
-   * @see <a href="https://redis.io/commands/scan#the-count-option">COUNT option in Redis
-   *      documentation</a>
+   * @see <a href="https://redis.io/commands/scan#the-count-option">COUNT option in Redis documentation</a>
    */
   public ScanParams count(final Integer count) {
     params.put(Keyword.COUNT, ByteBuffer.wrap(Protocol.toByteArray(count)));
@@ -61,7 +59,7 @@ public class ScanParams implements IParams {
 
   public String match() {
     if (params.containsKey(MATCH)) {
-      return new String(params.get(MATCH).array());
+      return SafeEncoder.encode(params.get(MATCH).array());
     } else {
       return null;
     }

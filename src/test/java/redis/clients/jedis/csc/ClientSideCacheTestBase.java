@@ -8,39 +8,53 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeAll;
 import redis.clients.jedis.*;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.RedisVersionCondition;
 
 @SinceRedisVersion(value = "7.4.0", message = "Jedis client-side caching is only supported with Redis 7.4 or later.")
 @Tag("integration")
 public abstract class ClientSideCacheTestBase {
 
-  protected static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone1");
+  protected static EndpointConfig endpoint;
 
-  protected static final HostAndPort hnp = endpoint.getHostAndPort();
+  protected static HostAndPort hnp;
 
   protected Jedis control;
 
   @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(HostAndPorts.getRedisEndpoint("standalone1"));
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(
+      () -> Endpoints.getRedisEndpoint("standalone1"));
+
+  @RegisterExtension
+  public static EnvCondition envCondition = new EnvCondition();
+
+  @BeforeAll
+  public static void prepareEndpoint() {
+    endpoint = Endpoints.getRedisEndpoint("standalone1");
+    hnp = endpoint.getHostAndPort();
+  }
 
   @BeforeEach
   public void setUp() throws Exception {
-    control = new Jedis(hnp, endpoint.getClientConfigBuilder().build());
+    control = new Jedis(hnp, endpoint.getClientConfigBuilder().resp2().build());
     control.flushAll();
   }
 
   @AfterEach
   public void tearDown() throws Exception {
-    control.close();
+    try {
+      control.flushAll();
+    } finally {
+      control.close();
+    }
   }
 
   protected static final Supplier<JedisClientConfig> clientConfig = () -> endpoint.getClientConfigBuilder().resp3().build();
 
   protected static final Supplier<SimpleObjectPoolConfig> singleConnectionPoolConfig = () -> {
-    var poolConfig = ConnectionPoolConfig.builder();
-    poolConfig.maxPoolSize(1);
-    return poolConfig.build();
+    return ConnectionPoolConfig.builder().maxPoolSize(1).build();
   };
 
 }

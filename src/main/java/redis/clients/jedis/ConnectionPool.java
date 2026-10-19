@@ -19,7 +19,7 @@ public class ConnectionPool extends Pool<Connection> {
   }
 
   public ConnectionPool(PooledObjectFactory<Connection> factory,
-                        SimpleObjectPoolConfig poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     super(factory, poolConfig);
   }
 
@@ -54,10 +54,6 @@ public class ConnectionPool extends Pool<Connection> {
     Connection conn = super.getResource();
     conn.setHandlingPool(this);
     return conn;
-  }
-
-  public PooledObjectFactory<Connection> getFactory() {
-    return super.getFactory();
   }
 
   @Override

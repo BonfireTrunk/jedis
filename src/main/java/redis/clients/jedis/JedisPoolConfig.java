@@ -1,18 +1,30 @@
 package redis.clients.jedis;
 
-import today.bonfire.oss.sop.SimpleObjectPoolConfig;
-
 import java.time.Duration;
 
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+
 /**
- * Configuration class for Jedis connection pool that extends SimpleObjectPoolConfig. Provides
- * Jedis-specific default values and configuration options while leveraging the base pool
- * configuration capabilities.
+ * Configuration class for {@link JedisPool} connection pooling. {@code new JedisPoolConfig()} and
+ * {@link #builder()} both start from the Jedis defaults: every 30 seconds all idle connections are
+ * validated, and those idle for more than 60 seconds are evicted. Connections are not validated on
+ * borrow.
+ * <p>
+ * An exhausted pool makes borrowers wait at most 10 seconds. Set {@code waitingForObjectTimeout}
+ * to a negative duration to wait forever (commons-pool2's {@code maxWait=-1}), or to
+ * {@link Duration#ZERO} to fail immediately (commons-pool2's {@code blockWhenExhausted=false}).
+ *
+ * @deprecated JedisPoolConfig is used with the deprecated {@link JedisPool} and {@link JedisSentinelPool} classes.
+ *             Use {@link ConnectionPoolConfig} instead, which is designed for the modern {@link RedisClient}
+ *             and {@link RedisSentinelClient} classes. ConnectionPoolConfig provides the same pooling configuration
+ *             options with better integration into the new client architecture.
  */
+@Deprecated
 public class JedisPoolConfig extends SimpleObjectPoolConfig {
 
   public JedisPoolConfig() {
-    super(builder().defaultConfig().prepareAndCheck());
+    // defaults to make your life with connection pool easier :)
+    super(builder().prepareAndCheck());
   }
 
   public JedisPoolConfig(SimpleObjectPoolConfig.Builder config) {
@@ -20,29 +32,34 @@ public class JedisPoolConfig extends SimpleObjectPoolConfig {
   }
 
   /**
-   * Creates a new builder instance with Jedis-specific default settings.
-   * @return A new Builder instance with Jedis-specific default settings
+   * @return a builder preset with the Jedis defaults
    */
   public static Builder builder() {
     return new Builder();
   }
 
-  /**
-   * Builder class for JedisPoolConfig that extends SimpleObjectPoolConfig.Builder to provide
-   * Jedis-specific configuration options.
-   */
   public static class Builder extends SimpleObjectPoolConfig.Builder {
 
+    public Builder() {
+      applyDefaults();
+    }
+
     /**
-     * Sets default Jedis pool configuration values.
-     * @return this Builder instance
+     * Applies the Jedis defaults again.
+     * @return this builder
+     * @deprecated {@link JedisPoolConfig#builder()} already starts from the Jedis defaults.
      */
+    @Deprecated
     public Builder defaultConfig() {
-      this.maxPoolSize(8).minPoolSize(0).fairness(false).testOnCreate(false).testOnBorrow(true)
-          .testWhileIdle(true).testOnReturn(false)
-          .durationBetweenEvictionsRuns(Duration.ofSeconds(30))
-          .objEvictionTimeout(Duration.ofSeconds(60));
+      applyDefaults();
       return this;
+    }
+
+    private void applyDefaults() {
+      // numValidationsPerEvictionRun stays unset, so every idle connection is examined on each run
+      testWhileIdle(true);
+      objEvictionTimeout(Duration.ofMillis(60000));
+      durationBetweenEvictionsRuns(Duration.ofMillis(30000));
     }
 
     @Override
@@ -53,8 +70,7 @@ public class JedisPoolConfig extends SimpleObjectPoolConfig {
 
     @Override
     public JedisPoolConfig build() {
-      var config = super.prepareAndCheck();
-      return new JedisPoolConfig(config);
+      return new JedisPoolConfig(prepareAndCheck());
     }
   }
 }

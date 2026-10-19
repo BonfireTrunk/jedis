@@ -14,6 +14,7 @@ public abstract class QueryNode implements Node {
 
   /**
    * Add a match criteria to this node
+   *
    * @param field The field to check. If null or empty, then any field is checked
    * @param values Values to check for.
    * @return The current node, for chaining.
@@ -25,6 +26,7 @@ public abstract class QueryNode implements Node {
 
   /**
    * Convenience method to add a list of string values
+   *
    * @param field Field to check for
    * @param values One or more string values.
    * @return The current node, for chaining.
@@ -36,6 +38,7 @@ public abstract class QueryNode implements Node {
 
   /**
    * Add a list of values from a collection
+   *
    * @param field The field to check
    * @param values Collection of values to match
    * @return The current node for chaining.
@@ -46,6 +49,7 @@ public abstract class QueryNode implements Node {
 
   /**
    * Add children nodes to this node.
+   *
    * @param nodes Children nodes to add
    * @return The current node, for chaining.
    */

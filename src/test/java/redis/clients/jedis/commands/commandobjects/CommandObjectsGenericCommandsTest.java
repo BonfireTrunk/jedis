@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.redis.test.annotations.SinceRedisVersion;
+import io.redis.test.annotations.ConditionalOnEnv;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import redis.clients.jedis.Jedis;
@@ -29,6 +30,7 @@ import redis.clients.jedis.params.RestoreParams;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.params.SortingParams;
 import redis.clients.jedis.resps.ScanResult;
+import redis.clients.jedis.util.TestEnvUtil;
 
 /**
  * Tests related to <a href="https://redis.io/commands/?group=generic">Generic</a> commands.
@@ -58,8 +60,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
     Boolean existsSingleByte = exec(commandObjects.exists(key1.getBytes()));
     assertThat(existsSingleByte, equalTo(true));
 
-    Long existsMultipleByte = exec(commandObjects.exists(key1.getBytes(), key2.getBytes(),
-      "nonExistingKey".getBytes()));
+    Long existsMultipleByte = exec(commandObjects.exists(key1.getBytes(), key2.getBytes(), "nonExistingKey".getBytes()));
     assertThat(existsMultipleByte, equalTo(2L));
 
     Boolean existsNonExisting = exec(commandObjects.exists("nonExistingKey"));
@@ -571,18 +572,15 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
     assertThat(pexpireTimeAfterNx, equalTo(futureTimestampMillis));
 
     // Updating with XX
-    long laterFutureTimestampMillis = futureTimestampMillis + 10000; // Further 10 seconds in the
-                                                                     // future
-    Long pexpireAtXx = exec(commandObjects.pexpireAt(key, laterFutureTimestampMillis,
-      ExpiryOption.XX));
+    long laterFutureTimestampMillis = futureTimestampMillis + 10000; // Further 10 seconds in the future
+    Long pexpireAtXx = exec(commandObjects.pexpireAt(key, laterFutureTimestampMillis, ExpiryOption.XX));
     assertThat(pexpireAtXx, equalTo(1L));
 
     Long pexpireTimeAfterXx = exec(commandObjects.pexpireTime(key));
     assertThat(pexpireTimeAfterXx, equalTo(laterFutureTimestampMillis));
 
     // Updating with NX fails
-    Long pexpireAtNxAgain = exec(commandObjects.pexpireAt(key, futureTimestampMillis,
-      ExpiryOption.NX));
+    Long pexpireAtNxAgain = exec(commandObjects.pexpireAt(key, futureTimestampMillis, ExpiryOption.NX));
     assertThat(pexpireAtNxAgain, equalTo(0L));
 
     Long pexpireTimeAfterNxAgain = exec(commandObjects.pexpireTime(key));
@@ -607,18 +605,15 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
     assertThat(pexpireTimeAfterNx, equalTo(futureTimestampMillis));
 
     // Updating with XX
-    long laterFutureTimestampMillis = futureTimestampMillis + 10000; // Further 10 seconds in the
-                                                                     // future
-    Long pexpireAtXx = exec(commandObjects.pexpireAt(key, laterFutureTimestampMillis,
-      ExpiryOption.XX));
+    long laterFutureTimestampMillis = futureTimestampMillis + 10000; // Further 10 seconds in the future
+    Long pexpireAtXx = exec(commandObjects.pexpireAt(key, laterFutureTimestampMillis, ExpiryOption.XX));
     assertThat(pexpireAtXx, equalTo(1L));
 
     Long pexpireTimeAfterXx = exec(commandObjects.pexpireTime(key));
     assertThat(pexpireTimeAfterXx, equalTo(laterFutureTimestampMillis));
 
     // Updating with NX fails
-    Long pexpireAtNxAgain = exec(commandObjects.pexpireAt(key, futureTimestampMillis,
-      ExpiryOption.NX));
+    Long pexpireAtNxAgain = exec(commandObjects.pexpireAt(key, futureTimestampMillis, ExpiryOption.NX));
     assertThat(pexpireAtNxAgain, equalTo(0L));
 
     Long pexpireTimeAfterNxAgain = exec(commandObjects.pexpireTime(key));
@@ -778,6 +773,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSortAndStore() {
     String listKey = "sortStoreList";
     String destinationKey = "sortedList";
@@ -792,6 +788,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSortAndStoreBinary() {
     byte[] listKey = "sortStoreList".getBytes();
     byte[] destinationKey = "sortedList".getBytes();
@@ -806,6 +803,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSortWithParamsAndStore() {
     String listKey = "sortParamsStoreList";
     String destinationKey = "sortedParamsList";
@@ -822,6 +820,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSortWithParamsAndStoreBinary() {
     byte[] listKey = "sortParamsStoreList".getBytes();
     byte[] destinationKey = "sortedParamsList".getBytes();
@@ -984,6 +983,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testCopyWithStringKeys() {
     String srcKey = "sourceKey";
     String dstKey = "destinationKey";
@@ -1020,6 +1020,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testCopyWithBinaryKeys() {
     byte[] srcKey = "sourceKey".getBytes();
     byte[] dstKey = "destinationKey".getBytes();
@@ -1056,6 +1057,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testCopyToDb() {
     String srcKey = "sourceKey";
     String dstKey = "destinationKey";
@@ -1082,6 +1084,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testCopyToDbBinary() {
     String srcKey = "sourceKey";
     String dstKey = "destinationKey";
@@ -1092,7 +1095,8 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
     Boolean existsAfterSet = exec(commandObjects.exists(srcKey));
     assertThat(existsAfterSet, equalTo(true));
 
-    Boolean copy = exec(commandObjects.copy(srcKey.getBytes(), dstKey.getBytes(), dstDB, true));
+    Boolean copy = exec(commandObjects.copy(
+        srcKey.getBytes(), dstKey.getBytes(), dstDB, true));
     assertThat(copy, equalTo(true));
 
     assertKeyExists(dstDB, dstKey, "initialValue");
@@ -1101,8 +1105,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
     exec(commandObjects.set(srcKey, "newValue"));
 
     // Copy again without replace, it will fail
-    Boolean secondCopy = exec(commandObjects.copy(srcKey.getBytes(), dstKey.getBytes(), dstDB,
-      false));
+    Boolean secondCopy = exec(commandObjects.copy(srcKey.getBytes(), dstKey.getBytes(), dstDB, false));
     assertThat(secondCopy, equalTo(false));
 
     assertKeyExists(dstDB, dstKey, "initialValue");
@@ -1118,6 +1121,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testRenameWithStringKeys() {
     String oldKey = "oldKeyName";
     String newKey = "newKeyName";
@@ -1142,6 +1146,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testRenameWithBinaryKeys() {
     byte[] oldKey = "oldKeyName".getBytes();
     byte[] newKey = "newKeyName".getBytes();
@@ -1166,6 +1171,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testRenamenx() {
     String oldKey = "oldKeyToRenameNX";
     String newKey = "newKeyForRenameNX";
@@ -1192,6 +1198,7 @@ public class CommandObjectsGenericCommandsTest extends CommandObjectsStandaloneT
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testRenamenxBinary() {
     byte[] oldKey = "oldKeyToRenameNX".getBytes();
     byte[] newKey = "newKeyForRenameNX".getBytes();

@@ -25,7 +25,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
   public void testJsonArrAppendWithPath() {
     String key = "testKey";
     Path path = Path.of(".path.to.array");
-    Object[] pojos = new Object[] { "value1", "value2" };
+    Object[] pojos = new Object[]{ "value1", "value2" };
     Long expectedResponse = 4L;
 
     when(commandObjects.jsonArrAppend(key, path, pojos)).thenReturn(longCommandObject);
@@ -43,7 +43,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
   public void testJsonArrAppendWithPath2() {
     String key = "testKey";
     Path2 path = Path2.of(".path.to.array");
-    Object[] objects = new Object[] { "value1", "value2" };
+    Object[] objects = new Object[]{ "value1", "value2" };
     List<Long> expectedResponse = Arrays.asList(3L, 4L);
 
     when(commandObjects.jsonArrAppend(key, path, objects)).thenReturn(listLongCommandObject);
@@ -61,11 +61,10 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
   public void testJsonArrAppendWithPath2WithEscape() {
     String key = "testKey";
     Path2 path = Path2.of(".path.to.array");
-    Object[] objects = new Object[] { "value1", "value2" };
+    Object[] objects = new Object[]{ "value1", "value2" };
     List<Long> expectedResponse = Arrays.asList(3L, 4L);
 
-    when(commandObjects.jsonArrAppendWithEscape(key, path, objects)).thenReturn(
-      listLongCommandObject);
+    when(commandObjects.jsonArrAppendWithEscape(key, path, objects)).thenReturn(listLongCommandObject);
     when(commandExecutor.executeCommand(listLongCommandObject)).thenReturn(expectedResponse);
 
     List<Long> result = jedis.jsonArrAppendWithEscape(key, path, objects);
@@ -119,8 +118,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
     Object scalar = "value";
     List<Long> expectedResponse = Collections.singletonList(2L);
 
-    when(commandObjects.jsonArrIndexWithEscape(key, path, scalar))
-        .thenReturn(listLongCommandObject);
+    when(commandObjects.jsonArrIndexWithEscape(key, path, scalar)).thenReturn(listLongCommandObject);
     when(commandExecutor.executeCommand(listLongCommandObject)).thenReturn(expectedResponse);
 
     List<Long> result = jedis.jsonArrIndexWithEscape(key, path, scalar);
@@ -136,7 +134,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
     String key = "testKey";
     Path path = Path.of(".path.to.array");
     int index = 1;
-    Object[] pojos = new Object[] { "value1", "value2" };
+    Object[] pojos = new Object[]{ "value1", "value2" };
     long expectedResponse = 5L;
 
     when(commandObjects.jsonArrInsert(key, path, index, pojos)).thenReturn(longCommandObject);
@@ -155,7 +153,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
     String key = "testKey";
     Path2 path = Path2.of(".path.to.array");
     int index = 1;
-    Object[] objects = new Object[] { "value1", "value2" };
+    Object[] objects = new Object[]{ "value1", "value2" };
     List<Long> expectedResponse = Collections.singletonList(5L);
 
     when(commandObjects.jsonArrInsert(key, path, index, objects)).thenReturn(listLongCommandObject);
@@ -174,11 +172,10 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
     String key = "testKey";
     Path2 path = Path2.of(".path.to.array");
     int index = 1;
-    Object[] objects = new Object[] { "value1", "value2" };
+    Object[] objects = new Object[]{ "value1", "value2" };
     List<Long> expectedResponse = Collections.singletonList(5L);
 
-    when(commandObjects.jsonArrInsertWithEscape(key, path, index, objects)).thenReturn(
-      listLongCommandObject);
+    when(commandObjects.jsonArrInsertWithEscape(key, path, index, objects)).thenReturn(listLongCommandObject);
     when(commandExecutor.executeCommand(listLongCommandObject)).thenReturn(expectedResponse);
 
     List<Long> result = jedis.jsonArrInsertWithEscape(key, path, index, objects);
@@ -603,7 +600,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
   @Test
   public void testJsonGetWithPath() {
     String key = "testKey";
-    Path[] paths = new Path[] { Path.of(".path.to.element1"), Path.of(".path.to.element2") };
+    Path[] paths = new Path[]{ Path.of(".path.to.element1"), Path.of(".path.to.element2") };
     Object expectedResponse = new JsonObject();
 
     when(commandObjects.jsonGet(key, paths)).thenReturn(objectCommandObject);
@@ -620,7 +617,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
   @Test
   public void testJsonGetWithPath2() {
     String key = "testKey";
-    Path2[] paths = new Path2[] { Path2.of(".path.to.element1"), Path2.of(".path.to.element2") };
+    Path2[] paths = new Path2[]{ Path2.of(".path.to.element1"), Path2.of(".path.to.element2") };
     Object expectedResponse = new JsonObject();
 
     when(commandObjects.jsonGet(key, paths)).thenReturn(objectCommandObject);
@@ -655,7 +652,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
   public void testJsonGetWithClassAndPath() {
     String key = "testKey";
     Class<MyBean> clazz = MyBean.class;
-    Path[] paths = new Path[] { Path.of(".path.to.element1"), Path.of(".path.to.element2") };
+    Path[] paths = new Path[]{ Path.of(".path.to.element1"), Path.of(".path.to.element2") };
     MyBean expectedResponse = new MyBean();
 
     when(commandObjects.jsonGet(key, clazz, paths)).thenReturn(myBeanCommandObject);
@@ -876,8 +873,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
     JsonSetParams params = new JsonSetParams().nx();
     String expectedResponse = "OK";
 
-    when(commandObjects.jsonSetWithEscape(key, path, object, params)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.jsonSetWithEscape(key, path, object, params)).thenReturn(stringCommandObject);
     when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.jsonSetWithEscape(key, path, object, params);
@@ -895,8 +891,7 @@ public class UnifiedJedisJsonCommandsTest extends UnifiedJedisMockedTestBase {
     String jsonString = "{\"field\":\"value\"}";
     String expectedResponse = "OK";
 
-    when(commandObjects.jsonSetWithPlainString(key, path, jsonString)).thenReturn(
-      stringCommandObject);
+    when(commandObjects.jsonSetWithPlainString(key, path, jsonString)).thenReturn(stringCommandObject);
     when(commandExecutor.executeCommand(stringCommandObject)).thenReturn(expectedResponse);
 
     String result = jedis.jsonSetWithPlainString(key, path, jsonString);

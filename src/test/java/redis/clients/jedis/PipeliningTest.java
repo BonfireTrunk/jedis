@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -36,9 +37,10 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.SetParams;
 import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.util.SafeEncoder;
+import redis.clients.jedis.util.TestEnvUtil;
 
 @ParameterizedClass
-@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#jedisRespVersions")
 public class PipeliningTest extends JedisCommandsTestBase {
 
   private static final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };
@@ -229,6 +231,7 @@ public class PipeliningTest extends JedisCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void pipelineSelect() {
     jedis.set("foo", "bar");
     jedis.swapDB(0, 1);
@@ -236,7 +239,7 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.get("foo");
     p.select(1);
     p.get("foo");
-    assertEquals(Arrays.<Object> asList(null, "OK", "bar"), p.syncAndReturnAll());
+    assertEquals(Arrays.<Object>asList(null, "OK", "bar"), p.syncAndReturnAll());
   }
 
   @Test
@@ -321,12 +324,12 @@ public class PipeliningTest extends JedisCommandsTestBase {
 
   @Test
   public void waitReplicas() {
+    EndpointConfig endpoint = Endpoints.getRedisEndpoint("standalone4-replica-of-standalone1");
+
     Pipeline p = jedis.pipelined();
     p.set("wait", "replicas");
     p.waitReplicas(1, 10);
     p.sync();
-
-    EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone4-replica-of-standalone1");
 
     try (Jedis j = new Jedis(endpoint.getHostAndPort())) {
       j.auth(endpoint.getPassword());
@@ -336,12 +339,12 @@ public class PipeliningTest extends JedisCommandsTestBase {
 
   @Test
   public void waitAof() {
+    EndpointConfig endpoint = Endpoints.getRedisEndpoint("standalone4-replica-of-standalone1");
+
     Pipeline p = jedis.pipelined();
     p.set("wait", "aof");
     p.waitAOF(1L, 0L, 0L);
     p.sync();
-
-    EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone4-replica-of-standalone1");
 
     try (Jedis j = new Jedis(endpoint.getHostAndPort())) {
       j.auth(endpoint.getPassword());
@@ -369,8 +372,7 @@ public class PipeliningTest extends JedisCommandsTestBase {
   public void setGetBinary() {
     Pipeline p = jedis.pipelined();
     Response<String> _ok = p.set("hello".getBytes(), "world".getBytes());
-    Response<byte[]> _world = p.setGet("hello".getBytes(), "jedis".getBytes(),
-      SetParams.setParams());
+    Response<byte[]> _world = p.setGet("hello".getBytes(), "jedis".getBytes(), SetParams.setParams());
     Response<byte[]> _jedis = p.get("hello".getBytes());
     Response<byte[]> _null = p.setGet("key".getBytes(), "value".getBytes(), SetParams.setParams());
     p.sync();
@@ -532,14 +534,16 @@ public class PipeliningTest extends JedisCommandsTestBase {
   @Test
   public void testSyncWithNoCommandQueued() {
     // we need to test with fresh instance of Jedis
-    Jedis jedis2 = new Jedis(endpoint.getHost(), endpoint.getPort(), 500);
+    Jedis jedis2 = new Jedis(endpoint.getHostAndPort(),
+        DefaultJedisClientConfig.builder().serverDefaultProtocol().timeoutMillis(500).build());
 
     Pipeline pipeline = jedis2.pipelined();
     pipeline.sync();
 
     jedis2.close();
 
-    jedis2 = new Jedis(endpoint.getHost(), endpoint.getPort(), 500);
+    jedis2 = new Jedis(endpoint.getHostAndPort(),
+        DefaultJedisClientConfig.builder().serverDefaultProtocol().timeoutMillis(500).build());
 
     pipeline = jedis2.pipelined();
     List<Object> resp = pipeline.syncAndReturnAll();
@@ -551,7 +555,8 @@ public class PipeliningTest extends JedisCommandsTestBase {
   @Test
   public void testCloseable() throws IOException {
     // we need to test with fresh instance of Jedis
-    Jedis jedis2 = new Jedis(endpoint.getHost(), endpoint.getPort(), 500);
+    Jedis jedis2 = new Jedis(endpoint.getHostAndPort(),
+        DefaultJedisClientConfig.builder().serverDefaultProtocol().timeoutMillis(500).build());
     jedis2.auth(endpoint.getPassword());
 
     Pipeline pipeline = jedis2.pipelined();
@@ -572,10 +577,10 @@ public class PipeliningTest extends JedisCommandsTestBase {
 
     p.time();
 
-    // we get back one result, with two components: the seconds, and the microseconds, but encoded
-    // as strings
+    // we get back one result, with two components: the seconds, and the microseconds, but encoded as strings
     Matcher timeResponseMatcher = hasItems(matchesPattern("\\d+"), matchesPattern("\\d+"));
-    assertThat(p.syncAndReturnAll(), hasItems(timeResponseMatcher));
+    assertThat(p.syncAndReturnAll(),
+        hasItems(timeResponseMatcher));
   }
 
   @Test
@@ -586,10 +591,12 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.set("foo", "bar");
     p.dbSize();
 
-    assertThat(p.syncAndReturnAll(), hasItems(0L, "OK", 1L));
+    assertThat(p.syncAndReturnAll(),
+        hasItems(0L, "OK", 1L));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void move() {
     Pipeline p = jedis.pipelined();
 
@@ -600,10 +607,12 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.select(1);
     p.get("foo");
 
-    assertThat(p.syncAndReturnAll(), hasItems(0L, "OK", 1L, null, "OK", "bar"));
+    assertThat(p.syncAndReturnAll(),
+        hasItems(0L, "OK", 1L, null, "OK", "bar"));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void moveBinary() {
     Pipeline p = jedis.pipelined();
 
@@ -614,10 +623,12 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.select(1);
     p.get(bfoo);
 
-    assertThat(p.syncAndReturnAll(), hasItems(0L, "OK", 1L, null, "OK", bbar));
+    assertThat(p.syncAndReturnAll(),
+        hasItems(0L, "OK", 1L, null, "OK", bbar));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void swapDb() {
     Pipeline p = jedis.pipelined();
 
@@ -632,10 +643,11 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.get("foo");
 
     assertThat(p.syncAndReturnAll(),
-      hasItems("OK", "bar", "OK", null, "OK", "OK", null, "OK", "bar"));
+        hasItems("OK", "bar", "OK", null, "OK", "OK", null, "OK", "bar"));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void copyToAnotherDb() {
     Pipeline p = jedis.pipelined();
 
@@ -653,12 +665,14 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.get("foo-copy");
 
     assertThat(p.syncAndReturnAll(),
-      hasItems(false, "OK", true, "bar", "OK", "bar", "OK", "OK", false, "baz", "bar"));
+        hasItems(false, "OK", true, "bar", "OK", "bar", "OK", "OK", false, "baz", "bar"));
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void copyToAnotherDbBinary() {
     Pipeline p = jedis.pipelined();
+
 
     p.copy(bfoo, bfoo1, 1, false);
     p.set(bfoo, bbar);
@@ -674,7 +688,7 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.get(bfoo1);
 
     assertThat(p.syncAndReturnAll(),
-      hasItems(false, "OK", true, bbar, "OK", bbar, "OK", "OK", false, bbaz, bbar));
+        hasItems(false, "OK", true, bbar, "OK", bbar, "OK", "OK", false, bbaz, bbar));
   }
 
   enum Foo implements ProtocolCommand {
@@ -688,8 +702,8 @@ public class PipeliningTest extends JedisCommandsTestBase {
 
   @Test
   public void errorInTheMiddle() {
-    CommandObject<String> invalidCommand = new CommandObject<>(
-        new CommandObjects().commandArguments(Foo.FOO), BuilderFactory.STRING);
+    CommandObject<String> invalidCommand =
+        new CommandObject<>(new CommandObjects(RedisProtocol.RESP2).commandArguments(Foo.FOO), BuilderFactory.STRING);
 
     Pipeline p = jedis.pipelined();
 
@@ -698,7 +712,11 @@ public class PipeliningTest extends JedisCommandsTestBase {
     p.get("foo");
 
     assertThat(p.syncAndReturnAll(),
-      hasItems(equalTo("OK"), instanceOf(JedisDataException.class), equalTo("bar")));
+        hasItems(
+            equalTo("OK"),
+            instanceOf(JedisDataException.class),
+            equalTo("bar")
+        ));
   }
 
 }

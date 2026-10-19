@@ -8,7 +8,8 @@ import redis.clients.jedis.util.SafeEncoder;
  */
 public enum EncodingFormat implements Rawable {
 
-  COMPRESSED, UNCOMPRESSED;
+  COMPRESSED,
+  UNCOMPRESSED;
 
   private final byte[] raw;
 

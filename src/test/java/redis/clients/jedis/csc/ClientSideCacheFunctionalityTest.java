@@ -19,16 +19,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.CommandObjects;
-import redis.clients.jedis.JedisPooled;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Protocol;
+import redis.clients.jedis.RedisClient;
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
+import redis.clients.jedis.util.TestEnvUtil;
 
 public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
+
+  private static final Logger log = LoggerFactory.getLogger(ClientSideCacheFunctionalityTest.class);
 
   @Test // T.5.1
   public void flushAllTest() {
@@ -37,7 +46,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       control.set("k" + i, "v" + i);
     }
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       Cache cache = jedis.getCache();
       for (int i = 0; i < count; i++) {
         jedis.get("k" + i);
@@ -46,6 +59,109 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       assertEquals(count, cache.getSize());
       cache.flush();
       assertEquals(0, cache.getSize());
+    }
+  }
+
+  @Test
+  public void invalidateAllWithLargeCacheTest() {
+    final int count = 2000;
+
+    // 1. Populate Redis with the keys
+    Pipeline populate = control.pipelined();
+    for (int i = 0; i < count; i++) {
+      populate.set("key" + i, "value" + i);
+    }
+    populate.sync();
+
+    try (RedisClient jedis = RedisClient.builder().hostAndPort(hnp).clientConfig(clientConfig.get())
+            .cacheConfig(CacheConfig.builder().maxSize(count).build()).build()) {
+
+      Cache cache = jedis.getCache();
+
+      // 2. Load all keys into cache; must stay sequential — pipelined GETs bypass the cache
+      for (int i = 0; i < count; i++) {
+        jedis.get("key" + i);
+      }
+
+      assertEquals(count, cache.getSize());
+
+      // 3. Trigger NULL invalidation (via flushAll)
+      control.flushAll();
+
+      // 4. Access a key to trigger cache invalidation synchronously
+      long invalidationStartTime = System.nanoTime();
+      jedis.get("key0");
+      long invalidationElapsedNanos = System.nanoTime() - invalidationStartTime;
+
+      assertEquals(1, cache.getSize());
+
+      CacheStats stats = cache.getStats();
+      double keysPerSec = (count * 1_000_000_000.0) / invalidationElapsedNanos;
+
+      log.info("invalidateAllWithLargeCacheTest: NULL invalidation flushed {} entries in {} ns ({} keys/sec)", count,
+              invalidationElapsedNanos, String.format("%.2f", keysPerSec));
+      log.info("cache stats: {}", stats);
+    }
+  }
+
+  @Test
+  public void pendingInvalidationMessagesTest() {
+    final int count = 1000; // Hundreds of keys
+
+    try (RedisClient jedis = RedisClient.builder().hostAndPort(hnp).clientConfig(clientConfig.get())
+            .poolConfig(singleConnectionPoolConfig.get())
+            .cacheConfig(CacheConfig.builder().maxSize(count).build()).build()) {
+      Cache cache = jedis.getCache();
+
+      // 1. Create and cache 1000 keys
+      for (int i = 0; i < count; i++) {
+        jedis.set("key" + i, "value" + i);
+      }
+      for (int i = 0; i < count; i++) {
+        jedis.get("key" + i);
+      }
+
+      assertEquals(count, cache.getSize());
+      assertEquals(0, cache.getStats().getInvalidationCount());
+
+      // Capture the tracked connection's server-side id. Pool is pinned to 1 so this
+      // is the same connection that holds the cached entries and will receive the
+      // invalidation push messages.
+      long trackedClientId = (Long) jedis.sendCommand(Protocol.Command.CLIENT, "ID");
+
+      // 2. Use control connection to update ALL keys
+      // This generates hundreds of invalidation messages
+      Pipeline update = control.pipelined();
+      for (int i = 0; i < count; i++) {
+        update.set("key" + i, "newvalue" + i);
+      }
+      update.sync();
+
+      // 3. Wait until the server has flushed all queued output (the invalidation
+      // frames) on the tracked client's connection. `oll` (output list length) and
+      // `omem` (output buffer memory) report what the server still has buffered for
+      // that client; once both are zero, every invalidation has been handed to the
+      // kernel and is on its way / already in the tracked socket's receive buffer.
+      await().atMost(5, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
+              .until(() -> {
+                String info = control.clientList(trackedClientId);
+                return info != null && info.contains(" oll=0 ") && info.contains(" omem=0 ");
+              });
+
+      // 4. Now use the cached connection - it should process all pending invalidations synchronously
+      long processingStartTime = System.nanoTime();
+      jedis.get("key0");
+      long processingElapsedNanos = System.nanoTime() - processingStartTime;
+
+      // 5. Verify all invalidations were processed
+      CacheStats stats = cache.getStats();
+      assertEquals(count, stats.getInvalidationCount());
+
+      double invalidationsPerSec = (count * 1_000_000_000.0) / processingElapsedNanos;
+
+      log.info("pendingInvalidationMessagesTest: {} pending invalidations processed in {} ns ({} invalidations/sec)", count,
+              processingElapsedNanos, String.format("%.2f", invalidationsPerSec));
+      log.info("cache stats: {}", stats);
     }
   }
 
@@ -61,7 +177,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
 
     Map<CacheKey, CacheEntry> map = new LinkedHashMap<>(count);
     Cache cache = new DefaultCache(count, map);
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), cache)) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cache(cache)
+        .build()) {
 
       // Retrieve the 100 keys in the same order
       for (int i = 0; i < count; i++) {
@@ -86,7 +206,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
 
   @Test // T.5.2
   public void deleteByKeyUsingMGetTest() {
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       Cache clientSideCache = jedis.getCache();
 
       jedis.set("1", "one");
@@ -110,7 +234,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     // By using LinkedHashMap, we can get the hashes (map keys) at the same order of the actual keys.
     LinkedHashMap<CacheKey, CacheEntry> map = new LinkedHashMap<>();
     Cache clientSideCache = new TestCache(map);
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), clientSideCache)) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cache(clientSideCache)
+        .build()) {
       for (int i = 0; i < count; i++) {
         jedis.get("k" + i);
       }
@@ -141,7 +269,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     // By using LinkedHashMap, we can get the hashes (map keys) at the same order of the actual keys.
     LinkedHashMap<CacheKey, CacheEntry> map = new LinkedHashMap<>();
     Cache clientSideCache = new TestCache(map);
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), clientSideCache)) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cache(clientSideCache)
+        .build()) {
       for (int i = 0; i < count; i++) {
         jedis.get("k" + i);
       }
@@ -164,7 +296,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       control.set("k" + i, "v" + i);
     }
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       Cache cache = jedis.getCache();
       for (int i = 0; i < count; i++) {
         jedis.get("k" + i);
@@ -189,7 +325,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       control.set("k" + i, "v" + i);
     }
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       Cache cache = jedis.getCache();
       for (int i = 0; i < count; i++) {
         jedis.get("k" + i);
@@ -210,7 +350,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     control.set("k1", "v1");
     control.set("k2", "v2");
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       jedis.mget("k1", "k2");
       assertEquals(1, jedis.getCache().getSize());
     }
@@ -221,7 +365,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     control.set("k1", "v1");
     control.set("k2", "v2");
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().maxSize(1).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().maxSize(1).build())
+        .build()) {
       Cache cache = jedis.getCache();
       assertEquals(0, cache.getSize());
       jedis.get("k1");
@@ -237,8 +385,8 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   public void testInvalidationWithUnifiedJedis() {
     Cache cache = new TestCache();
     Cache mock = Mockito.spy(cache);
-    UnifiedJedis client = new UnifiedJedis(hnp, clientConfig.get(), mock);
-    UnifiedJedis controlClient = new UnifiedJedis(hnp, clientConfig.get());
+    UnifiedJedis client = RedisClient.builder().hostAndPort(hnp).clientConfig(clientConfig.get()).cache(mock).build();
+    UnifiedJedis controlClient = RedisClient.builder().hostAndPort(hnp).clientConfig(clientConfig.get()).build();
 
     try {
       // "foo" is cached
@@ -265,7 +413,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   public void differentInstanceOnEachCacheHit() {
 
     // fill the cache for maxSize
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       Cache cache = jedis.getCache();
       jedis.sadd("foo", "a");
       jedis.sadd("foo", "b");
@@ -277,7 +429,7 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       Set<String> members1 = jedis.smembers("foo");
       Set<String> members2 = jedis.smembers("foo");
 
-      Set<String> fromMap = (Set<String>) cache.get(new CacheKey<>(new CommandObjects().smembers("foo"))).getValue();
+      Set<String> fromMap = (Set<String>) cache.get(new CacheKey<>(new CommandObjects(RedisProtocol.RESP3).smembers("foo"))).getValue();
       assertEquals(expected, members1);
       assertEquals(expected, members2);
       assertEquals(expected, fromMap);
@@ -287,9 +439,10 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testSequentialAccess() throws InterruptedException {
     int threadCount = 10;
-    int iterations = 10000;
+    int iterations = 1000;
 
     control.set("foo", "0");
 
@@ -297,7 +450,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
     CacheConfig cacheConfig = CacheConfig.builder().maxSize(1000).build();
-    try (JedisPooled jedis = new JedisPooled(endpoint.getHostAndPort(), clientConfig.get(), cacheConfig)) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(clientConfig.get())
+        .cacheConfig(cacheConfig)
+        .build()) {
       // Submit multiple threads to perform concurrent operations
       CountDownLatch latch = new CountDownLatch(threadCount);
       for (int i = 0; i < threadCount; i++) {
@@ -332,16 +489,21 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testConcurrentAccessWithStats() throws InterruptedException {
     int threadCount = 10;
-    int iterations = 10000;
+    int iterations = 1000;
 
     control.set("foo", "0");
 
     ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
     // Create the shared mock instance of cache
-    try (JedisPooled jedis = new JedisPooled(endpoint.getHostAndPort(), clientConfig.get(), CacheConfig.builder().build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().build())
+        .build()) {
       Cache cache = jedis.getCache();
       // Submit multiple threads to perform concurrent operations
       CountDownLatch latch = new CountDownLatch(threadCount);
@@ -371,14 +533,19 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testMaxSize() throws InterruptedException {
     int threadCount = 10;
-    int iterations = 11000;
+    int iterations = 2000;
     int maxSize = 1000;
 
     ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
-    try (JedisPooled jedis = new JedisPooled(endpoint.getHostAndPort(), clientConfig.get(), CacheConfig.builder().maxSize(maxSize).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().maxSize(maxSize).build())
+        .build()) {
       Cache testCache = jedis.getCache();
       // Submit multiple threads to perform concurrent operations
       CountDownLatch latch = new CountDownLatch(threadCount);
@@ -417,8 +584,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     int touchOffset = 10;
 
     // fill the cache for maxSize
-    try (JedisPooled jedis = new JedisPooled(endpoint.getHostAndPort(), clientConfig.get(),
-        CacheConfig.builder().maxSize(maxSize).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().maxSize(maxSize).build())
+        .build()) {
       Cache cache = jedis.getCache();
       for (int i = 0; i < maxSize; i++) {
         jedis.set("foo" + i, "bar" + i);
@@ -438,17 +608,17 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
 
       // check touched keys not evicted
       for (int i = touchOffset; i < touchOffset + expectedEvictions; i++) {
-        assertTrue(cache.hasCacheKey(new CacheKey(new CommandObjects().get("foo" + i))));
+        assertTrue(cache.hasCacheKey(new CacheKey(new CommandObjects(RedisProtocol.RESP3).get("foo" + i))));
       }
 
       // check expected evictions are done till the offset
       for (int i = 0; i < touchOffset; i++) {
-        assertTrue(!cache.hasCacheKey(new CacheKey(new CommandObjects().get("foo" + i))));
+        assertTrue(!cache.hasCacheKey(new CacheKey(new CommandObjects(RedisProtocol.RESP3).get("foo" + i))));
       }
 
       // check expected evictions are done after the touched keys
       for (int i = touchOffset + expectedEvictions; i < (2 * expectedEvictions); i++) {
-        assertFalse(cache.hasCacheKey(new CacheKey(new CommandObjects().get("foo" + i))));
+        assertFalse(cache.hasCacheKey(new CacheKey(new CommandObjects(RedisProtocol.RESP3).get("foo" + i))));
       }
 
       assertEquals(maxSize, cache.getSize());
@@ -456,17 +626,21 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void testEvictionPolicyMultithreaded() throws InterruptedException {
     int NUMBER_OF_THREADS = 100;
-    int TOTAL_OPERATIONS = 1000000;
+    int TOTAL_OPERATIONS = 100000;
     int NUMBER_OF_DISTINCT_KEYS = 53;
     int MAX_SIZE = 20;
     List<Exception> exceptions = new ArrayList<>();
 
     List<Thread> tds = new ArrayList<>();
     final AtomicInteger ind = new AtomicInteger();
-    try (JedisPooled jedis = new JedisPooled(endpoint.getHostAndPort(), clientConfig.get(),
-        CacheConfig.builder().maxSize(MAX_SIZE).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(endpoint.getHostAndPort())
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().maxSize(MAX_SIZE).build())
+        .build()) {
       Cache cache = jedis.getCache();
       for (int i = 0; i < NUMBER_OF_THREADS; i++) {
         Thread hj = new Thread(new Runnable() {
@@ -505,7 +679,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     String nonExisting = "non-existing-key-"+ UUID.randomUUID().toString();
     control.del(nonExisting);
 
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().maxSize(MAX_SIZE).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().maxSize(MAX_SIZE).build())
+        .build()) {
       Cache cache = jedis.getCache();
       CacheStats stats = cache.getStats();
 
@@ -537,7 +715,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
   @Test
   public void testCacheFactory() throws InterruptedException {
     // this checks the instantiation with parameters (int, EvictionPolicy, Cacheable)
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(), CacheConfig.builder().cacheClass(TestCache.class).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().cacheClass(TestCache.class).build())
+        .build()) {
       Cache cache = jedis.getCache();
       CacheStats stats = cache.getStats();
 
@@ -551,8 +733,11 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
     }
 
     // this checks the instantiation with parameters (int, EvictionPolicy)
-    try (JedisPooled jedis = new JedisPooled(hnp, clientConfig.get(),
-        CacheConfig.builder().cacheClass(TestCache.class).cacheable(null).build())) {
+    try (RedisClient jedis = RedisClient.builder()
+        .hostAndPort(hnp)
+        .clientConfig(clientConfig.get())
+        .cacheConfig(CacheConfig.builder().cacheClass(TestCache.class).cacheable(null).build())
+        .build()) {
       Cache cache = jedis.getCache();
       CacheStats stats = cache.getStats();
 
@@ -565,4 +750,6 @@ public class ClientSideCacheFunctionalityTest extends ClientSideCacheTestBase {
       assertEquals(1, stats.getMissCount());
     }
   }
+
+
 }

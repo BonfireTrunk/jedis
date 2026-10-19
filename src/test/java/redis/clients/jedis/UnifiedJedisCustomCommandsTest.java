@@ -29,8 +29,7 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     Object result = jedis.sendCommand(cmd);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -54,8 +53,7 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     Object result = jedis.sendCommand(cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -83,8 +81,7 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     Object result = jedis.sendBlockingCommand(cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -108,8 +105,7 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     Object result = jedis.sendCommand(cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -137,8 +133,7 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     Object result = jedis.sendBlockingCommand(cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -159,15 +154,14 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
     CommandArguments commandArgumentsWithKey = mock(CommandArguments.class);
 
     when(commandArguments.addObjects((Object[]) args)).thenReturn(commandArgumentsWithArgs);
-    when(commandArgumentsWithArgs.processKey(sampleKey)).thenReturn(commandArgumentsWithKey);
+    when(commandArgumentsWithArgs.addHashSlotKey(sampleKey)).thenReturn(commandArgumentsWithKey);
 
     when(commandObjects.commandArguments(cmd)).thenReturn(commandArguments);
     when(commandExecutor.executeCommand(any())).thenReturn("OK");
 
     Object result = jedis.sendCommand(sampleKey, cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -190,15 +184,14 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     when(commandArguments.addObjects((Object[]) args)).thenReturn(commandArgumentsWithArgs);
     when(commandArgumentsWithArgs.blocking()).thenReturn(commandArgumentsBlocking);
-    when(commandArgumentsBlocking.processKey(sampleKey)).thenReturn(commandArgumentsWithKey);
+    when(commandArgumentsBlocking.addHashSlotKey(sampleKey)).thenReturn(commandArgumentsWithKey);
 
     when(commandObjects.commandArguments(cmd)).thenReturn(commandArguments);
     when(commandExecutor.executeCommand(any())).thenReturn("OK");
 
     Object result = jedis.sendBlockingCommand(sampleKey, cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -219,15 +212,14 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
     CommandArguments commandArgumentsWithKey = mock(CommandArguments.class);
 
     when(commandArguments.addObjects((Object[]) args)).thenReturn(commandArgumentsWithArgs);
-    when(commandArgumentsWithArgs.processKey(sampleKey)).thenReturn(commandArgumentsWithKey);
+    when(commandArgumentsWithArgs.addHashSlotKey(sampleKey)).thenReturn(commandArgumentsWithKey);
 
     when(commandObjects.commandArguments(cmd)).thenReturn(commandArguments);
     when(commandExecutor.executeCommand(any())).thenReturn("OK");
 
     Object result = jedis.sendCommand(sampleKey, cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();
@@ -250,15 +242,14 @@ public class UnifiedJedisCustomCommandsTest extends UnifiedJedisMockedTestBase {
 
     when(commandArguments.addObjects((Object[]) args)).thenReturn(commandArgumentsWithArgs);
     when(commandArgumentsWithArgs.blocking()).thenReturn(commandArgumentsBlocking);
-    when(commandArgumentsBlocking.processKey(sampleKey)).thenReturn(commandArgumentsWithKey);
+    when(commandArgumentsBlocking.addHashSlotKey(sampleKey)).thenReturn(commandArgumentsWithKey);
 
     when(commandObjects.commandArguments(cmd)).thenReturn(commandArguments);
     when(commandExecutor.executeCommand(any())).thenReturn("OK");
 
     Object result = jedis.sendBlockingCommand(sampleKey, cmd, args);
 
-    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor
-        .forClass(CommandObject.class);
+    ArgumentCaptor<CommandObject<Object>> argumentCaptor = ArgumentCaptor.forClass(CommandObject.class);
     verify(commandExecutor).executeCommand(argumentCaptor.capture());
 
     CommandObject<Object> commandObject = argumentCaptor.getValue();

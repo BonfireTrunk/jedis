@@ -4,6 +4,7 @@ import java.util.List;
 
 import redis.clients.jedis.args.ListDirection;
 import redis.clients.jedis.args.ListPosition;
+import redis.clients.jedis.params.LMoveMParams;
 import redis.clients.jedis.params.LPosParams;
 import redis.clients.jedis.util.KeyValue;
 
@@ -111,9 +112,9 @@ public interface ListCommands {
   String ltrim(String key, long start, long stop);
 
   /**
-   * Returns the element at index in the list stored at key. 0 is the first element, 1 the second
-   * and so on. Negative indexes are supported, for example -1 is the last element, -2 the
-   * penultimate and so on.
+   * Returns the element at index in the list stored at key.  0 is the first element, 1 the second
+   * and so on. Negative indexes are supported, for example -1 is the last element, -2 the penultimate
+   * and so on.
    * <p>
    * If the value stored at key is not of list type an error is returned. If the index is out of
    * range a 'nil' reply is returned.
@@ -137,8 +138,8 @@ public interface ListCommands {
    * elements starting from the end of the list. So -1 is the last element, -2 is the penultimate,
    * and so forth.
    * <p>
-   * Time Complexity O(N) when N being the length of the list. For the first or last elements of the
-   * list is O(1)
+   * Time Complexity O(N) when N being the length of the list. For the first or last elements of
+   * the list is O(1)
    * @param key
    * @param index
    * @param value
@@ -193,21 +194,21 @@ public interface ListCommands {
    * @param key
    * @param element
    * @return The index of first matching element in the list. Value will be 'nil' when the element
-   *         is not present in the list
+   * is not present in the list
    */
   Long lpos(String key, String element);
 
   /**
-   * In case there are multiple matches Rank option specifies the "rank" of the element to return. A
-   * rank of 1 returns the first match, 2 to return the second match, and so forth. If list `foo`
-   * has elements ("a","b","c","1","2","3","c","c"), The function call to get the index of second
-   * occurrence of "c" will be as follows lpos("foo","c", LPosParams.lPosParams().rank(2)).
+   * In case there are multiple matches Rank option specifies the "rank" of the element to return.
+   * A rank of 1 returns the first match, 2 to return the second match, and so forth.
+   * If list `foo` has elements ("a","b","c","1","2","3","c","c"), The function call to get the
+   * index of second occurrence of "c" will be as follows lpos("foo","c", LPosParams.lPosParams().rank(2)).
    * <p>
-   * Maxlen option compares the element provided only with a given maximum number of list items. A
-   * value of 1000 will make sure that the command performs only 1000 comparisons. The comparison is
-   * made for the first part or the last part depending on the fact we use a positive or negative
-   * rank. Following is how we could use the Maxlen option lpos("foo", "b",
-   * LPosParams.lPosParams().rank(1).maxlen(2)).
+   * Maxlen option compares the element provided only with a given maximum number of list items.
+   * A value of 1000 will make sure that the command performs only 1000 comparisons. The
+   * comparison is made for the first part or the last part depending on the fact we use a positive or
+   * negative rank.
+   * Following is how we could use the Maxlen option lpos("foo", "b", LPosParams.lPosParams().rank(1).maxlen(2)).
    * @param key
    * @param element
    * @param params {@link LPosParams}
@@ -217,8 +218,7 @@ public interface ListCommands {
 
   /**
    * Returns the index of matching elements inside a Redis list. If the element is found, its index
-   * (the zero-based position in the list) is returned. Otherwise, if no match is found, nil is
-   * returned.
+   * (the zero-based position in the list) is returned. Otherwise, if no match is found, nil is returned.
    * <p>
    * Time complexity: O(N) where N is the number of elements in the list
    * @param key
@@ -253,11 +253,10 @@ public interface ListCommands {
    * <p>
    * When key does not exist, it is considered an empty list and no operation is performed.
    * @param key
-   * @param where can be BEFORE or AFTER
+   * @param where can be  BEFORE or AFTER
    * @param pivot reference value
    * @param value the value
-   * @return The length of the list after the insert operation, or -1 when the value pivot was not
-   *         found
+   * @return The length of the list after the insert operation, or -1 when the value pivot was not found
    */
   long linsert(String key, ListPosition where, String pivot, String value);
 
@@ -282,12 +281,11 @@ public interface ListCommands {
   long rpushx(String key, String... strings);
 
   /**
-   * The blocking version of {@link ListCommands#lpop(String)} LPOP} because it blocks the
-   * connection when there are no elements to pop from any of the given lists. An element is popped
-   * from the head of the first list that is non-empty, with the given keys being checked in the
-   * order that they are given.
-   * @param timeout the timeout argument is interpreted as a double value specifying the maximum
-   *          number of seconds to block. A timeout of zero can be used to block indefinitely.
+   * The blocking version of {@link ListCommands#lpop(String)} LPOP} because it blocks the connection
+   * when there are no elements to pop from any of the given lists. An element is popped from the head of
+   * the first list that is non-empty, with the given keys being checked in the order that they are given.
+   * @param timeout the timeout argument is interpreted as a double value specifying the maximum number of
+   *               seconds to block. A timeout of zero can be used to block indefinitely.
    * @param keys
    */
   List<String> blpop(int timeout, String... keys);
@@ -298,15 +296,15 @@ public interface ListCommands {
   List<String> blpop(int timeout, String key);
 
   /**
-   * The blocking version of {@link ListCommands#lpop(String)} LPOP} because it blocks the
-   * connection when there are no elements to pop from any of the given lists. An element is popped
-   * from the head of the first list that is non-empty, with the given keys being checked in the
-   * order that they are given.
-   * @param timeout the timeout argument is interpreted as a double value specifying the maximum
-   *          number of seconds to block. A timeout of zero can be used to block indefinitely.
+   * The blocking version of {@link ListCommands#lpop(String)} LPOP} because it blocks the connection
+   * when there are no elements to pop from any of the given lists. An element is popped from the head of
+   * the first list that is non-empty, with the given keys being checked in the order that they are given.
+   * @param timeout the timeout argument is interpreted as a double value specifying the maximum number of
+   *               seconds to block. A timeout of zero can be used to block indefinitely.
    * @param keys
    */
   KeyValue<String, String> blpop(double timeout, String... keys);
+
 
   /**
    * @see ListCommands#blpop(double, String...)
@@ -314,12 +312,11 @@ public interface ListCommands {
   KeyValue<String, String> blpop(double timeout, String key);
 
   /**
-   * The blocking version of {@link ListCommands#rpop(String)} RPOP} because it blocks the
-   * connection when there are no elements to pop from any of the given lists. An element is popped
-   * from the tail of the first list that is non-empty, with the given keys being checked in the
-   * order that they are given.
-   * @param timeout the timeout argument is interpreted as a double value specifying the maximum
-   *          number of seconds to block. A timeout of zero can be used to block indefinitely.
+   * The blocking version of {@link ListCommands#rpop(String)} RPOP} because it blocks the connection
+   * when there are no elements to pop from any of the given lists. An element is popped from the tail of
+   * the first list that is non-empty, with the given keys being checked in the order that they are given.
+   * @param timeout the timeout argument is interpreted as a double value specifying the maximum number of
+   *               seconds to block. A timeout of zero can be used to block indefinitely.
    * @param keys
    */
   List<String> brpop(int timeout, String... keys);
@@ -330,12 +327,11 @@ public interface ListCommands {
   List<String> brpop(int timeout, String key);
 
   /**
-   * The blocking version of {@link ListCommands#rpop(String)} RPOP} because it blocks the
-   * connection when there are no elements to pop from any of the given lists. An element is popped
-   * from the tail of the first list that is non-empty, with the given keys being checked in the
-   * order that they are given.
-   * @param timeout the timeout argument is interpreted as a double value specifying the maximum
-   *          number of seconds to block. A timeout of zero can be used to block indefinitely.
+   * The blocking version of {@link ListCommands#rpop(String)} RPOP} because it blocks the connection
+   * when there are no elements to pop from any of the given lists. An element is popped from the tail of
+   * the first list that is non-empty, with the given keys being checked in the order that they are given.
+   * @param timeout the timeout argument is interpreted as a double value specifying the maximum number of
+   *               seconds to block. A timeout of zero can be used to block indefinitely.
    * @param keys
    */
   KeyValue<String, String> brpop(double timeout, String... keys);
@@ -359,21 +355,29 @@ public interface ListCommands {
    * @param srckey
    * @param dstkey
    * @return Bulk reply
+   * @deprecated Use {@link ListCommands#lmove(String, String, ListDirection, ListDirection)} with
+   * {@link ListDirection#RIGHT} and {@link ListDirection#LEFT}.
+   * Deprecated in Jedis 7.3.0. Mirrors Redis deprecation since 6.2.0.
    */
+  @Deprecated
   String rpoplpush(String srckey, String dstkey);
 
   /**
-   * The blocking variant of {@link ListCommands#rpoplpush(String, String)}. When source is empty,
-   * Redis will block the connection until another client pushes to it or until timeout is reached.
-   * A timeout of zero can be used to block indefinitely.
+   * The blocking variant of {@link ListCommands#rpoplpush(String, String)}. When source is
+   * empty, Redis will block the connection until another client pushes to it or until timeout is
+   * reached. A timeout of zero can be used to block indefinitely.
    * <p>
    * Time complexity: O(1)
    * @param source
    * @param destination
-   * @param timeout the timeout argument is interpreted as a double value specifying the maximum
-   *          number of seconds to block. A timeout of zero can be used to block indefinitely.
+   * @param timeout the timeout argument is interpreted as a double value specifying the maximum number of
+   *               seconds to block. A timeout of zero can be used to block indefinitely.
    * @return The element being popped from source and pushed to destination
+   * @deprecated Use {@link ListCommands#blmove(String, String, ListDirection, ListDirection, double)} with
+   * {@link ListDirection#RIGHT} and {@link ListDirection#LEFT}.
+   * Deprecated in Jedis 7.3.0. Mirrors Redis deprecation since 6.2.0.
    */
+  @Deprecated
   String brpoplpush(String source, String destination, int timeout);
 
   /**
@@ -387,17 +391,95 @@ public interface ListCommands {
   String lmove(String srcKey, String dstKey, ListDirection from, ListDirection to);
 
   /**
-   * Pop an element from a list, push it to another list and return it; or block until one is
-   * available
+   * Pop an element from a list, push it to another list and return it; or block until one is available
    * @param srcKey
    * @param dstKey
    * @param from can be LEFT or RIGHT
    * @param to can be LEFT or RIGHT
-   * @param timeout the timeout argument is interpreted as a double value specifying the maximum
-   *          number of seconds to block. A timeout of zero can be used to block indefinitely.
+   * @param timeout the timeout argument is interpreted as a double value specifying the maximum number of
+   *               seconds to block. A timeout of zero can be used to block indefinitely.
    * @return The element being popped and pushed
    */
   String blmove(String srcKey, String dstKey, ListDirection from, ListDirection to, double timeout);
+
+  /**
+   * <b><a href="https://redis.io/commands/lmovem">LMOVEM Command</a></b>
+   * Atomically move one element from the head (LEFT) or tail (RIGHT) of the list at
+   * {@code srcKey}, push it onto the head (LEFT) or tail (RIGHT) of the list at {@code dstKey}, and
+   * return it wrapped in a list. Without a count block this is equivalent to
+   * {@link #lmove(String, String, ListDirection, ListDirection)}.
+   * <p>
+   * Time complexity: O(1)
+   * @param srcKey the source list
+   * @param dstKey the destination list
+   * @param from where to pop from the source, LEFT or RIGHT
+   * @param to where to push to the destination, LEFT or RIGHT
+   * @return The moved element in a list, or {@code null} if the source list does not exist
+   * @since 8.0
+   */
+  List<String> lmovem(String srcKey, String dstKey, ListDirection from, ListDirection to);
+
+  /**
+   * <b><a href="https://redis.io/commands/lmovem">LMOVEM Command</a></b>
+   * Atomically move multiple elements from the head (LEFT) or tail (RIGHT) of the list at
+   * {@code srcKey} onto the head (LEFT) or tail (RIGHT) of the list at {@code dstKey}, and return
+   * them in destination order. The {@code params} select how many elements to move
+   * ({@code COUNT}: up to; {@code EXACTLY}: exactly or nothing) and their ordering ({@code OBO}:
+   * one by one; {@code BULK}: in bulk).
+   * <p>
+   * Time complexity: O(N) where N is the number of elements moved.
+   * @param srcKey the source list
+   * @param dstKey the destination list
+   * @param from where to pop from the source, LEFT or RIGHT
+   * @param to where to push to the destination, LEFT or RIGHT
+   * @param params the count and ordering of the move
+   * @return The moved elements in destination order, or {@code null} if the source list does not
+   *         exist or, with {@code EXACTLY}, holds fewer than the requested number of elements
+   * @since 8.0
+   */
+  List<String> lmovem(String srcKey, String dstKey, ListDirection from, ListDirection to,
+      LMoveMParams params);
+
+  /**
+   * <b><a href="https://redis.io/commands/blmovem">BLMOVEM Command</a></b>
+   * The blocking variant of {@link #lmovem(String, String, ListDirection, ListDirection)}. When
+   * the source list is empty, Redis blocks the connection until another client pushes to it or
+   * until {@code timeout} is reached.
+   * <p>
+   * Time complexity: O(1)
+   * @param srcKey the source list
+   * @param dstKey the destination list
+   * @param from where to pop from the source, LEFT or RIGHT
+   * @param to where to push to the destination, LEFT or RIGHT
+   * @param timeout the maximum number of seconds to block, interpreted as a double. A timeout of
+   *          zero blocks indefinitely.
+   * @return The moved element in a list, or {@code null} on timeout
+   * @since 8.0
+   */
+  List<String> blmovem(String srcKey, String dstKey, ListDirection from, ListDirection to,
+      double timeout);
+
+  /**
+   * <b><a href="https://redis.io/commands/blmovem">BLMOVEM Command</a></b>
+   * The blocking variant of
+   * {@link #lmovem(String, String, ListDirection, ListDirection, LMoveMParams)}. With a
+   * {@code COUNT} selector it blocks only while the source list is empty; with an {@code EXACTLY}
+   * selector it blocks until the source list holds enough elements, or until {@code timeout} is
+   * reached.
+   * <p>
+   * Time complexity: O(N) where N is the number of elements moved.
+   * @param srcKey the source list
+   * @param dstKey the destination list
+   * @param from where to pop from the source, LEFT or RIGHT
+   * @param to where to push to the destination, LEFT or RIGHT
+   * @param timeout the maximum number of seconds to block, interpreted as a double. A timeout of
+   *          zero blocks indefinitely.
+   * @param params the count and ordering of the move
+   * @return The moved elements in destination order, or {@code null} on timeout
+   * @since 8.0
+   */
+  List<String> blmovem(String srcKey, String dstKey, ListDirection from, ListDirection to,
+      double timeout, LMoveMParams params);
 
   KeyValue<String, List<String>> lmpop(ListDirection direction, String... keys);
 
@@ -405,6 +487,5 @@ public interface ListCommands {
 
   KeyValue<String, List<String>> blmpop(double timeout, ListDirection direction, String... keys);
 
-  KeyValue<String, List<String>> blmpop(double timeout, ListDirection direction, int count,
-      String... keys);
+  KeyValue<String, List<String>> blmpop(double timeout, ListDirection direction, int count, String... keys);
 }

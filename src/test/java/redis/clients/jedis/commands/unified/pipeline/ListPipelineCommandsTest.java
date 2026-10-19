@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 import java.util.List;
 
+import io.redis.test.annotations.ConditionalOnEnv;
 import io.redis.test.annotations.SinceRedisVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
@@ -25,6 +26,7 @@ import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.LPosParams;
 import redis.clients.jedis.util.KeyValue;
+import redis.clients.jedis.util.TestEnvUtil;
 
 @ParameterizedClass
 @MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
@@ -57,14 +59,22 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.rpush("foo", "foo");
     pipe.rpush("foo", "bar", "foo");
 
-    assertThat(pipe.syncAndReturnAll(), contains(1L, 2L, 4L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        1L,
+        2L,
+        4L
+    ));
 
     // Binary
     pipe.rpush(bfoo, bbar);
     pipe.rpush(bfoo, bfoo);
     pipe.rpush(bfoo, bbar, bfoo);
 
-    assertThat(pipe.syncAndReturnAll(), contains(1L, 2L, 4L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        1L,
+        2L,
+        4L
+    ));
   }
 
   @Test
@@ -73,14 +83,22 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush("foo", "foo");
     pipe.lpush("foo", "bar", "foo");
 
-    assertThat(pipe.syncAndReturnAll(), contains(1L, 2L, 4L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        1L,
+        2L,
+        4L
+    ));
 
     // Binary
     pipe.lpush(bfoo, bbar);
     pipe.lpush(bfoo, bfoo);
     pipe.lpush(bfoo, bbar, bfoo);
 
-    assertThat(pipe.syncAndReturnAll(), contains(1L, 2L, 4L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        1L,
+        2L,
+        4L
+    ));
   }
 
   @Test
@@ -90,7 +108,12 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush("foo", "car");
     pipe.llen("foo");
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1L, 2L, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1L,
+        2L,
+        2L
+    ));
 
     // Binary
     pipe.llen(bfoo);
@@ -98,7 +121,12 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush(bfoo, bcar);
     pipe.llen(bfoo);
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1L, 2L, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1L,
+        2L,
+        2L
+    ));
   }
 
   @Test
@@ -106,15 +134,19 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.set("foo", "bar");
     pipe.llen("foo");
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(equalTo("OK"), instanceOf(JedisDataException.class)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo("OK"),
+        instanceOf(JedisDataException.class)
+    ));
 
     // Binary
     pipe.set(bfoo, bbar);
     pipe.llen(bfoo);
 
-    assertThat(pipe.syncAndReturnAll(),
-      contains(equalTo("OK"), instanceOf(JedisDataException.class)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo("OK"),
+        instanceOf(JedisDataException.class)
+    ));
   }
 
   @Test
@@ -374,6 +406,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void rpoplpush() {
     pipe.rpush("foo", "a");
     pipe.rpush("foo", "b");
@@ -412,6 +445,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void blpop() throws InterruptedException {
     Response<List<String>> result1 = pipe.blpop(1, "foo");
 
@@ -455,6 +489,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void blpopDouble() {
     Response<KeyValue<String, String>> result1 = pipe.blpop(0.1, "foo");
 
@@ -513,7 +548,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
       } catch (InterruptedException e) {
         logger.error("", e);
       }
-      jedis.lpush("foo", "bar");
+      client.lpush("foo", "bar");
     }).start();
 
     result = pipe.blpop(1.2, "foo");
@@ -524,6 +559,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void brpop() {
     Response<List<String>> result1 = pipe.brpop(1, "foo");
 
@@ -567,6 +603,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void brpopDouble() {
     Response<KeyValue<String, String>> result1 = pipe.brpop(0.1, "foo");
 
@@ -625,7 +662,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
       } catch (InterruptedException e) {
         logger.error("", e);
       }
-      jedis.lpush("foo", "bar");
+      client.lpush("foo", "bar");
     }).start();
 
     result = pipe.brpop(1.2, "foo");
@@ -641,14 +678,22 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush("foo", "a");
     pipe.lpushx("foo", "b");
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1L, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1L,
+        2L
+    ));
 
     // Binary
     pipe.lpushx(bfoo, bbar);
     pipe.lpush(bfoo, bA);
     pipe.lpushx(bfoo, bB);
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1L, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1L,
+        2L
+    ));
   }
 
   @Test
@@ -657,14 +702,22 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush("foo", "a");
     pipe.rpushx("foo", "b");
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1L, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1L,
+        2L
+    ));
 
     // Binary
     pipe.rpushx(bfoo, bbar);
     pipe.lpush(bfoo, bA);
     pipe.rpushx(bfoo, bB);
 
-    assertThat(pipe.syncAndReturnAll(), contains(0L, 1L, 2L));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        0L,
+        1L,
+        2L
+    ));
   }
 
   @Test
@@ -706,6 +759,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void brpoplpush() {
     new Thread(() -> {
       try {
@@ -713,7 +767,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
       } catch (InterruptedException e) {
         logger.error("", e);
       }
-      jedis.lpush("foo", "a");
+      client.lpush("foo", "a");
     }).start();
 
     Response<String> element = pipe.brpoplpush("foo", "bar", 0);
@@ -734,7 +788,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
       } catch (InterruptedException e) {
         logger.error("", e);
       }
-      jedis.lpush(bfoo, bA);
+      client.lpush(bfoo, bA);
     }).start();
 
     Response<byte[]> belement = pipe.brpoplpush(bfoo, bbar, 0);
@@ -758,7 +812,10 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpos("foo", "b");
     pipe.lpos("foo", "d");
 
-    assertThat(pipe.syncAndReturnAll(), contains(equalTo(1L), nullValue()));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        nullValue()
+    ));
 
     pipe.rpush("foo", "a");
     pipe.rpush("foo", "b");
@@ -773,19 +830,22 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpos("foo", "b", LPosParams.lPosParams().rank(2).maxlen(2));
     pipe.lpos("foo", "b", LPosParams.lPosParams().rank(-2).maxlen(2));
 
-    assertThat(
-      pipe.syncAndReturnAll(),
-      contains(equalTo(1L), equalTo(5L), equalTo(4L), nullValue(), equalTo(1L), nullValue(),
-        equalTo(4L)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        equalTo(5L),
+        equalTo(4L),
+        nullValue(),
+        equalTo(1L),
+        nullValue(),
+        equalTo(4L)
+    ));
 
     Response<List<Long>> posList1 = pipe.lpos("foo", "b", LPosParams.lPosParams(), 2);
     Response<List<Long>> posList2 = pipe.lpos("foo", "b", LPosParams.lPosParams(), 0);
     Response<List<Long>> posList3 = pipe.lpos("foo", "b", LPosParams.lPosParams().rank(2), 0);
-    Response<List<Long>> posList4 = pipe.lpos("foo", "b",
-      LPosParams.lPosParams().rank(2).maxlen(5), 0);
+    Response<List<Long>> posList4 = pipe.lpos("foo", "b", LPosParams.lPosParams().rank(2).maxlen(5), 0);
     Response<List<Long>> posList5 = pipe.lpos("foo", "b", LPosParams.lPosParams().rank(-2), 0);
-    Response<List<Long>> posList6 = pipe.lpos("foo", "b", LPosParams.lPosParams().rank(-1)
-        .maxlen(5), 2);
+    Response<List<Long>> posList6 = pipe.lpos("foo", "b", LPosParams.lPosParams().rank(-1).maxlen(5), 2);
 
     pipe.sync();
 
@@ -805,7 +865,10 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpos(bfoo, bB);
     pipe.lpos(bfoo, b3);
 
-    assertThat(pipe.syncAndReturnAll(), contains(equalTo(1L), nullValue()));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(1L),
+        nullValue()
+    ));
 
     pipe.rpush(bfoo, bA);
     pipe.rpush(bfoo, bB);
@@ -815,11 +878,13 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpos(bfoo, bB, LPosParams.lPosParams().rank(2));
     pipe.lpos(bfoo, bB, LPosParams.lPosParams().rank(-2).maxlen(5));
 
-    assertThat(pipe.syncAndReturnAll(), contains(equalTo(4L), equalTo(1L)));
+    assertThat(pipe.syncAndReturnAll(), contains(
+        equalTo(4L),
+        equalTo(1L)
+    ));
 
     Response<List<Long>> bposList1 = pipe.lpos(bfoo, bA, LPosParams.lPosParams().maxlen(6), 0);
-    Response<List<Long>> bposList2 = pipe.lpos(bfoo, bA, LPosParams.lPosParams().maxlen(6).rank(2),
-      1);
+    Response<List<Long>> bposList2 = pipe.lpos(bfoo, bA, LPosParams.lPosParams().maxlen(6).rank(2), 1);
 
     pipe.sync();
 
@@ -828,6 +893,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void lmove() {
     pipe.rpush("foo", "bar1", "bar2", "bar3");
 
@@ -856,6 +922,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
   }
 
   @Test
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void blmove() {
     new Thread(() -> {
       try {
@@ -863,7 +930,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
       } catch (InterruptedException e) {
         logger.error("", e);
       }
-      jedis.rpush("foo", "bar1", "bar2", "bar3");
+      client.rpush("foo", "bar1", "bar2", "bar3");
     }).start();
 
     Response<String> response = pipe.blmove("foo", "bar", ListDirection.RIGHT, ListDirection.LEFT, 0);
@@ -883,7 +950,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
       } catch (InterruptedException e) {
         logger.error("", e);
       }
-      jedis.rpush(bfoo, b1, b2, b3);
+      client.rpush(bfoo, b1, b2, b3);
     }).start();
 
     Response<byte[]> bresponse = pipe.blmove(bfoo, bbar, ListDirection.RIGHT, ListDirection.LEFT, 0);
@@ -899,6 +966,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
 
   @Test
   @SinceRedisVersion(value="7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void lmpop() {
     String mylist1 = "mylist1";
     String mylist2 = "mylist2";
@@ -907,14 +975,10 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush(mylist1, "one1", "two1", "three1", "four1", "five1");
     pipe.lpush(mylist2, "one2", "two2", "three2", "four2", "five2");
 
-    Response<KeyValue<String, List<String>>> elements1 = pipe.lmpop(ListDirection.LEFT, mylist1,
-      mylist2);
-    Response<KeyValue<String, List<String>>> elements2 = pipe.lmpop(ListDirection.LEFT, 5, mylist1,
-      mylist2);
-    Response<KeyValue<String, List<String>>> elements3 = pipe.lmpop(ListDirection.RIGHT, 100,
-      mylist1, mylist2);
-    Response<KeyValue<String, List<String>>> elements4 = pipe.lmpop(ListDirection.RIGHT, mylist1,
-      mylist2);
+    Response<KeyValue<String, List<String>>> elements1 = pipe.lmpop(ListDirection.LEFT, mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements2 = pipe.lmpop(ListDirection.LEFT, 5, mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements3 = pipe.lmpop(ListDirection.RIGHT, 100, mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements4 = pipe.lmpop(ListDirection.RIGHT, mylist1, mylist2);
 
     pipe.sync();
 
@@ -932,6 +996,7 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
 
   @Test
   @SinceRedisVersion(value="7.0.0")
+  @ConditionalOnEnv(value = TestEnvUtil.ENV_REDIS_ENTERPRISE, enabled = false)
   public void blmpopSimple() {
     String mylist1 = "mylist1";
     String mylist2 = "mylist2";
@@ -940,14 +1005,10 @@ public class ListPipelineCommandsTest extends PipelineCommandsTestBase {
     pipe.lpush(mylist1, "one1", "two1", "three1", "four1", "five1");
     pipe.lpush(mylist2, "one2", "two2", "three2", "four2", "five2");
 
-    Response<KeyValue<String, List<String>>> elements1 = pipe.blmpop(1L, ListDirection.LEFT,
-      mylist1, mylist2);
-    Response<KeyValue<String, List<String>>> elements2 = pipe.blmpop(1L, ListDirection.LEFT, 5,
-      mylist1, mylist2);
-    Response<KeyValue<String, List<String>>> elements3 = pipe.blmpop(1L, ListDirection.RIGHT, 100,
-      mylist1, mylist2);
-    Response<KeyValue<String, List<String>>> elements4 = pipe.blmpop(1L, ListDirection.RIGHT,
-      mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements1 = pipe.blmpop(1L, ListDirection.LEFT, mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements2 = pipe.blmpop(1L, ListDirection.LEFT, 5, mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements3 = pipe.blmpop(1L, ListDirection.RIGHT, 100, mylist1, mylist2);
+    Response<KeyValue<String, List<String>>> elements4 = pipe.blmpop(1L, ListDirection.RIGHT, mylist1, mylist2);
 
     pipe.sync();
 

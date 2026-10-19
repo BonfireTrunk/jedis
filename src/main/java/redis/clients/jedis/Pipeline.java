@@ -14,11 +14,37 @@ import redis.clients.jedis.util.KeyValue;
 
 public class Pipeline extends AbstractPipeline implements DatabasePipelineCommands, Closeable {
 
-  private final Queue<Response<?>> pipelinedResponses = new LinkedList<>();
+  /**
+   * An entry of the wire-order reply queue, marking whether it belongs to a client-internal
+   * command (e.g. HIMPORT's injected {@code PREPARE}): its reply is consumed in wire order like
+   * any other, but it is excluded from user-facing results such as {@link #syncAndReturnAll()}.
+   */
+  private static final class QueuedResponse<T> extends Response<T> {
+
+    private final boolean internal;
+
+    private QueuedResponse(Builder<T> builder, boolean internal) {
+      super(builder);
+      this.internal = internal;
+    }
+
+    static <T> QueuedResponse<T> user(Builder<T> builder) {
+      return new QueuedResponse<>(builder, false);
+    }
+
+    static <T> QueuedResponse<T> internal(Builder<T> builder) {
+      return new QueuedResponse<>(builder, true);
+    }
+
+    boolean isInternal() {
+      return internal;
+    }
+  }
+
+  private final Queue<QueuedResponse<?>> pipelinedResponses = new LinkedList<>();
   protected final Connection connection;
   private final boolean closeConnection;
-
-  // private final CommandObjects commandObjects;
+  //private final CommandObjects commandObjects;
 
   public Pipeline(Jedis jedis) {
     this(jedis.getConnection(), false);
@@ -33,10 +59,7 @@ public class Pipeline extends AbstractPipeline implements DatabasePipelineComman
   }
 
   private static CommandObjects createCommandObjects(Connection connection) {
-    CommandObjects commandObjects = new CommandObjects();
-    RedisProtocol proto = connection.getRedisProtocol();
-    if (proto != null) commandObjects.setProtocol(proto);
-    return commandObjects;
+    return new CommandObjects(RedisProtocol.orServerDefault(connection.getRedisProtocol()));
   }
 
   Pipeline(Connection connection, boolean closeConnection, CommandObjects commandObjects) {
@@ -48,9 +71,18 @@ public class Pipeline extends AbstractPipeline implements DatabasePipelineComman
   @Override
   public final <T> Response<T> appendCommand(CommandObject<T> commandObject) {
     connection.sendCommand(commandObject.getArguments());
-    Response<T> response = new Response<>(commandObject.getBuilder());
+    QueuedResponse<T> response = QueuedResponse.user(commandObject.getBuilder());
     pipelinedResponses.add(response);
     return response;
+  }
+
+  /**
+   * Buffers a client-internal command: its reply is consumed in wire order like any other, but it
+   * is excluded from user-facing results ({@link #syncAndReturnAll()}).
+   */
+  private <T> void appendInternalCommand(CommandObject<T> commandObject) {
+    connection.sendCommand(commandObject.getArguments());
+    pipelinedResponses.add(QueuedResponse.internal(commandObject.getBuilder()));
   }
 
   @Override
@@ -89,9 +121,12 @@ public class Pipeline extends AbstractPipeline implements DatabasePipelineComman
       List<Object> unformatted = connection.getMany(pipelinedResponses.size());
       List<Object> formatted = new ArrayList<>();
       for (Object rawReply : unformatted) {
+        QueuedResponse<?> response = pipelinedResponses.poll();
+        response.set(rawReply);
+        if (response.isInternal()) {
+          continue; // client-internal command; not part of the user's results
+        }
         try {
-          Response<?> response = pipelinedResponses.poll();
-          response.set(rawReply);
           formatted.add(response.get());
         } catch (JedisDataException e) {
           formatted.add(e);
@@ -116,26 +151,23 @@ public class Pipeline extends AbstractPipeline implements DatabasePipelineComman
   }
 
   public Response<List<String>> time() {
-    return appendCommand(new CommandObject<>(
-        commandObjects.commandArguments(Protocol.Command.TIME), BuilderFactory.STRING_LIST));
+    return appendCommand(new CommandObject<>(commandObjects.commandArguments(Protocol.Command.TIME), BuilderFactory.STRING_LIST));
   }
 
   @Override
   public Response<String> select(final int index) {
-    return appendCommand(new CommandObject<>(commandObjects.commandArguments(
-      Protocol.Command.SELECT).add(index), BuilderFactory.STRING));
+    return appendCommand(new CommandObject<>(commandObjects.commandArguments(Protocol.Command.SELECT).add(index), BuilderFactory.STRING));
   }
 
   @Override
   public Response<Long> dbSize() {
-    return appendCommand(new CommandObject<>(
-        commandObjects.commandArguments(Protocol.Command.DBSIZE), BuilderFactory.LONG));
+    return appendCommand(new CommandObject<>(commandObjects.commandArguments(Protocol.Command.DBSIZE), BuilderFactory.LONG));
   }
 
   @Override
   public Response<String> swapDB(final int index1, final int index2) {
-    return appendCommand(new CommandObject<>(commandObjects
-        .commandArguments(Protocol.Command.SWAPDB).add(index1).add(index2), BuilderFactory.STRING));
+    return appendCommand(new CommandObject<>(commandObjects.commandArguments(Protocol.Command.SWAPDB)
+        .add(index1).add(index2), BuilderFactory.STRING));
   }
 
   @Override
@@ -171,14 +203,40 @@ public class Pipeline extends AbstractPipeline implements DatabasePipelineComman
   }
 
   @Override
-  public Response<String> migrate(String host, int port, int destinationDB, int timeout,
-      MigrateParams params, byte[]... keys) {
+  public Response<String> migrate(String host, int port, int destinationDB, int timeout, MigrateParams params, byte[]... keys) {
     return appendCommand(commandObjects.migrate(host, port, destinationDB, timeout, params, keys));
   }
 
   @Override
-  public Response<String> migrate(String host, int port, int destinationDB, int timeout,
-      MigrateParams params, String... keys) {
+  public Response<String> migrate(String host, int port, int destinationDB, int timeout, MigrateParams params, String... keys) {
     return appendCommand(commandObjects.migrate(host, port, destinationDB, timeout, params, keys));
+  }
+
+  @Override
+  public Response<String> himportSet(String key, HashImport fieldset, String... values) {
+    HashImportSupport.checkArgs(fieldset, values.length);
+    himportPrepareBeforeUse(fieldset);
+    return appendCommand(commandObjects.himportSetBare(key, fieldset, values));
+  }
+
+  @Override
+  public Response<String> himportSet(byte[] key, HashImport fieldset, byte[]... values) {
+    HashImportSupport.checkArgs(fieldset, values.length);
+    himportPrepareBeforeUse(fieldset);
+    return appendCommand(commandObjects.himportSetBare(key, fieldset, values));
+  }
+
+  /**
+   * Buffers an internal {@code HIMPORT PREPARE} ahead of the {@code SET} when this pipeline's
+   * connection has not yet prepared the fieldset, recording it in the connection's note so
+   * before-command reconciliation discards it after {@link HashImport#close()}. The pipeline owns
+   * its connection, so it uses the bare {@code SET} and injects the PREPARE itself; the hook
+   * variant exists for the executor path, where the connection is unknown until execution.
+   */
+  private void himportPrepareBeforeUse(HashImport fieldset) {
+    if (!connection.himportState().isPrepared(fieldset.name())) {
+      appendInternalCommand(commandObjects.himportPrepare(fieldset.name(), fieldset.fields()));
+      HashImportSupport.markPrepared(connection, fieldset);
+    }
   }
 }

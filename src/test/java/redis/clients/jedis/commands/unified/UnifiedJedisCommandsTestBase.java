@@ -4,39 +4,62 @@ package redis.clients.jedis.commands.unified;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeAll;
 import redis.clients.jedis.EndpointConfig;
-import redis.clients.jedis.HostAndPorts;
+import redis.clients.jedis.Endpoints;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.commands.CommandsTestsParameters;
 import redis.clients.jedis.util.EnabledOnCommandCondition;
+import redis.clients.jedis.util.EnvCondition;
 import redis.clients.jedis.util.RedisVersionCondition;
+import redis.clients.jedis.util.TestKeyRegistry;
 
 @Tag("integration")
 public abstract class UnifiedJedisCommandsTestBase {
 
   /**
-   * Input data for parameterized tests. In principle all subclasses of this class should be
-   * parameterized tests, to run with several versions of RESP.
+   * Input data for parameterized tests. In principle all subclasses of this
+   * class should be parameterized tests, to run with several versions of RESP.
+   *
    * @see CommandsTestsParameters#respVersions()
    */
   protected final RedisProtocol protocol;
 
   protected UnifiedJedis jedis;
 
-  protected static final EndpointConfig endpoint = HostAndPorts.getRedisEndpoint("standalone0");
+  /**
+   * Per-test registry for unique key names on the shared test endpoints. Keys created via
+   * {@code keys.key(...)} are namespaced by test and deleted automatically after each test;
+   * tests that don't use it are unaffected.
+   */
+  protected TestKeyRegistry keys;
+
+  protected static EndpointConfig endpoint;
 
   @RegisterExtension
-  public RedisVersionCondition versionCondition = new RedisVersionCondition(endpoint);
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(
+      () -> endpoint);
   @RegisterExtension
-  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(endpoint);
+  public EnabledOnCommandCondition enabledOnCommandCondition = new EnabledOnCommandCondition(
+      () -> endpoint);
+  @RegisterExtension
+  public static EnvCondition envCondition = new EnvCondition();
+
+  @BeforeAll
+  public static void prepareEndpoint() {
+    endpoint = Endpoints.getRedisEndpoint("standalone0");
+  }
 
   /**
-   * The RESP protocol is to be injected by the subclasses, usually via JUnit parameterized tests,
-   * because most of the subclassed tests are meant to be executed against multiple RESP versions.
-   * For the special cases where a single RESP version is relevant, we still force the subclass to
-   * be explicit and call this constructor.
+   * The RESP protocol is to be injected by the subclasses, usually via JUnit
+   * parameterized tests, because most of the subclassed tests are meant to be
+   * executed against multiple RESP versions. For the special cases where a single
+   * RESP version is relevant, we still force the subclass to be explicit and
+   * call this constructor.
+   *
    * @param protocol The RESP protocol to use during the tests.
    */
   public UnifiedJedisCommandsTestBase(RedisProtocol protocol) {
@@ -55,7 +78,8 @@ public abstract class UnifiedJedisCommandsTestBase {
   }
 
   @BeforeEach
-  void setUpBase() {
+  void setUpBase(TestInfo testInfo) {
+    keys = TestKeyRegistry.create(testInfo);
     jedis = createTestClient();
     clearData();
   }
@@ -63,6 +87,7 @@ public abstract class UnifiedJedisCommandsTestBase {
   @AfterEach
   void tearDownBase() {
     if (jedis != null) {
+      keys.cleanup(jedis);
       jedis.close();
     }
   }

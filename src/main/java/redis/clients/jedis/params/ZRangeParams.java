@@ -26,12 +26,20 @@ public class ZRangeParams implements IParams {
   }
 
   public ZRangeParams(int min, int max) {
+    this((long) min, (long) max);
+  }
+
+  public ZRangeParams(long min, long max) {
     this.by = null;
     this.min = from(min);
     this.max = from(max);
   }
 
   public static ZRangeParams zrangeParams(int min, int max) {
+    return new ZRangeParams(min, max);
+  }
+
+  public static ZRangeParams zrangeParams(long min, long max) {
     return new ZRangeParams(min, max);
   }
 
@@ -106,8 +114,7 @@ public class ZRangeParams implements IParams {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ZRangeParams that = (ZRangeParams) o;
-    return rev == that.rev && limit == that.limit && offset == that.offset && count == that.count
-        && by == that.by && Objects.equals(min, that.min) && Objects.equals(max, that.max);
+    return rev == that.rev && limit == that.limit && offset == that.offset && count == that.count && by == that.by && Objects.equals(min, that.min) && Objects.equals(max, that.max);
   }
 
   @Override

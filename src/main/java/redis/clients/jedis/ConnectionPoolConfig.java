@@ -1,18 +1,24 @@
 package redis.clients.jedis;
 
-import today.bonfire.oss.sop.SimpleObjectPoolConfig;
-
 import java.time.Duration;
 
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+
 /**
- * Configuration class for Connection pool that extends SimpleObjectPoolConfig. Provides
- * pool-specific default values and configuration options while leveraging the base pool
- * configuration capabilities.
+ * Configuration for {@link Connection} pools. {@code new ConnectionPoolConfig()} and
+ * {@link #builder()} both start from the Jedis defaults: every 30 seconds all idle connections are
+ * validated, and those idle for more than 60 seconds are evicted. Connections are not validated on
+ * borrow.
+ * <p>
+ * An exhausted pool makes borrowers wait at most 10 seconds. Set {@code waitingForObjectTimeout}
+ * to a negative duration to wait forever (commons-pool2's {@code maxWait=-1}), or to
+ * {@link Duration#ZERO} to fail immediately (commons-pool2's {@code blockWhenExhausted=false}).
  */
 public class ConnectionPoolConfig extends SimpleObjectPoolConfig {
 
   public ConnectionPoolConfig() {
-    super(builder().defaultConfig().prepareAndCheck());
+    // defaults to make your life with connection pool easier :)
+    super(builder().prepareAndCheck());
   }
 
   public ConnectionPoolConfig(SimpleObjectPoolConfig.Builder config) {
@@ -20,29 +26,34 @@ public class ConnectionPoolConfig extends SimpleObjectPoolConfig {
   }
 
   /**
-   * Creates a new builder instance with pool-specific default settings.
-   * @return A new Builder instance with pool-specific default settings
+   * @return a builder preset with the Jedis defaults
    */
   public static Builder builder() {
     return new Builder();
   }
 
-  /**
-   * Builder class for ConnectionPoolConfig that extends SimpleObjectPoolConfig.Builder to provide
-   * pool-specific configuration options.
-   */
   public static class Builder extends SimpleObjectPoolConfig.Builder {
 
+    public Builder() {
+      applyDefaults();
+    }
+
     /**
-     * Sets default pool configuration values.
-     * @return this Builder instance
+     * Applies the Jedis defaults again.
+     * @return this builder
+     * @deprecated {@link ConnectionPoolConfig#builder()} already starts from the Jedis defaults.
      */
+    @Deprecated
     public Builder defaultConfig() {
-      this.maxPoolSize(8).minPoolSize(0).fairness(false).testOnCreate(false).testOnBorrow(true)
-          .testWhileIdle(true).testOnReturn(false)
-          .durationBetweenEvictionsRuns(Duration.ofSeconds(30))
-          .objEvictionTimeout(Duration.ofSeconds(60));
+      applyDefaults();
       return this;
+    }
+
+    private void applyDefaults() {
+      // numValidationsPerEvictionRun stays unset, so every idle connection is examined on each run
+      testWhileIdle(true);
+      objEvictionTimeout(Duration.ofMillis(60000));
+      durationBetweenEvictionsRuns(Duration.ofMillis(30000));
     }
 
     @Override
@@ -53,8 +64,7 @@ public class ConnectionPoolConfig extends SimpleObjectPoolConfig {
 
     @Override
     public ConnectionPoolConfig build() {
-      var config = super.prepareAndCheck();
-      return new ConnectionPoolConfig(config);
+      return new ConnectionPoolConfig(prepareAndCheck());
     }
   }
 }
