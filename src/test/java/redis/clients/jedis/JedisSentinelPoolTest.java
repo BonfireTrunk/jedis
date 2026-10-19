@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,7 @@ public class JedisSentinelPoolTest {
   public void repeatedSentinelPoolInitialization() {
 
     for (int i = 0; i < 20; ++i) {
-      GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
+      SimpleObjectPoolConfig config = SimpleObjectPoolConfig.defaultConfig();
 
       JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, config, 1000,
           "foobared", 2);
@@ -72,7 +73,7 @@ public class JedisSentinelPoolTest {
 
   @Test
   public void checkCloseableConnections() throws Exception {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.defaultConfig();
 
     JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, config, 1000,
         "foobared", 2);
@@ -87,9 +88,8 @@ public class JedisSentinelPoolTest {
 
   @Test
   public void returnResourceShouldResetState() {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     try (JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, config, 1000,
         "foobared", 2)) {
 
@@ -110,9 +110,8 @@ public class JedisSentinelPoolTest {
 
   @Test
   public void checkResourceIsCloseable() {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, config, 1000,
         "foobared", 2);
 
@@ -133,9 +132,8 @@ public class JedisSentinelPoolTest {
 
   @Test
   public void customClientName() {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     JedisSentinelPool pool = new JedisSentinelPool(MASTER_NAME, sentinels, config, 1000,
         "foobared", 0, "my_shiny_client_name");
 

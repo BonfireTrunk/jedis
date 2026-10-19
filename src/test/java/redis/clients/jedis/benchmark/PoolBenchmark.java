@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import redis.clients.jedis.*;
 
@@ -27,7 +27,7 @@ public class PoolBenchmark {
   }
 
   private static void withPool() throws Exception {
-    final JedisPool pool = new JedisPool(new GenericObjectPoolConfig<Jedis>(), endpoint.getHost(),
+    final JedisPool pool = new JedisPool(SimpleObjectPoolConfig.defaultConfig(), endpoint.getHost(),
         endpoint.getPort(), 2000, endpoint.getPassword());
     List<Thread> tds = new ArrayList<Thread>();
 

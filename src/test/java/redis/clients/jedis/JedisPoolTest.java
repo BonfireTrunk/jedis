@@ -6,10 +6,8 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.redis.test.annotations.ConditionalOnEnv;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -114,9 +112,8 @@ public class JedisPoolTest {
 
   @Test
   public void checkResourceIsClosableAndReusable() {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     try (JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000, endpointStandalone0.getPassword(), 0,
         "closable-reusable-pool", false, null, null, null)) {
 
@@ -150,9 +147,8 @@ public class JedisPoolTest {
 
   @Test
   public void checkPoolOverflow() {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     try (JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort());
         Jedis jedis = pool.getResource()) {
       jedis.auth(endpointStandalone0.getPassword());
@@ -163,8 +159,8 @@ public class JedisPoolTest {
 
   @Test
   public void securePool() {
-    JedisPoolConfig config = new JedisPoolConfig();
-    config.setTestOnBorrow(true);
+    SimpleObjectPoolConfig config = JedisPoolConfig.builder()
+        .testOnBorrow(true).build();
     JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000, endpointStandalone0.getPassword());
     try (Jedis jedis = pool.getResource()) {
       jedis.set("foo", "bar");
@@ -289,31 +285,30 @@ public class JedisPoolTest {
     class CrashingJedisPooledObjectFactory implements PooledObjectFactory<Jedis> {
 
       @Override
-      public PooledObject<Jedis> makeObject() throws Exception {
-        return new DefaultPooledObject<Jedis>(new CrashingJedis());
+      public Jedis createObject() {
+        return new CrashingJedis();
       }
 
       @Override
-      public void destroyObject(PooledObject<Jedis> p) throws Exception {
+      public void destroyObject(Jedis p) {
         destroyed.incrementAndGet();
       }
 
       @Override
-      public boolean validateObject(PooledObject<Jedis> p) {
+      public boolean isObjectValid(Jedis p) {
         return true;
       }
 
       @Override
-      public void activateObject(PooledObject<Jedis> p) throws Exception {
+      public void activateObject(Jedis p) {
       }
 
       @Override
-      public void passivateObject(PooledObject<Jedis> p) throws Exception {
+      public void passivateObject(Jedis p) {
       }
     }
 
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1).build();
     JedisPool pool = new JedisPool(config, new CrashingJedisPooledObjectFactory());
     Jedis crashingJedis = pool.getResource();
 
@@ -327,9 +322,8 @@ public class JedisPoolTest {
 
   @Test
   public void returnResourceShouldResetState() {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     JedisPool pool = new JedisPool(config, endpointStandalone0.getHost(), endpointStandalone0.getPort(), 2000, endpointStandalone0.getPassword());
 
     Jedis jedis = pool.getResource();
@@ -426,8 +420,8 @@ public class JedisPoolTest {
 
   @Test
   public void testCloseConnectionOnMakeObject() {
-    JedisPoolConfig config = new JedisPoolConfig();
-    config.setTestOnBorrow(true);
+    SimpleObjectPoolConfig config = JedisPoolConfig.builder()
+        .testOnBorrow(true).build();
     try (JedisPool pool = new JedisPool(new JedisPoolConfig(), endpointStandalone0.getHost(),
         endpointStandalone0.getPort(), 2000, "wrong pass");
         Jedis jedis = new Jedis(endpointStandalone0.getURIBuilder().defaultCredentials().build())) {

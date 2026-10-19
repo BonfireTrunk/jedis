@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -23,7 +23,7 @@ import redis.clients.jedis.*;
  * 
  * <pre>
  * public JedisCluster(Set&lt;HostAndPort&gt; clusterNodes, JedisClientConfig clientConfig, 
- *                     int maxAttempts, GenericObjectPoolConfig&lt;Connection&gt; poolConfig)
+ *                     int maxAttempts, SimpleObjectPoolConfig poolConfig)
  * </pre>
  * 
  * can be replaced with the RedisClusterClient.Builder pattern while maintaining the same
@@ -72,8 +72,7 @@ public class RedisClusterClientMigrationIntegrationTest {
 
   /**
    * Test that verifies both approaches can handle cluster operations correctly. Tests constructor:
-   * JedisCluster(Set&lt;HostAndPort&gt;, JedisClientConfig, int,
-   * GenericObjectPoolConfig&lt;Connection&gt;)
+   * JedisCluster(Set&lt;HostAndPort&gt;, JedisClientConfig, int, SimpleObjectPoolConfig)
    */
   @Test
   public void testSpringDataRedisConstructor() {
@@ -81,7 +80,7 @@ public class RedisClusterClientMigrationIntegrationTest {
     JedisClientConfig clientConfig = DefaultJedisClientConfig.builder().password(PASSWORD)
         .socketTimeoutMillis(2000).connectionTimeoutMillis(2000).build();
 
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
 
     // Create both cluster clients
     legacyCluster = new JedisCluster(CLUSTER_NODES, clientConfig, MAX_ATTEMPTS, poolConfig);
@@ -94,7 +93,7 @@ public class RedisClusterClientMigrationIntegrationTest {
   /**
    * Test migration from constructor with username, password, clientName, and SSL. Tests
    * constructor: JedisCluster(Set&lt;HostAndPort&gt;, int, int, int, String, String, String,
-   * GenericObjectPoolConfig&lt;Connection&gt;, boolean)
+   * SimpleObjectPoolConfig, boolean)
    */
   @Test
   public void testConstructorWithUsernamePasswordClientNameAndSsl() {
@@ -104,7 +103,7 @@ public class RedisClusterClientMigrationIntegrationTest {
     String clientName = "test-client";
     boolean ssl = false; // SSL requires special cluster setup
 
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
 
     // Legacy constructor with username
     legacyCluster = new JedisCluster(CLUSTER_NODES, connectionTimeout, socketTimeout, MAX_ATTEMPTS,
@@ -124,7 +123,7 @@ public class RedisClusterClientMigrationIntegrationTest {
   /**
    * Test migration from constructor with password, clientName, and SSL (no username). Tests
    * constructor: JedisCluster(Set&lt;HostAndPort&gt;, int, int, int, String, String,
-   * GenericObjectPoolConfig&lt;Connection&gt;, boolean)
+   * SimpleObjectPoolConfig, boolean)
    */
   @Test
   public void testConstructorWithPasswordClientNameAndSsl() {
@@ -133,7 +132,7 @@ public class RedisClusterClientMigrationIntegrationTest {
     String clientName = "test-client";
     boolean ssl = false; // SSL requires special cluster setup
 
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
 
     // Legacy constructor without username
     legacyCluster = new JedisCluster(CLUSTER_NODES, connectionTimeout, socketTimeout, MAX_ATTEMPTS,
@@ -152,13 +151,11 @@ public class RedisClusterClientMigrationIntegrationTest {
 
   /**
    * Test migration from simple constructor with just nodes and poolConfig. Tests constructor:
-   * JedisCluster(Set&lt;HostAndPort&gt;, GenericObjectPoolConfig&lt;Connection&gt;)
+   * JedisCluster(Set&lt;HostAndPort&gt;, SimpleObjectPoolConfig)
    */
   @Test
   public void testConstructorWithNodesAndPoolConfig() {
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
-    poolConfig.setMaxTotal(8);
-    poolConfig.setMaxIdle(8);
+    SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder().maxPoolSize(8).build();
     JedisClientConfig clientConfig = DefaultJedisClientConfig.builder().password(PASSWORD).build();
 
     // Legacy constructor
@@ -174,14 +171,14 @@ public class RedisClusterClientMigrationIntegrationTest {
   /**
    * Test migration from constructor with connection timeout, socket timeout, maxAttempts, password,
    * and poolConfig. Tests constructor: JedisCluster(Set&lt;HostAndPort&gt;, int, int, int, String,
-   * GenericObjectPoolConfig&lt;Connection&gt;)
+   * SimpleObjectPoolConfig)
    */
   @Test
   public void testConstructorWithTimeoutsPasswordAndPoolConfig() {
     int connectionTimeout = 2000;
     int socketTimeout = 2000;
 
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
 
     // Legacy constructor
     legacyCluster = new JedisCluster(CLUSTER_NODES, connectionTimeout, socketTimeout, MAX_ATTEMPTS,
@@ -200,13 +197,13 @@ public class RedisClusterClientMigrationIntegrationTest {
 
   /**
    * Test migration from constructor with timeout, maxAttempts, and poolConfig. Tests constructor:
-   * JedisCluster(Set&lt;HostAndPort&gt;, int, int, GenericObjectPoolConfig&lt;Connection&gt;)
+   * JedisCluster(Set&lt;HostAndPort&gt;, int, int, SimpleObjectPoolConfig)
    */
   @Test
   public void testConstructorWithTimeoutMaxAttemptsAndPoolConfig() {
     int timeout = 2000;
 
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
     JedisClientConfig clientConfig = DefaultJedisClientConfig.builder().timeoutMillis(timeout)
         .password(PASSWORD).build();
 
@@ -223,13 +220,13 @@ public class RedisClusterClientMigrationIntegrationTest {
 
   /**
    * Test migration from single HostAndPort constructor with poolConfig. Tests constructor:
-   * JedisCluster(HostAndPort, GenericObjectPoolConfig&lt;Connection&gt;)
+   * JedisCluster(HostAndPort, SimpleObjectPoolConfig)
    */
   @Test
   public void testConstructorWithSingleNodeAndPoolConfig() {
     int timeout = 2000;
     HostAndPort singleNode = endpoint.getHostsAndPorts().get(0);
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
     JedisClientConfig clientConfig = DefaultJedisClientConfig.builder().password(PASSWORD).build();
 
     // Legacy constructor with single node

@@ -1,10 +1,11 @@
 package redis.clients.jedis;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,8 +76,8 @@ public class SentineledConnectionProviderTest {
   @Timeout( value = 1)
   public void getConnectionMapDoesNotCauseConnectionLeak() {
 
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder()
+        .maxPoolSize(1).build();
 
     try (SentineledConnectionProvider sut = new SentineledConnectionProvider(MASTER_NAME,
             primary.getClientConfigBuilder().build(), config, sentinels,
@@ -105,8 +106,8 @@ public class SentineledConnectionProviderTest {
   @Timeout( value = 1)
   public void getPrimaryNodesConnectionMapDoesNotCauseConnectionLeak() {
 
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder()
+        .maxPoolSize(1).build();
 
     try (SentineledConnectionProvider sut = new SentineledConnectionProvider(MASTER_NAME,
             primary.getClientConfigBuilder().build(), config, sentinels,
@@ -156,7 +157,7 @@ public class SentineledConnectionProviderTest {
 
   @Test
   public void checkCloseableConnections() throws Exception {
-    GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.defaultConfig();
 
     try (RedisSentinelClient jedis = RedisSentinelClient
         .builder().masterName(MASTER_NAME).clientConfig(DefaultJedisClientConfig.builder()
@@ -170,9 +171,8 @@ public class SentineledConnectionProviderTest {
 
   @Test
   public void checkResourceIsCloseable() {
-    GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
 
     try (RedisSentinelClient jedis = RedisSentinelClient
         .builder().masterName(MASTER_NAME).clientConfig(DefaultJedisClientConfig.builder()

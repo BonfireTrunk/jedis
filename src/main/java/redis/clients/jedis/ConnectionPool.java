@@ -1,14 +1,13 @@
 package redis.clients.jedis;
 
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-
 import redis.clients.authentication.core.Token;
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.authentication.AuthXManager;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.Pool;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 public class ConnectionPool extends Pool<Connection> {
 
@@ -20,7 +19,7 @@ public class ConnectionPool extends Pool<Connection> {
   }
 
   public ConnectionPool(PooledObjectFactory<Connection> factory,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     super(factory, poolConfig);
   }
 
@@ -31,7 +30,7 @@ public class ConnectionPool extends Pool<Connection> {
   }
 
   public ConnectionPool(HostAndPort hostAndPort, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(new ConnectionFactory(hostAndPort, clientConfig), poolConfig);
     attachAuthenticationListener(clientConfig.getAuthXManager());
   }
@@ -45,7 +44,7 @@ public class ConnectionPool extends Pool<Connection> {
 
   @Experimental
   public ConnectionPool(HostAndPort hostAndPort, JedisClientConfig clientConfig,
-      Cache clientSideCache, GenericObjectPoolConfig<Connection> poolConfig) {
+      Cache clientSideCache, SimpleObjectPoolConfig poolConfig) {
     this(new ConnectionFactory(hostAndPort, clientConfig, clientSideCache), poolConfig);
     attachAuthenticationListener(clientConfig.getAuthXManager());
   }

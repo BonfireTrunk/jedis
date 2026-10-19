@@ -81,7 +81,7 @@ public class TokenBasedAuthenticationUnitTests {
     try (ConnectionPool pool = new ConnectionPool(hnp,
         endpoint.getClientConfigBuilder().authXManager(jedisAuthXManager).build()) {
       @Override
-      public void evict() throws Exception {
+      public void evict() {
         numberOfEvictions.incrementAndGet();
         super.evict();
       }
@@ -107,7 +107,7 @@ public class TokenBasedAuthenticationUnitTests {
     try (ConnectionPool pool = new ConnectionPool(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().authXManager(jedisAuthXManager).build()) {
       @Override
-      public void evict() throws Exception {
+      public void evict() {
         numberOfEvictions.incrementAndGet();
         super.evict();
       }

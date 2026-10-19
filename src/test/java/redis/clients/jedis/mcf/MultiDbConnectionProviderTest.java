@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import redis.clients.jedis.util.TestKeyRegistry;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -190,10 +191,9 @@ public class MultiDbConnectionProviderTest {
 
   @Test
   public void testConnectionPoolConfigApplied() {
-    ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-    poolConfig.setMaxTotal(8);
-    poolConfig.setMaxIdle(4);
-    poolConfig.setMinIdle(1);
+    // SimpleObjectPoolConfig has no maxIdle; only maxPoolSize and minPoolSize are configured
+    SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder().maxPoolSize(8).minPoolSize(1)
+        .build();
     DatabaseConfig[] databaseConfigs = new DatabaseConfig[2];
 
     databaseConfigs[0] = DatabaseConfig
@@ -208,9 +208,8 @@ public class MultiDbConnectionProviderTest {
         new MultiDbConfig.Builder(databaseConfigs).build())) {
       MultiDbConnectionProvider.Database activeDatabase = customProvider.getDatabase();
       ConnectionPool connectionPool = activeDatabase.getConnectionPool();
-      assertEquals(8, connectionPool.getMaxTotal());
-      assertEquals(4, connectionPool.getMaxIdle());
-      assertEquals(1, connectionPool.getMinIdle());
+      assertEquals(8, connectionPool.config().maxPoolSize());
+      assertEquals(1, connectionPool.config().minPoolSize());
     }
   }
 

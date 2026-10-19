@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +20,7 @@ import redis.clients.jedis.EndpointConfig;
 import redis.clients.jedis.Endpoints;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.util.Pool;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 /**
  * Tests for {@link PooledConnectionProvider}.
@@ -35,8 +37,7 @@ public class PooledConnectionProviderIT {
 
   @BeforeEach
   public void setUp() {
-    ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-    poolConfig.setMaxTotal(2);
+    SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder().maxPoolSize(2).build();
     provider = new PooledConnectionProvider(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().build(), poolConfig);
   }
@@ -85,9 +86,8 @@ public class PooledConnectionProviderIT {
   @Test
   @Timeout(value = 1)
   public void getPrimaryNodesConnectionMapDoesNotLeakConnections() {
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
 
     try (PooledConnectionProvider sut = new PooledConnectionProvider(endpoint.getHostAndPort(),
         endpoint.getClientConfigBuilder().build(), config)) {

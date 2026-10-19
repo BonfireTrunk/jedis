@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.redis.test.annotations.EnabledOnCommand;
 import io.redis.test.annotations.SinceRedisVersion;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -652,9 +652,8 @@ public class UnboundRedisClusterClientTest extends UnboundRedisClusterClientTest
 
   @Test
   public void testIfPoolConfigAppliesToClusterPools() {
-    GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(0);
-    config.setMaxWait(Duration.ofMillis(DEFAULT_TIMEOUT));
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ofMillis(DEFAULT_TIMEOUT)).build();
     Set<HostAndPort> jedisClusterNode = new HashSet<>();
     jedisClusterNode.add(nodeInfo1);
     try (RedisClusterClient jc = RedisClusterClient.builder()
@@ -667,7 +666,17 @@ public class UnboundRedisClusterClientTest extends UnboundRedisClusterClientTest
         .maxAttempts(DEFAULT_REDIRECTIONS)
         .poolConfig(config)
         .build()) {
-      assertThrows(JedisException.class, ()->jc.set("52", "poolTestValue"));
+      // SimpleObjectPoolConfig requires maxPoolSize >= 1 (commons-pool2 allowed maxTotal=0), so
+      // exhaust every node pool by holding its only connection instead.
+      List<Connection> held = new ArrayList<>();
+      try {
+        for (ConnectionPool nodePool : jc.getClusterNodes().values()) {
+          held.add(nodePool.getResource());
+        }
+        assertThrows(JedisException.class, ()->jc.set("52", "poolTestValue"));
+      } finally {
+        held.forEach(Connection::close);
+      }
     }
   }
 
@@ -795,8 +804,8 @@ public class UnboundRedisClusterClientTest extends UnboundRedisClusterClientTest
   public void testReturnConnectionOnJedisConnectionException() throws InterruptedException {
     Set<HostAndPort> jedisClusterNode = new HashSet<>();
     jedisClusterNode.add(nodeInfo1);
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder()
+        .maxPoolSize(1).build();
     try (RedisClusterClient jc = RedisClusterClient.builder()
         .nodes(jedisClusterNode)
         .clientConfig(DefaultJedisClientConfig.builder()
@@ -823,8 +832,8 @@ public class UnboundRedisClusterClientTest extends UnboundRedisClusterClientTest
   public void testReturnConnectionOnRedirection() {
     Set<HostAndPort> jedisClusterNode = new HashSet<>();
     jedisClusterNode.add(nodeInfo1);
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder()
+        .maxPoolSize(1).build();
     try (RedisClusterClient jc = RedisClusterClient.builder()
         .nodes(jedisClusterNode)
         .clientConfig(DefaultJedisClientConfig.builder()
@@ -849,8 +858,8 @@ public class UnboundRedisClusterClientTest extends UnboundRedisClusterClientTest
     // cluster node is defined as 127.0.0.1; adding localhost should work,
     // but shouldn't show up.
     jedisClusterNode.add(localhost);
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder()
+        .maxPoolSize(1).build();
 
     try (RedisClusterClient jc = RedisClusterClient.builder()
         .nodes(jedisClusterNode)
@@ -874,8 +883,8 @@ public class UnboundRedisClusterClientTest extends UnboundRedisClusterClientTest
     Set<HostAndPort> jedisClusterNode = new LinkedHashSet<HostAndPort>();
     jedisClusterNode.add(invalidHost);
     jedisClusterNode.add(nodeInfo1);
-    ConnectionPoolConfig config = new ConnectionPoolConfig();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = ConnectionPoolConfig.builder()
+        .maxPoolSize(1).build();
     try (RedisClusterClient jc = RedisClusterClient.builder()
         .nodes(jedisClusterNode)
         .clientConfig(DefaultJedisClientConfig.builder()

@@ -6,15 +6,13 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.exceptions.InvalidURIException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
+import today.bonfire.oss.sop.PooledObjectFactory;
 
 /**
  * PooledObjectFactory implementation for creating and managing {@link Jedis} instances in
@@ -180,16 +178,14 @@ public class JedisFactory implements PooledObjectFactory<Jedis> {
   }
 
   @Override
-  public void activateObject(PooledObject<Jedis> pooledJedis) throws Exception {
-    final Jedis jedis = pooledJedis.getObject();
+  public void activateObject(Jedis jedis) {
     if (jedis.getDB() != clientConfig.getDatabase()) {
       jedis.select(clientConfig.getDatabase());
     }
   }
 
   @Override
-  public void destroyObject(PooledObject<Jedis> pooledJedis) throws Exception {
-    final Jedis jedis = pooledJedis.getObject();
+  public void destroyObject(Jedis jedis) {
     if (jedis.isConnected()) {
       try {
         jedis.close();
@@ -200,11 +196,9 @@ public class JedisFactory implements PooledObjectFactory<Jedis> {
   }
 
   @Override
-  public PooledObject<Jedis> makeObject() throws Exception {
-    Jedis jedis = null;
+  public Jedis createObject() {
     try {
-      jedis = new Jedis(jedisSocketFactory, clientConfig);
-      return new DefaultPooledObject<>(jedis);
+      return new Jedis(jedisSocketFactory, clientConfig);
     } catch (JedisException je) {
       logger.debug("Error while makeObject", je);
       throw je;
@@ -212,13 +206,17 @@ public class JedisFactory implements PooledObjectFactory<Jedis> {
   }
 
   @Override
-  public void passivateObject(PooledObject<Jedis> pooledJedis) throws Exception {
+  public void passivateObject(Jedis jedis) {
     // TODO maybe should select db 0? Not sure right now.
   }
 
   @Override
-  public boolean validateObject(PooledObject<Jedis> pooledJedis) {
-    final Jedis jedis = pooledJedis.getObject();
+  public boolean isObjectValidForBorrow(Jedis jedis) {
+    return isObjectValid(jedis);
+  }
+
+  @Override
+  public boolean isObjectValid(Jedis jedis) {
     try {
       boolean targetHasNotChanged = true;
       if (jedisSocketFactory instanceof DefaultJedisSocketFactory) {

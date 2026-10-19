@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.HostAndPort;
@@ -39,27 +39,27 @@ public class ClusterConnectionProvider implements ConnectionProvider {
   }
 
   public ClusterConnectionProvider(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this.cache = new JedisClusterInfoCache(clientConfig, poolConfig, clusterNodes);
     initializeSlotsCache(clusterNodes, clientConfig);
   }
 
   @Experimental
   public ClusterConnectionProvider(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, Cache clientSideCache,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this.cache = new JedisClusterInfoCache(clientConfig, clientSideCache, poolConfig, clusterNodes);
     initializeSlotsCache(clusterNodes, clientConfig);
   }
 
   public ClusterConnectionProvider(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig, Duration topologyRefreshPeriod) {
+      SimpleObjectPoolConfig poolConfig, Duration topologyRefreshPeriod) {
     this.cache = new JedisClusterInfoCache(clientConfig, poolConfig, clusterNodes, topologyRefreshPeriod);
     initializeSlotsCache(clusterNodes, clientConfig);
   }
 
   @Experimental
   public ClusterConnectionProvider(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, Cache clientSideCache,
-      GenericObjectPoolConfig<Connection> poolConfig, Duration topologyRefreshPeriod) {
+      SimpleObjectPoolConfig poolConfig, Duration topologyRefreshPeriod) {
     this.cache = new JedisClusterInfoCache(clientConfig, clientSideCache, poolConfig, clusterNodes, topologyRefreshPeriod);
     initializeSlotsCache(clusterNodes, clientConfig);
   }

@@ -9,8 +9,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -65,7 +65,7 @@ public class JedisClusterConstructorReflectionTest {
         } else if (t == JedisClientConfig.class) {
           paramCovered[i] = true;
           paramCoverageBy[i] = "JedisCluster.builder().clientConfig(DefaultJedisClientConfig...)";
-        } else if (t == GenericObjectPoolConfig.class) {
+        } else if (t == SimpleObjectPoolConfig.class) {
           paramCovered[i] = true;
           paramCoverageBy[i] = "JedisCluster.builder().poolConfig(...)";
         } else if (t == Cache.class) {

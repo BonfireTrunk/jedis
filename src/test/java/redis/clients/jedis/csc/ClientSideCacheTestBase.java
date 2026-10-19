@@ -3,7 +3,7 @@ package redis.clients.jedis.csc;
 import java.util.function.Supplier;
 
 import io.redis.test.annotations.SinceRedisVersion;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -53,10 +53,8 @@ public abstract class ClientSideCacheTestBase {
 
   protected static final Supplier<JedisClientConfig> clientConfig = () -> endpoint.getClientConfigBuilder().resp3().build();
 
-  protected static final Supplier<GenericObjectPoolConfig<Connection>> singleConnectionPoolConfig = () -> {
-    ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-    poolConfig.setMaxTotal(1);
-    return poolConfig;
+  protected static final Supplier<SimpleObjectPoolConfig> singleConnectionPoolConfig = () -> {
+    return ConnectionPoolConfig.builder().maxPoolSize(1).build();
   };
 
 }

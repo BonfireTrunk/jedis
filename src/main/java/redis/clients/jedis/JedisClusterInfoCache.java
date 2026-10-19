@@ -20,7 +20,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class JedisClusterInfoCache {
   private final Lock w = rwl.writeLock();
   private final Lock rediscoverLock = new ReentrantLock();
 
-  private final GenericObjectPoolConfig<Connection> poolConfig;
+  private final SimpleObjectPoolConfig poolConfig;
   private final JedisClientConfig clientConfig;
   private final Cache clientSideCache;
   private final Set<HostAndPort> startNodes;
@@ -81,25 +81,25 @@ public class JedisClusterInfoCache {
   }
 
   public JedisClusterInfoCache(final JedisClientConfig clientConfig,
-      final GenericObjectPoolConfig<Connection> poolConfig, final Set<HostAndPort> startNodes) {
+      final SimpleObjectPoolConfig poolConfig, final Set<HostAndPort> startNodes) {
     this(clientConfig, null, poolConfig, startNodes);
   }
 
   @Experimental
   public JedisClusterInfoCache(final JedisClientConfig clientConfig, Cache clientSideCache,
-      final GenericObjectPoolConfig<Connection> poolConfig, final Set<HostAndPort> startNodes) {
+      final SimpleObjectPoolConfig poolConfig, final Set<HostAndPort> startNodes) {
     this(clientConfig, clientSideCache, poolConfig, startNodes, null);
   }
 
   public JedisClusterInfoCache(final JedisClientConfig clientConfig,
-      final GenericObjectPoolConfig<Connection> poolConfig, final Set<HostAndPort> startNodes,
+      final SimpleObjectPoolConfig poolConfig, final Set<HostAndPort> startNodes,
       final Duration topologyRefreshPeriod) {
     this(clientConfig, null, poolConfig, startNodes, topologyRefreshPeriod);
   }
 
   @Experimental
   public JedisClusterInfoCache(final JedisClientConfig clientConfig, Cache clientSideCache,
-      final GenericObjectPoolConfig<Connection> poolConfig, final Set<HostAndPort> startNodes,
+      final SimpleObjectPoolConfig poolConfig, final Set<HostAndPort> startNodes,
       final Duration topologyRefreshPeriod) {
     this.poolConfig = poolConfig;
     this.clientConfig = clientConfig;

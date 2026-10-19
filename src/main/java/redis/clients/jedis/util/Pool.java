@@ -1,19 +1,19 @@
 package redis.clients.jedis.util;
 
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import redis.clients.jedis.exceptions.JedisException;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPool;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
-public class Pool<T> extends GenericObjectPool<T> {
+public class Pool<T> extends SimpleObjectPool<T> {
 
   // Legacy
-  public Pool(GenericObjectPoolConfig<T> poolConfig, PooledObjectFactory<T> factory) {
+  public Pool(SimpleObjectPoolConfig poolConfig, PooledObjectFactory<T> factory) {
     this(factory, poolConfig);
   }
 
-  public Pool(final PooledObjectFactory<T> factory, final GenericObjectPoolConfig<T> poolConfig) {
-    super(factory, poolConfig);
+  public Pool(final PooledObjectFactory<T> factory, final SimpleObjectPoolConfig poolConfig) {
+    super(poolConfig, factory);
   }
 
   public Pool(final PooledObjectFactory<T> factory) {
@@ -59,20 +59,42 @@ public class Pool<T> extends GenericObjectPool<T> {
       return;
     }
     try {
-      super.invalidateObject(resource);
+      super.returnObject(resource, true);
     } catch (Exception e) {
       throw new JedisException("Could not return the broken resource to the pool", e);
     }
   }
 
   @Override
-  public void addObjects(int count) {
+  public int addObjects(int count) {
     try {
-      for (int i = 0; i < count; i++) {
-        addObject();
-      }
+      return super.addObjects(count);
     } catch (Exception e) {
       throw new JedisException("Error trying to add idle objects", e);
     }
+  }
+
+  /**
+   * Destroys all idle objects. Borrowed objects are not affected.
+   */
+  public void clear() {
+    super.destroyAllIdleObjects();
+  }
+
+  @Override
+  public PooledObjectFactory<T> getFactory() {
+    return super.getFactory();
+  }
+
+  public int getNumActive() {
+    return super.borrowedObjectsCount();
+  }
+
+  public int getNumIdle() {
+    return super.idleObjectCount();
+  }
+
+  public int getNumWaiters() {
+    return super.waitingCount();
   }
 }

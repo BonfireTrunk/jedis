@@ -1,8 +1,7 @@
 package redis.clients.jedis;
 
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +19,9 @@ public class JedisPoolUnitTest {
     mockJedis = mock(Jedis.class);
     PooledObjectFactory<Jedis> mockFactory = mock(PooledObjectFactory.class);
 
-    when(mockFactory.makeObject()).thenReturn(new DefaultPooledObject<>(mockJedis));
+    when(mockFactory.createObject()).thenReturn(mockJedis);
 
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1).build();
     pool = spy(new JedisPool(config, mockFactory));
 
   }

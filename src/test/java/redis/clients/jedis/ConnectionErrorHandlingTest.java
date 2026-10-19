@@ -23,10 +23,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.PooledObjectFactory;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.Test;
 
 import redis.clients.jedis.Protocol.Command;
@@ -1528,8 +1526,7 @@ public class ConnectionErrorHandlingTest {
 
   private static ConnectionPool newSingleConnectionPool(AtomicInteger destroyed,
       Supplier<Connection> connectionSupplier) {
-    GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1).build();
     return new ConnectionPool(new SuppliedConnectionFactory(connectionSupplier, destroyed), config);
   }
 
@@ -2176,7 +2173,7 @@ public class ConnectionErrorHandlingTest {
     }
   }
 
-  private static final class SuppliedConnectionFactory extends BasePooledObjectFactory<Connection> {
+  private static final class SuppliedConnectionFactory implements PooledObjectFactory<Connection> {
 
     private final Supplier<Connection> connectionSupplier;
     private final AtomicInteger destroyed;
@@ -2188,19 +2185,13 @@ public class ConnectionErrorHandlingTest {
     }
 
     @Override
-    public Connection create() {
+    public Connection createObject() {
       return connectionSupplier.get();
     }
 
     @Override
-    public PooledObject<Connection> wrap(Connection connection) {
-      return new DefaultPooledObject<>(connection);
-    }
-
-    @Override
-    public void destroyObject(PooledObject<Connection> pooledObject) throws Exception {
+    public void destroyObject(Connection connection) {
       destroyed.incrementAndGet();
-      super.destroyObject(pooledObject);
     }
   }
 

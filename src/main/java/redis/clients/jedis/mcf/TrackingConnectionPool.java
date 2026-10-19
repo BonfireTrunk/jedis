@@ -4,8 +4,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +17,8 @@ import redis.clients.jedis.JedisClientConfig;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConnection;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.util.PlainPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 public class TrackingConnectionPool extends ConnectionPool {
 
@@ -42,18 +42,18 @@ public class TrackingConnectionPool extends ConnectionPool {
     }
 
     @Override
-    public PooledObject<Connection> makeObject() throws Exception {
+    public Connection createObject() {
       if (failFast) {
         throw new JedisConnectionException("Failed to create connection!");
       }
       try {
-        PooledObject<Connection> object = super.makeObject();
+        Connection connection = super.createObject();
         // this can make a marginal improvement on fast failover duration!
         if (failFast) {
-          object.getObject().close();
+          connection.close();
           throw new JedisConnectionException("Failed to create connection!");
         }
-        return object;
+        return connection;
       } catch (JedisConnectionException e) {
         throw e;
       } catch (Exception e) {
@@ -89,7 +89,7 @@ public class TrackingConnectionPool extends ConnectionPool {
   public static class Builder {
     private HostAndPort hostAndPort;
     private JedisClientConfig clientConfig;
-    private GenericObjectPoolConfig<Connection> poolConfig;
+    private SimpleObjectPoolConfig poolConfig;
     private Cache cache;
 
     public Builder hostAndPort(HostAndPort hostAndPort) {
@@ -102,7 +102,7 @@ public class TrackingConnectionPool extends ConnectionPool {
       return this;
     }
 
-    public Builder poolConfig(GenericObjectPoolConfig<Connection> poolConfig) {
+    public Builder poolConfig(SimpleObjectPoolConfig poolConfig) {
       this.poolConfig = poolConfig;
       return this;
     }
@@ -122,7 +122,7 @@ public class TrackingConnectionPool extends ConnectionPool {
         clientConfig = DefaultJedisClientConfig.builder().build();
       }
       if (poolConfig == null) {
-        poolConfig = new GenericObjectPoolConfig<>();
+        poolConfig = PlainPoolConfig.create();
       }
     }
   }
@@ -131,7 +131,7 @@ public class TrackingConnectionPool extends ConnectionPool {
 
   private final HostAndPort hostAndPort;
   private final JedisClientConfig clientConfig;
-  private final GenericObjectPoolConfig<Connection> poolConfig;
+  private final SimpleObjectPoolConfig poolConfig;
   private final Cache cache;
   private final AtomicInteger numWaiters = new AtomicInteger();
   private final Set<Connection> poolTrackedObjects = ConcurrentHashMap.newKeySet();
@@ -142,7 +142,7 @@ public class TrackingConnectionPool extends ConnectionPool {
 
   private TrackingConnectionPool(Builder builder) {
     super(createfailFastFactory(builder),
-        builder.poolConfig != null ? builder.poolConfig : new GenericObjectPoolConfig<>());
+        builder.poolConfig != null ? builder.poolConfig : PlainPoolConfig.create());
 
     this.hostAndPort = builder.hostAndPort;
     this.clientConfig = builder.clientConfig;

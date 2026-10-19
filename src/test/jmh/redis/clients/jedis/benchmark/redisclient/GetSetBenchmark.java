@@ -1,6 +1,6 @@
 package redis.clients.jedis.benchmark.redisclient;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import redis.clients.jedis.*;
@@ -63,12 +63,12 @@ public abstract class GetSetBenchmark {
   public void setupTrial() {
     // Configure connection pool sized for max concurrency (64 threads)
     // Pool size must exceed thread count to avoid measuring pool contention
-    GenericObjectPoolConfig<Connection> poolConfig = new GenericObjectPoolConfig<>();
-    poolConfig.setMaxTotal(64); // >= max thread count across all subclasses
-    poolConfig.setMaxIdle(64); // Keep connections alive for reuse
-    poolConfig.setMinIdle(8); // Warm pool for baseline scenarios
-    poolConfig.setBlockWhenExhausted(true); // Block if pool exhausted (shouldn't happen)
-    poolConfig.setMaxWait(java.time.Duration.ofSeconds(5)); // Max wait time
+    // maxPoolSize >= max thread count across all subclasses; minPoolSize warms the pool for
+    // baseline scenarios; waitingForObjectTimeout bounds the wait if the pool is exhausted
+    // (shouldn't happen). SimpleObjectPool has no maxIdle: idle connections are kept until
+    // objEvictionTimeout.
+    SimpleObjectPoolConfig poolConfig = SimpleObjectPoolConfig.builder().maxPoolSize(64)
+        .minPoolSize(8).waitingForObjectTimeout(java.time.Duration.ofSeconds(5)).build();
 
     // Create RedisClient with properly-sized connection pool
     redisClient = RedisClient.builder().hostAndPort(endpoint.getHost(), endpoint.getPort())

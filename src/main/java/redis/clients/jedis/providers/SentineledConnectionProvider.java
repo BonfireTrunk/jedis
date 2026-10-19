@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class SentineledConnectionProvider implements ConnectionProvider {
 
   private final Cache clientSideCache;
 
-  private final GenericObjectPoolConfig<Connection> masterPoolConfig;
+  private final SimpleObjectPoolConfig masterPoolConfig;
 
   protected final Collection<SentinelListener> sentinelListeners = new ArrayList<>();
 
@@ -77,14 +77,14 @@ public class SentineledConnectionProvider implements ConnectionProvider {
   }
 
   public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-      final GenericObjectPoolConfig<Connection> poolConfig,
+      final SimpleObjectPoolConfig poolConfig,
       Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
     this(masterName, masterClientConfig, poolConfig, sentinels, sentinelClientConfig, DEFAULT_RESUBSCRIBE_DELAY);
   }
 
   @Experimental
   public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-          Cache clientSideCache, final GenericObjectPoolConfig<Connection> poolConfig,
+          Cache clientSideCache, final SimpleObjectPoolConfig poolConfig,
           Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig) {
     this(masterName, masterClientConfig, clientSideCache, poolConfig, sentinels, sentinelClientConfig,
             DEFAULT_RESUBSCRIBE_DELAY);
@@ -93,11 +93,11 @@ public class SentineledConnectionProvider implements ConnectionProvider {
   /**
    *
    * @deprecated use
-   *             {@link #SentineledConnectionProvider(String, JedisClientConfig, GenericObjectPoolConfig, Set, JedisClientConfig, Delay)}
+   *             {@link #SentineledConnectionProvider(String, JedisClientConfig, SimpleObjectPoolConfig, Set, JedisClientConfig, Delay)}
    */
   @Deprecated
   public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-          final GenericObjectPoolConfig<Connection> poolConfig, Set<HostAndPort> sentinels,
+          final SimpleObjectPoolConfig poolConfig, Set<HostAndPort> sentinels,
           final JedisClientConfig sentinelClientConfig, final long subscribeRetryWaitTimeMillis) {
     this(masterName, masterClientConfig, null, poolConfig, sentinels, sentinelClientConfig,
         Delay.constant(Duration.ofMillis(subscribeRetryWaitTimeMillis)));
@@ -116,19 +116,19 @@ public class SentineledConnectionProvider implements ConnectionProvider {
    * @since 7.3.0
    */
   public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-          final GenericObjectPoolConfig<Connection> poolConfig, Set<HostAndPort> sentinels,
+          final SimpleObjectPoolConfig poolConfig, Set<HostAndPort> sentinels,
           final JedisClientConfig sentinelClientConfig, final Delay subscribeRetryWaitTimeMillis) {
     this(masterName, masterClientConfig, null, poolConfig, sentinels, sentinelClientConfig, subscribeRetryWaitTimeMillis);
   }
 
   /**
    * @deprecated use
-   *             {@link #SentineledConnectionProvider(String, JedisClientConfig, Cache, GenericObjectPoolConfig, Set, JedisClientConfig, Delay)}
+   *             {@link #SentineledConnectionProvider(String, JedisClientConfig, Cache, SimpleObjectPoolConfig, Set, JedisClientConfig, Delay)}
    */
   @Experimental
   @Deprecated
   public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-      Cache clientSideCache, final GenericObjectPoolConfig<Connection> poolConfig,
+      Cache clientSideCache, final SimpleObjectPoolConfig poolConfig,
       Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig,
       final long subscribeRetryWaitTimeMillis) {
 
@@ -138,7 +138,7 @@ public class SentineledConnectionProvider implements ConnectionProvider {
 
   @Experimental
   public SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-      Cache clientSideCache, final GenericObjectPoolConfig<Connection> poolConfig,
+      Cache clientSideCache, final SimpleObjectPoolConfig poolConfig,
       Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig,
       final Delay resubscribeDelay) {
     this(masterName, masterClientConfig, clientSideCache, poolConfig, sentinels,
@@ -146,7 +146,7 @@ public class SentineledConnectionProvider implements ConnectionProvider {
   }
 
   SentineledConnectionProvider(String masterName, final JedisClientConfig masterClientConfig,
-      Cache clientSideCache, final GenericObjectPoolConfig<Connection> poolConfig,
+      Cache clientSideCache, final SimpleObjectPoolConfig poolConfig,
       Set<HostAndPort> sentinels, final JedisClientConfig sentinelClientConfig,
       final Delay resubscribeDelay, SentinelConnectionFactory sentinelConnectionFactory,
       Sleeper sleeper) {

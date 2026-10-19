@@ -11,11 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.redis.test.annotations.ConditionalOnEnv;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -72,9 +73,8 @@ public class RedisClientTest {
 
   @Test
   public void checkPoolOverflow() {
-    GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
-    config.setBlockWhenExhausted(false);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .waitingForObjectTimeout(Duration.ZERO).build();
     try (
         RedisClient pool = RedisClient.builder().hostAndPort(endpointStandalone7.getHostAndPort())
             .poolConfig(config).build();
@@ -290,9 +290,8 @@ public class RedisClientTest {
     };
 
     // TODO: do it without the help of pool config; from Connection constructor? (configurable) force ping?
-    GenericObjectPoolConfig<Connection> poolConfig = new GenericObjectPoolConfig<>();
-    poolConfig.setMaxTotal(1);
-    poolConfig.setTestOnBorrow(true);
+    SimpleObjectPoolConfig poolConfig = SimpleObjectPoolConfig.builder().maxPoolSize(1)
+        .testOnBorrow(true).build();
     try (RedisClient pool = RedisClient.builder().hostAndPort(endpointStandalone1.getHostAndPort())
         .clientConfig(
           DefaultJedisClientConfig.builder().credentialsProvider(credentialsProvider).build())

@@ -1,8 +1,7 @@
 package redis.clients.jedis.benchmark.workload;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.openjdk.jmh.annotations.*;
-import redis.clients.jedis.Connection;
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.EndpointConfig;
 import redis.clients.jedis.Endpoints;
@@ -183,9 +182,8 @@ public abstract class GetSetMixedR90W10Benchmark {
 
     @Override
     protected void setupClient() {
-      GenericObjectPoolConfig<Jedis> poolConfig = new GenericObjectPoolConfig<>();
-      poolConfig.setMaxTotal(POOL_SIZE);
-      poolConfig.setMaxIdle(POOL_SIZE);
+      SimpleObjectPoolConfig poolConfig = SimpleObjectPoolConfig.builder().maxPoolSize(POOL_SIZE)
+          .build();
       pool = new JedisPool(poolConfig, new HostAndPort(endpoint.getHost(), endpoint.getPort()),
           DefaultJedisClientConfig.builder().password(endpoint.getPassword())
               .serverDefaultProtocol().build());
@@ -300,9 +298,7 @@ public abstract class GetSetMixedR90W10Benchmark {
   // ====================================================================
 
   private static RedisClient buildRedisClient(boolean withCSC) {
-    GenericObjectPoolConfig<Connection> pool = new GenericObjectPoolConfig<>();
-    pool.setMaxTotal(POOL_SIZE);
-    pool.setMaxIdle(POOL_SIZE);
+    SimpleObjectPoolConfig pool = SimpleObjectPoolConfig.builder().maxPoolSize(POOL_SIZE).build();
 
     DefaultJedisClientConfig.Builder cfg = DefaultJedisClientConfig.builder()
         .password(endpoint.getPassword());

@@ -1,8 +1,7 @@
 package redis.clients.jedis.examples;
 
 import java.time.Duration;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import redis.clients.jedis.Connection;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import redis.clients.jedis.ConnectionPoolConfig;
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.HostAndPort;
@@ -27,7 +26,7 @@ public class RetryableCommandExecution {
     // Connection and pool parameters
     HostAndPort hostAndPort = new HostAndPort("127.0.0.1", 6379);
     JedisClientConfig clientConfig = DefaultJedisClientConfig.builder().user("myuser").password("mypassword").build();
-    GenericObjectPoolConfig<Connection> poolConfig = new ConnectionPoolConfig();
+    SimpleObjectPoolConfig poolConfig = new ConnectionPoolConfig();
 
     PooledConnectionProvider provider = new PooledConnectionProvider(hostAndPort, clientConfig, poolConfig);
 

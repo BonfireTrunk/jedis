@@ -5,7 +5,7 @@ import io.redis.test.annotations.SinceRedisVersion;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.Tag;
@@ -27,11 +27,9 @@ public class RedisClusterClientSideCacheTest extends UnifiedJedisClientSideCache
   private static final Supplier<JedisClientConfig> clientConfig
       = () -> endpoint.getClientConfigBuilder().resp3().build();
 
-  private static final Supplier<GenericObjectPoolConfig<Connection>> singleConnectionPoolConfig
+  private static final Supplier<SimpleObjectPoolConfig> singleConnectionPoolConfig
       = () -> {
-        ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-        poolConfig.setMaxTotal(1);
-        return poolConfig;
+        return ConnectionPoolConfig.builder().maxPoolSize(1).build();
       };
 
   @RegisterExtension

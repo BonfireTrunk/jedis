@@ -1,8 +1,5 @@
 package redis.clients.jedis;
 
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.PooledObjectFactory;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +12,7 @@ import redis.clients.jedis.authentication.AuthXEventListener;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConnection;
 import redis.clients.jedis.exceptions.JedisException;
+import today.bonfire.oss.sop.PooledObjectFactory;
 
 /**
  * PoolableObjectFactory custom impl.
@@ -167,13 +165,12 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
   }
 
   @Override
-  public void activateObject(PooledObject<Connection> pooledConnection) throws Exception {
+  public void activateObject(Connection connection) {
     // what to do ??
   }
 
   @Override
-  public void destroyObject(PooledObject<Connection> pooledConnection) throws Exception {
-    final Connection jedis = pooledConnection.getObject();
+  public void destroyObject(Connection jedis) {
     if (jedis.isConnected()) {
       try {
         jedis.close();
@@ -184,10 +181,9 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
   }
 
   @Override
-  public PooledObject<Connection> makeObject() throws Exception {
+  public Connection createObject() {
     try {
-      Connection jedis = objectMaker.get();
-      return new DefaultPooledObject<>(jedis);
+      return objectMaker.get();
     } catch (JedisException je) {
       logger.debug("Error while makeObject", je);
       throw je;
@@ -195,15 +191,18 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
   }
 
   @Override
-  public void passivateObject(PooledObject<Connection> pooledConnection) throws Exception {
+  public void passivateObject(Connection jedis) {
     // TODO maybe should select db 0? Not sure right now.
-    Connection jedis = pooledConnection.getObject();
     reAuthenticate(jedis);
   }
 
   @Override
-  public boolean validateObject(PooledObject<Connection> pooledConnection) {
-    final Connection jedis = pooledConnection.getObject();
+  public boolean isObjectValidForBorrow(Connection jedis) {
+    return isObjectValid(jedis);
+  }
+
+  @Override
+  public boolean isObjectValid(Connection jedis) {
     try {
       // check HostAndPort ??
       if (!jedis.isConnected()) {
@@ -217,7 +216,7 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
     }
   }
 
-  private void reAuthenticate(Connection jedis) throws Exception {
+  private void reAuthenticate(Connection jedis) {
     try {
       String result = jedis.reAuthenticate();
       if (result != null && !result.equals("OK")) {

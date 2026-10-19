@@ -1,13 +1,12 @@
 package redis.clients.jedis.tls;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.EndpointConfig;
 import redis.clients.jedis.Endpoints;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
 
 /**
@@ -22,7 +21,7 @@ import redis.clients.jedis.JedisSentinelPool;
  */
 public class SSLOptionsJedisSentinelPoolIT extends RedisSentinelTlsTestBase {
 
-  private static final GenericObjectPoolConfig<Jedis> POOL_CONFIG = new GenericObjectPoolConfig<>();
+  private static final SimpleObjectPoolConfig POOL_CONFIG = SimpleObjectPoolConfig.defaultConfig();
 
   // Endpoints for different SSL configurations
   private static EndpointConfig aclTlsEndpoint;

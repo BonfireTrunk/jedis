@@ -37,6 +37,7 @@ import redis.clients.jedis.util.GeoCoordinateMatcher;
 import redis.clients.jedis.util.GeoRadiusResponseMatcher;
 import redis.clients.jedis.util.JedisClusterTestUtil;
 import redis.clients.jedis.util.SafeEncoder;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 @Tag("integration")
 @ParameterizedClass
@@ -1121,8 +1122,8 @@ public class ClusterPipeliningTest {
   @Timeout(10)
   public void multiple() {
     final int maxTotal = 100;
-    ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-    poolConfig.setMaxTotal(maxTotal);
+    SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder()
+        .maxPoolSize(maxTotal).build();
     try (RedisClusterClient cluster = RedisClusterClient.builder().nodes(nodes).clientConfig(
         clientConfig).maxAttempts(5).poolConfig(poolConfig).build()) {
       for (int i = 0; i < maxTotal; i++) {

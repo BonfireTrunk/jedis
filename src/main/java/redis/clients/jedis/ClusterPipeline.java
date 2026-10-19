@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 import redis.clients.jedis.exceptions.JedisClusterOperationException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.providers.ClusterConnectionProvider;
@@ -70,13 +70,13 @@ public class ClusterPipeline extends MultiNodePipelineBase {
   }
 
   public ClusterPipeline(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, poolConfig), clientConfig);
     this.closeable = this.provider;
   }
 
   public ClusterPipeline(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig, Duration topologyRefreshPeriod) {
+      SimpleObjectPoolConfig poolConfig, Duration topologyRefreshPeriod) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, poolConfig, topologyRefreshPeriod),
         clientConfig);
     this.closeable = this.provider;

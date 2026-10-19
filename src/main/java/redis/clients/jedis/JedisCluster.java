@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import redis.clients.jedis.annots.Experimental;
 import redis.clients.jedis.builders.ClusterClientBuilder;
@@ -77,45 +77,45 @@ public class JedisCluster extends UnifiedJedis {
     this(Collections.singleton(node), timeout, maxAttempts);
   }
 
-  public JedisCluster(HostAndPort node, final GenericObjectPoolConfig<Connection> poolConfig) {
+  public JedisCluster(HostAndPort node, final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), poolConfig);
   }
 
-  public JedisCluster(HostAndPort node, int timeout, final GenericObjectPoolConfig<Connection> poolConfig) {
+  public JedisCluster(HostAndPort node, int timeout, final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), timeout, poolConfig);
   }
 
   public JedisCluster(HostAndPort node, int timeout, int maxAttempts,
-      final GenericObjectPoolConfig<Connection> poolConfig) {
+      final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), timeout, maxAttempts, poolConfig);
   }
 
   public JedisCluster(HostAndPort node, int connectionTimeout, int soTimeout, int maxAttempts,
-      final GenericObjectPoolConfig<Connection> poolConfig) {
+      final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), connectionTimeout, soTimeout, maxAttempts, poolConfig);
   }
 
   public JedisCluster(HostAndPort node, int connectionTimeout, int soTimeout, int maxAttempts,
-      String password, final GenericObjectPoolConfig<Connection> poolConfig) {
+      String password, final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), connectionTimeout, soTimeout, maxAttempts, password,
         poolConfig);
   }
 
   public JedisCluster(HostAndPort node, int connectionTimeout, int soTimeout, int maxAttempts,
-      String password, String clientName, final GenericObjectPoolConfig<Connection> poolConfig) {
+      String password, String clientName, final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), connectionTimeout, soTimeout, maxAttempts, password,
         clientName, poolConfig);
   }
 
   public JedisCluster(HostAndPort node, int connectionTimeout, int soTimeout, int maxAttempts,
       String user, String password, String clientName,
-      final GenericObjectPoolConfig<Connection> poolConfig) {
+      final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), connectionTimeout, soTimeout, maxAttempts, user, password,
         clientName, poolConfig);
   }
 
   public JedisCluster(HostAndPort node, int connectionTimeout, int soTimeout, int maxAttempts,
-      String password, String clientName, final GenericObjectPoolConfig<Connection> poolConfig,
+      String password, String clientName, final SimpleObjectPoolConfig poolConfig,
       boolean ssl) {
     this(Collections.singleton(node), connectionTimeout, soTimeout, maxAttempts, password,
         clientName, poolConfig, ssl);
@@ -123,13 +123,13 @@ public class JedisCluster extends UnifiedJedis {
 
   public JedisCluster(HostAndPort node, int connectionTimeout, int soTimeout, int maxAttempts,
       String user, String password, String clientName,
-      final GenericObjectPoolConfig<Connection> poolConfig, boolean ssl) {
+      final SimpleObjectPoolConfig poolConfig, boolean ssl) {
     this(Collections.singleton(node), connectionTimeout, soTimeout, maxAttempts, user, password,
         clientName, poolConfig, ssl);
   }
 
   public JedisCluster(HostAndPort node, final JedisClientConfig clientConfig, int maxAttempts,
-      final GenericObjectPoolConfig<Connection> poolConfig) {
+      final SimpleObjectPoolConfig poolConfig) {
     this(Collections.singleton(node), clientConfig, maxAttempts, poolConfig);
   }
 
@@ -177,40 +177,40 @@ public class JedisCluster extends UnifiedJedis {
         .hostAndPortMapper(hostAndPortMap).build());
   }
 
-  public JedisCluster(Set<HostAndPort> nodes, final GenericObjectPoolConfig<Connection> poolConfig) {
+  public JedisCluster(Set<HostAndPort> nodes, final SimpleObjectPoolConfig poolConfig) {
     this(nodes, DEFAULT_TIMEOUT, DEFAULT_MAX_ATTEMPTS, poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> nodes, int timeout,
-      final GenericObjectPoolConfig<Connection> poolConfig) {
+      final SimpleObjectPoolConfig poolConfig) {
     this(nodes, timeout, DEFAULT_MAX_ATTEMPTS, poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int timeout, int maxAttempts,
-      final GenericObjectPoolConfig<Connection> poolConfig) {
+      final SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, timeout, timeout, maxAttempts, poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
-      int maxAttempts, final GenericObjectPoolConfig<Connection> poolConfig) {
+      int maxAttempts, final SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, connectionTimeout, soTimeout, maxAttempts, null, poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
-      int maxAttempts, String password, GenericObjectPoolConfig<Connection> poolConfig) {
+      int maxAttempts, String password, SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, connectionTimeout, soTimeout, maxAttempts, password, null, poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
       int maxAttempts, String password, String clientName,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, connectionTimeout, soTimeout, maxAttempts, null, password, clientName,
         poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
       int maxAttempts, String user, String password, String clientName,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, DefaultJedisClientConfig.builder().connectionTimeoutMillis(connectionTimeout)
         .socketTimeoutMillis(soTimeout).user(user).password(password).clientName(clientName).build(),
         maxAttempts, poolConfig);
@@ -218,7 +218,7 @@ public class JedisCluster extends UnifiedJedis {
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
       int infiniteSoTimeout, int maxAttempts, String user, String password, String clientName,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, DefaultJedisClientConfig.builder().connectionTimeoutMillis(connectionTimeout)
         .socketTimeoutMillis(soTimeout).blockingSocketTimeoutMillis(infiniteSoTimeout)
         .user(user).password(password).clientName(clientName).build(), maxAttempts, poolConfig);
@@ -226,14 +226,14 @@ public class JedisCluster extends UnifiedJedis {
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
       int maxAttempts, String password, String clientName,
-      GenericObjectPoolConfig<Connection> poolConfig, boolean ssl) {
+      SimpleObjectPoolConfig poolConfig, boolean ssl) {
     this(clusterNodes, connectionTimeout, soTimeout, maxAttempts, null, password, clientName,
         poolConfig, ssl);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, int connectionTimeout, int soTimeout,
       int maxAttempts, String user, String password, String clientName,
-      GenericObjectPoolConfig<Connection> poolConfig, boolean ssl) {
+      SimpleObjectPoolConfig poolConfig, boolean ssl) {
     this(clusterNodes, DefaultJedisClientConfig.builder().connectionTimeoutMillis(connectionTimeout)
         .socketTimeoutMillis(soTimeout).user(user).password(password).clientName(clientName).ssl(ssl).build(),
         maxAttempts, poolConfig);
@@ -268,24 +268,24 @@ public class JedisCluster extends UnifiedJedis {
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, clientConfig, DEFAULT_MAX_ATTEMPTS, poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, int maxAttempts,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(clusterNodes, clientConfig, maxAttempts,
         Duration.ofMillis((long) clientConfig.getSocketTimeoutMillis() * maxAttempts), poolConfig);
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, int maxAttempts,
-      Duration maxTotalRetriesDuration, GenericObjectPoolConfig<Connection> poolConfig) {
+      Duration maxTotalRetriesDuration, SimpleObjectPoolConfig poolConfig) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, poolConfig), maxAttempts, maxTotalRetriesDuration,
         clientConfig.getRedisProtocol());
   }
 
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig,
-      GenericObjectPoolConfig<Connection> poolConfig, Duration topologyRefreshPeriod, int maxAttempts,
+      SimpleObjectPoolConfig poolConfig, Duration topologyRefreshPeriod, int maxAttempts,
       Duration maxTotalRetriesDuration) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, poolConfig, topologyRefreshPeriod),
         maxAttempts, maxTotalRetriesDuration, clientConfig.getRedisProtocol());
@@ -326,14 +326,14 @@ public class JedisCluster extends UnifiedJedis {
 
   @Experimental
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, Cache clientSideCache,
-      int maxAttempts, Duration maxTotalRetriesDuration, GenericObjectPoolConfig<Connection> poolConfig) {
+      int maxAttempts, Duration maxTotalRetriesDuration, SimpleObjectPoolConfig poolConfig) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, clientSideCache, poolConfig),
         maxAttempts, maxTotalRetriesDuration, clientConfig.getRedisProtocol(), clientSideCache);
   }
 
   @Experimental
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, Cache clientSideCache,
-      GenericObjectPoolConfig<Connection> poolConfig) {
+      SimpleObjectPoolConfig poolConfig) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, clientSideCache, poolConfig),
         DEFAULT_MAX_ATTEMPTS, Duration.ofMillis(DEFAULT_MAX_ATTEMPTS * clientConfig.getSocketTimeoutMillis()),
         clientConfig.getRedisProtocol(), clientSideCache);
@@ -341,7 +341,7 @@ public class JedisCluster extends UnifiedJedis {
 
   @Experimental
   public JedisCluster(Set<HostAndPort> clusterNodes, JedisClientConfig clientConfig, Cache clientSideCache,
-      GenericObjectPoolConfig<Connection> poolConfig, Duration topologyRefreshPeriod, int maxAttempts,
+      SimpleObjectPoolConfig poolConfig, Duration topologyRefreshPeriod, int maxAttempts,
       Duration maxTotalRetriesDuration) {
     this(new ClusterConnectionProvider(clusterNodes, clientConfig, clientSideCache, poolConfig, topologyRefreshPeriod),
         maxAttempts, maxTotalRetriesDuration, clientConfig.getRedisProtocol(), clientSideCache);

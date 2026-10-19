@@ -3,7 +3,7 @@ package redis.clients.jedis;
 import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import io.redis.test.annotations.ConditionalOnEnv;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -68,8 +68,7 @@ public class UnavailableConnectionTest {
   }
 
   public static void setupAvoidQuitInDestroyObject() throws InterruptedException {
-    GenericObjectPoolConfig<Jedis> config = new GenericObjectPoolConfig<>();
-    config.setMaxTotal(1);
+    SimpleObjectPoolConfig config = SimpleObjectPoolConfig.builder().maxPoolSize(1).build();
     poolForBrokenJedis1 = new JedisPool(config, unavailableNode.getHost(),
         unavailableNode.getPort());
     brokenJedis1 = poolForBrokenJedis1.getResource();
@@ -91,11 +90,12 @@ public class UnavailableConnectionTest {
     try {
       brokenJedis1.close(); // we need capture/mock to test this properly
     } catch (JedisException e) {
-      // Behavior change in commons-pool2 2.13.1: GenericObjectPool#invalidateObject now
-      // attempts to replace the invalidated instance, which fails when
-      // ConnectionFactory#makeObject() cannot reach the (unavailable) server. The
-      // underlying socket failure varies by environment (Connection refused / reset /
-      // etc.), so we only assert on the exception type.
+      // commons-pool2 2.13.1 changed GenericObjectPool#invalidateObject to replace the
+      // invalidated instance, which failed when the factory could not reach the (unavailable)
+      // server. SimpleObjectPool only destroys a broken object and never replaces it, so
+      // close() is not expected to throw here. The tolerant catch is kept: if it ever does
+      // throw, the underlying socket failure varies by environment (Connection refused /
+      // reset / etc.), so we only assert on the exception type.
       assertInstanceOf(JedisConnectionException.class, e.getCause(),
           "Unexpected cause for broken-resource return: " + e.getCause());
     }
