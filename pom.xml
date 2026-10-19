@@ -1,85 +1,53 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
+		<groupId>today.bonfire.oss</groupId>
+		<artifactId>bonfire-oss-parent</artifactId>
+		<version>2.0.0</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>jar</packaging>
-	<groupId>redis.clients</groupId>
+	<groupId>today.bonfire.oss</groupId>
 	<artifactId>jedis</artifactId>
-	<version>8.0.2-SNAPSHOT</version>
+	<version>8.0.2</version>
 	<name>Jedis</name>
-	<description>Jedis is a blazingly small and sane Redis java client.</description>
-	<url>https://github.com/redis/jedis</url>
-
-	<mailingLists>
-		<mailingList>
-			<name>Jedis Mailing List</name>
-			<post>jedis_redis@googlegroups.com</post>
-			<archive>
-				https://groups.google.com/group/jedis_redis
-			</archive>
-		</mailingList>
-	</mailingLists>
+	<description>Modified Jedis library to support java 21 and uses a simple object pool. This is a blazingly small and sane Redis java client.</description>
+	<url>https://github.com/BonfireTrunk/jedis</url>
 
 	<licenses>
 		<license>
 			<name>MIT</name>
-			<url>https://github.com/redis/jedis/blob/master/LICENSE</url>
+			<url>https://github.com/BonfireTrunk/jedis/blob/master/LICENSE</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
 
 	<issueManagement>
 		<system>github</system>
-		<url>https://github.com/redis/jedis/issues</url>
+		<url>https://github.com/BonfireTrunk/jedis/issues</url>
 	</issueManagement>
 
 	<scm>
-		<connection>scm:git:git@github.com:redis/jedis.git</connection>
-		<url>scm:git:git@github.com:redis/jedis.git</url>
-		<developerConnection>https://github.com/redis/jedis/tree/master</developerConnection>
+		<connection>scm:git:git@github.com:BonfireTrunk/jedis.git</connection>
+		<url>scm:git:git@github.com:BonfireTrunk/jedis.git</url>
+		<developerConnection>scm:git:git@github.com:BonfireTrunk/jedis.git</developerConnection>
+		<tag>HEAD</tag>
 	</scm>
-
-	<developers>
-		<developer>
-			<id>redis</id>
-			<name>Redis Ltd.</name>
-			<organization>Redis</organization>
-			<organizationUrl>https://redis.io</organizationUrl>
-		</developer>
-	</developers>
 
 	<properties>
 		<github.global.server>github</github.global.server>
-		<jedis.module.name>redis.clients.jedis</jedis.module.name>
-		<slf4j.version>1.7.36</slf4j.version>
+		<jedis.module.name>bonfire.oss.jedis</jedis.module.name>
 		<resilience4j.version>1.7.1</resilience4j.version>
 		<jackson.version>2.22.1</jackson.version>
-		<maven.surefire.version>3.5.6</maven.surefire.version>
-		<junit.version>5.14.4</junit.version>
-		<!-- Default JVM options for tests -->
-		<JVM_OPTS></JVM_OPTS>
+		<maven.surefire.version>${maven-surefire-plugin.version}</maven.surefire.version>
+		<!-- Default JVM options for tests; the agent is Mockito's inline mock maker, as the parent POM loads it -->
+		<JVM_OPTS>--add-opens java.base/java.time=ALL-UNNAMED -javaagent:"${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar"</JVM_OPTS>
 		<!-- Default excluded groups for tests - can be overridden from command line -->
 		<excludedGroupsForUnitTests>integration,scenario</excludedGroupsForUnitTests>
 		<skipUnitTests>false</skipUnitTests>
 		<skipIntegrationTests>false</skipIntegrationTests>
 		<skipScenarioTests>true</skipScenarioTests>
 	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.junit</groupId>
-				<artifactId>junit-bom</artifactId>
-				<version>${junit.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
@@ -101,6 +69,7 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.14.0</version>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
@@ -141,7 +110,6 @@
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-junit-jupiter</artifactId>
-			<version>4.11.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -158,13 +126,6 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.13</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-inline</artifactId>
-			<version>4.11.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -248,16 +209,6 @@
 		</dependency>
 	</dependencies>
 
-	<distributionManagement>
-		<repository>
-			<id>central</id>
-			<url>https://central.sonatype.com/api/v1/publisher/deployments/upload/</url>
-		</repository>
-		<snapshotRepository>
-			<id>central</id>
-			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 
 	<build>
 		<resources>
@@ -270,8 +221,12 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.15</version>
 				<executions>
+					<!-- Disable the parent POM's default agent; the executions below set up coverage -->
+					<execution>
+						<id>prepare-agent</id>
+						<phase>none</phase>
+					</execution>
 					<!-- Collect coverage for unit tests -->
 					<execution>
 						<id>prepare-agent-ut</id>
@@ -353,10 +308,8 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.15.0</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<release>${java.version}</release>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -466,54 +419,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.4.0</version>
-				<configuration>
-					<attach>true</attach>
-				</configuration>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.12.0</version>
-				<configuration>
-					<source>8</source><!-- Until JDK 11+ -->
-					<detectJavaApiLink>false</detectJavaApiLink><!-- Until JDK 11+ -->
-					<!--<doclint>none</doclint>-->
-					<!--<doclint>all,-missing</doclint>-->
-				</configuration>
-				<executions>
-					<execution>
-						<id>attach-javadoc</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>3.3.1</version>
-			</plugin>
-			<plugin>
-				<groupId>org.sonatype.central</groupId>
-				<artifactId>central-publishing-maven-plugin</artifactId>
-				<version>0.11.0</version>
-				<extensions>true</extensions>
-				<configuration>
-					<publishingServerId>central</publishingServerId>
-					<autoPublish>true</autoPublish>
-					<waitUntil>published</waitUntil>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>net.revelc.code.formatter</groupId>
@@ -654,7 +559,6 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.5.1</version>
 				<configuration>
 					<archive>
 						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -667,7 +571,6 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>5.1.9</version>
 				<executions>
 					<execution>
 						<id>bundle-manifest</id>
@@ -681,33 +584,6 @@
 		</plugins>
 	</build>
 	<profiles>
-		<profile>
-			<id>release</id>
-			<build>
-				<plugins>
-					<!--Sign the components - this is required by maven central for releases -->
-					<plugin>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>3.2.8</version>
-						<configuration>
-							<gpgArguments>
-								<arg>--pinentry-mode</arg>
-								<arg>loopback</arg>
-							</gpgArguments>
-						</configuration>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
 		<profile>
 			<id>doctests</id>
 			<build>
@@ -734,10 +610,8 @@
 				<plugins>
 					<plugin>
 						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.15.0</version>
 						<configuration>
-							<source>1.8</source>
-							<target>1.8</target>
+							<release>${java.version}</release>
 							<parameters>true</parameters>
 						</configuration>
 					</plugin>
@@ -767,10 +641,8 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.15.0</version>
 						<configuration>
-							<source>1.8</source>
-							<target>1.8</target>
+							<release>${java.version}</release>
 							<annotationProcessorPaths>
 								<path>
 									<groupId>org.openjdk.jmh</groupId>
