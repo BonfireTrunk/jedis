@@ -18,3 +18,4 @@ redis-git
 appendonlydir/
 .DS_Store
 .vscode/settings.json
+.serena/
