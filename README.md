@@ -1,3 +1,11 @@
+
+This is a fork of https://github.com/redis/jedis
+This was done to support a different object pool and some other changes as per our requirement.
+This is also helpful for others who want to use latest java version and other features.
+
+**********************
+
+
 # Jedis
 
 [![Release](https://img.shields.io/github/release/redis/jedis.svg?sort=semver)](https://github.com/redis/jedis/releases/latest)
@@ -37,6 +45,7 @@ The most recent version of this library supports redis version
 [8.8](https://github.com/redis/redis/blob/8.8/00-RELEASENOTES) and
 [8.10](https://github.com/redis/redis/blob/8.10/00-RELEASENOTES).
 
+This fork supports java 21 and above.
 The table below highlights version compatibility of the most-recent library versions with Redis and JDK versions. Compatibility means communication features, and Redis command capabilities.
 
 
@@ -152,7 +161,3 @@ You can also contribute documentation -- or anything to improve Jedis. Please se
 ## License
 
 Jedis is licensed under the [MIT license](https://github.com/redis/jedis/blob/master/LICENSE).
-
-## Sponsorship
-
-[![Redis Logo](https://raw.githubusercontent.com/redis/jedis/master/redis-logo-full-color-rgb.png)](https://redis.io/)
