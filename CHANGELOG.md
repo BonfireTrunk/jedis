@@ -8,7 +8,7 @@ All notable changes to this fork of [Jedis](https://github.com/redis/jedis) are 
 
 - Based on Jedis 8.0.2 (the previous fork release, 7.1.0, was based on Jedis 7.1.0).
 - Connection pools use simple-object-pool 3.0.0 (was 2.4.0) in place of commons-pool2.
-- Built on bonfire-oss-parent 2.1.0 (was 1.1.12). Java 21 or newer is still required.
+- Built on bonfire-oss-parent 2.1.1 (was 1.1.12). Java 21 or newer is still required.
 
 ### Added
 
