@@ -4,7 +4,7 @@
 
 Try setting own `timeout` value when constructing `JedisPool` using the following constructor:
 ```java
-JedisPool(GenericObjectPoolConfig poolConfig, String host, int port, int timeout)
+JedisPool(SimpleObjectPoolConfig poolConfig, String host, int port, int timeout)
 ```
 where `timeout` is given as milliseconds.
 
@@ -15,12 +15,14 @@ Default `timeout` value is **2 seconds**.
 JedisPool defaults to 8 connections, you can change this in the PoolConfig:
 
 ```java
-JedisPoolConfig poolConfig = new JedisPoolConfig();
-poolConfig.setMaxTotal(maxTotal); // maximum active connections
-poolConfig.setMaxIdle(maxIdle);  // maximum idle connections
+SimpleObjectPoolConfig poolConfig = JedisPoolConfig.builder()
+        .maxPoolSize(maxPoolSize) // maximum connections, borrowed and idle together
+        .build();
 ```
 
-Take into account that `JedisPool` inherits commons-pool [BaseObjectPoolConfig](https://commons.apache.org/proper/commons-pool/api-2.3/org/apache/commons/pool2/impl/BaseObjectPoolConfig.html) which has a lot of configuration parameters. 
+When every connection is borrowed, `getResource()` waits up to 10 seconds for one to be returned, then throws `JedisException`. Change this with `waitingForObjectTimeout`: a negative duration waits forever, `Duration.ZERO` fails immediately.
+
+Take into account that `JedisPool` is configured with simple-object-pool's [SimpleObjectPoolConfig](https://github.com/BonfireTrunk/simple-object-pool) which has a lot of configuration parameters. 
 We've set some defined ones which suit most of the cases. In case, you experience [issues](https://github.com/xetorthio/jedis/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+JedisPool) tuning these parameters may help.
 
 ## How to configure the buffer size of socket(s)

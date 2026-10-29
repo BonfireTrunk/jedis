@@ -277,8 +277,8 @@ getConnection() → connection          // Return the same connection
 **Location:** `src/main/java/redis/clients/jedis/providers/PooledConnectionProvider.java`
 
 **Characteristics:**
-- Apache Commons Pool2 for connection pooling
-- Configurable pool settings (maxTotal, maxIdle, minIdle)
+- simple-object-pool for connection pooling
+- Configurable pool settings (maxPoolSize, minPoolSize, waitingForObjectTimeout)
 - Connection validation
 - **Use Case:** RedisClient (standalone)
 
@@ -607,7 +607,7 @@ client.close();
 
 **Common Configuration:**
 - `clientConfig` - JedisClientConfig (auth, SSL, timeout, protocol)
-- `poolConfig` - GenericObjectPoolConfig (pool settings)
+- `poolConfig` - SimpleObjectPoolConfig (pool settings)
 - `cacheConfig` / `cache` - Client-side caching configuration
 - `connectionProvider` / `commandExecutor` - custom component overrides
 

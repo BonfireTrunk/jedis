@@ -15,7 +15,7 @@ This guide helps you migrate from Jedis 7.5.0 to Jedis 8.0.0. Version 8.0.0 intr
   - [`broadcastCommand` and `JedisBroadcastAndRoundRobinConfig` Removed](#broadcastcommand-and-jedisbroadcastandroundrobinconfig-removed)
   - [Removed Sharding Utility Classes](#removed-sharding-utility-classes)
   - [`aclLogBinary()` Removed](#acllogbinary-removed)
-  - [`commons-pool2` Upgraded to 2.13.1](#commons-pool2-upgraded-to-2131)
+  - [Connection Pool Changes](#connection-pool-changes)
 - [Deprecations](#deprecations)
   - [`JedisCluster` Deprecation](#jediscluster-deprecation)
   - [Legacy SSL Configuration Setters Deprecated](#legacy-ssl-configuration-setters-deprecated)
@@ -338,9 +338,15 @@ Use `aclLog()` / `aclLog(int)`, which return structured `AccessControlLogEntry` 
 List<AccessControlLogEntry> log = jedis.aclLog();
 ```
 
-### `commons-pool2` Upgraded to 2.13.1
+### Connection Pool Changes
 
-The `org.apache.commons:commons-pool2` dependency has been bumped from 2.12.1 to **2.13.1**. The connection-close exception handling inside `MultiDbCommandExecutor` was adjusted accordingly. If you pin `commons-pool2` directly in your `pom.xml` / `build.gradle`, update it to 2.13.1 to stay consistent with what Jedis is tested against.
+Connections are pooled with `today.bonfire.oss:simple-object-pool` 3.0.0. Pool defaults now match upstream Jedis, except that borrowers wait at most 10 seconds on an exhausted pool instead of forever. Compared with this fork's 7.1.0 release, which used simple-object-pool 2.4.0:
+
+- `ConnectionPoolConfig.builder()` and `JedisPoolConfig.builder()` start from the Jedis defaults: idle connections are validated every 30 seconds and evicted after 60 seconds idle. `Builder.defaultConfig()` is deprecated and no longer needed.
+- `testOnBorrow` now defaults to `false`. Set it to `true` to validate every borrowed connection, including a `PING`, as 7.1.0 did.
+- The `JedisPool` and `JedisSentinelPool` constructors that take no pool config no longer validate idle connections.
+- When the pool is exhausted or closed, `getResource()` throws `JedisException` instead of `JedisConnectionException`. Failures to open a connection are still thrown as `JedisConnectionException`.
+- `waitingForObjectTimeout` controls the wait: a negative duration waits forever, `Duration.ZERO` fails immediately.
 
 ## Deprecations
 
