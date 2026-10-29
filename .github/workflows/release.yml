@@ -1,0 +1,27 @@
+name: release
+
+on:
+  push:
+    branches: [prime]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    permissions:
+      contents: write
+      packages: write
+    uses: BonfireTrunk/.github/.github/workflows/maven-release.yml@prime
+    with:
+      # Integration tests need a Redis server, which the runner does not have
+      maven-args: -DskipIntegrationTests=true
+    secrets:
+      CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+      CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+      MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_KEY }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}

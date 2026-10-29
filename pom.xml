@@ -2,7 +2,7 @@
 	<parent>
 		<groupId>today.bonfire.oss</groupId>
 		<artifactId>bonfire-oss-parent</artifactId>
-		<version>2.0.0</version>
+		<version>2.1.1</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -47,6 +47,9 @@
 		<skipUnitTests>false</skipUnitTests>
 		<skipIntegrationTests>false</skipIntegrationTests>
 		<skipScenarioTests>true</skipScenarioTests>
+		<!-- The parent formats with palantir-java-format; this fork keeps upstream's formatting so upstream changes merge cleanly -->
+		<spotless.check.skip>true</spotless.check.skip>
+		<spotless.apply.skip>true</spotless.apply.skip>
 	</properties>
 
 	<dependencies>
