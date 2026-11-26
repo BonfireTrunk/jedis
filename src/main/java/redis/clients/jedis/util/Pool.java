@@ -16,8 +16,12 @@ public class Pool<T> extends SimpleObjectPool<T> {
     super(poolConfig, factory);
   }
 
+  /**
+   * Creates a pool with {@link PlainPoolConfig}, the counterpart of the plain commons-pool2 config
+   * upstream Jedis uses here: no scheduled eviction or idle validation.
+   */
   public Pool(final PooledObjectFactory<T> factory) {
-    super(factory);
+    super(PlainPoolConfig.create(), factory);
   }
 
   @Override

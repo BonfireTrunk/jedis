@@ -12,6 +12,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 import today.bonfire.oss.sop.PooledObjectFactory;
 import today.bonfire.oss.sop.SimpleObjectPoolConfig;
+import today.bonfire.oss.sop.SimpleObjectPoolConfig.EvictionPolicy;
 
 /**
  * The exceptions {@link Pool#getResource()} throws, as documented in the v7-to-v8 migration guide.
@@ -55,6 +56,14 @@ public class PoolTest {
     pool.close();
     JedisException e = assertThrows(JedisException.class, pool::getResource);
     assertFalse(e instanceof JedisConnectionException);
+  }
+
+  @Test
+  public void poolWithoutAConfigRunsNoEvictionOrIdleValidation() {
+    try (Pool<Object> pool = new Pool<>(objectFactory())) {
+      assertSame(EvictionPolicy.NONE, pool.config().evictionPolicy());
+      assertFalse(pool.config().testWhileIdle());
+    }
   }
 
   private static PooledObjectFactory<Object> objectFactory() {

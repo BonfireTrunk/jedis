@@ -10,7 +10,7 @@ All notable changes to this fork of [Jedis](https://github.com/redis/jedis) are 
 - Connections retired by a maintenance notification are evicted through simple-object-pool's `shouldEvict` hook, which takes the place of upstream's commons-pool2 eviction policy. simple-object-pool stays at 3.0.0.
 - A retired or broken connection returned to the pool is destroyed without opening a replacement; the next borrow opens one. Upstream's commons-pool2 opens the replacement at once, so after a `MOVING` notification the fork's first command pays the connect.
 - With `minPoolSize` above 0, the eviction pass a maintenance handoff or a token renewal triggers also refills the pool to `minPoolSize` straight away, on the thread that runs the pass. commons-pool2 leaves the refill to its next scheduled evictor run.
-- Cluster node pools created without a pool config (for example `new ClusterConnectionProvider(nodes, clientConfig)`) no longer run scheduled idle validation, matching upstream. Clients built with `RedisClusterClient.builder()` are unaffected, since the builder always passes a pool config.
+- Pools created without a pool config no longer run scheduled idle validation or evict idle connections after 5 minutes, matching upstream. This covers cluster node pools (for example `new ClusterConnectionProvider(nodes, clientConfig)`), `new ConnectionPool(hostAndPort, clientConfig)`, `new PooledConnectionProvider(hostAndPort)` and the constructors that take only a factory. Clients built with a builder (`RedisClient.builder()`, `RedisClusterClient.builder()` and so on) are unaffected, since the builder always passes a pool config.
 - Built on bonfire-oss-parent 2.2.1 (was 2.1.1).
 
 ### Added
