@@ -89,7 +89,7 @@ public class AuthXManagerHookRegistrationTest {
   }
 
   /**
-   * destroy() may land between the hook's closed-check and evict(). Whatever evict() does on the
+   * destroy() may land between the hook's closed-check and evict(). A failure of evict() on the
    * closed pool must not escape, or the renewal aborts for every other pool on the manager.
    */
   @Test
@@ -102,7 +102,9 @@ public class AuthXManagerHookRegistrationTest {
       @Override
       public void evict() {
         destroy();
-        super.evict();
+        // simple-object-pool's evict() returns quietly on a closed pool, so throw as commons-pool2
+        // did to keep the closed-pool branch of the hook covered
+        throw new IllegalStateException("Pool not open");
       }
     };
     AtomicInteger laterHookCalls = new AtomicInteger();

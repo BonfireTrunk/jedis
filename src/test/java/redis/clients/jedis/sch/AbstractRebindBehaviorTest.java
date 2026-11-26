@@ -200,8 +200,8 @@ public abstract class AbstractRebindBehaviorTest {
 
   @Test
   public void testRebindTriggeredByEvictorIdleValidation() throws Exception {
-    SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder().maxPoolSize(1).build(); // testWhileIdle,
-                                                                                               // numTests=-1
+    // testWhileIdle on; every idle connection is validated on each run
+    SimpleObjectPoolConfig poolConfig = ConnectionPoolConfig.builder().maxPoolSize(1).build();
 
     try (
         UnifiedJedis client = createClient(server1Address, clientConfig, maintConfig, poolConfig)) {

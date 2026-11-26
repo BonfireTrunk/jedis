@@ -31,6 +31,7 @@ import redis.clients.jedis.MaintenanceNotificationsConfig;
 import redis.clients.jedis.RedisClusterClient;
 import redis.clients.jedis.exceptions.JedisMovedDataException;
 import redis.clients.jedis.scenario.TrafficRunner.Failure;
+import today.bonfire.oss.sop.exceptions.PoolClosedException;
 
 /**
  * S5, the black-box guarantee: a stock {@link RedisClusterClient} (RESP3, maintenance notifications
@@ -134,10 +135,17 @@ public class ClusterMaintenanceTrafficResilienceIT extends ClusterMaintNotificat
     return false;
   }
 
-  /** A borrow from the pool of a node the delta had just dropped (commons-pool "Pool not open"). */
+  /**
+   * A borrow from the pool of a node the delta had just dropped (simple-object-pool's
+   * PoolClosedException).
+   */
   private static boolean isDestroyedPoolBorrow(Failure failure) {
-    Throwable root = failure.rootCause();
-    return root instanceof IllegalStateException && "Pool not open".equals(root.getMessage());
+    for (Throwable t = failure.error; t != null; t = t.getCause()) {
+      if (t instanceof PoolClosedException) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
