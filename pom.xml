@@ -2,14 +2,14 @@
 	<parent>
 		<groupId>today.bonfire.oss</groupId>
 		<artifactId>bonfire-oss-parent</artifactId>
-		<version>2.1.1</version>
+		<version>2.2.1</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>jar</packaging>
 	<groupId>today.bonfire.oss</groupId>
 	<artifactId>jedis</artifactId>
-	<version>8.0.2</version>
+	<version>8.1.0</version>
 	<name>Jedis</name>
 	<description>Modified Jedis library to support java 21 and uses a simple object pool. This is a blazingly small and sane Redis java client.</description>
 	<url>https://github.com/BonfireTrunk/jedis</url>
@@ -38,13 +38,15 @@
 		<github.global.server>github</github.global.server>
 		<jedis.module.name>bonfire.oss.jedis</jedis.module.name>
 		<resilience4j.version>1.7.1</resilience4j.version>
-		<jackson.version>2.22.1</jackson.version>
+		<jackson.version>2.23.0</jackson.version>
 		<maven.surefire.version>${maven-surefire-plugin.version}</maven.surefire.version>
 		<!-- Default JVM options for tests; the agent is Mockito's inline mock maker, as the parent POM loads it -->
 		<JVM_OPTS>--add-opens java.base/java.time=ALL-UNNAMED -javaagent:"${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar"</JVM_OPTS>
 		<!-- Default excluded groups for tests - can be overridden from command line -->
 		<excludedGroupsForUnitTests>integration,scenario</excludedGroupsForUnitTests>
-		<skipUnitTests>false</skipUnitTests>
+		<skipTests>false</skipTests>
+		<!-- -DskipTests skips unit tests; skipUnitTests stays as an alias for callers that still pass it -->
+		<skipUnitTests>${skipTests}</skipUnitTests>
 		<skipIntegrationTests>false</skipIntegrationTests>
 		<skipScenarioTests>true</skipScenarioTests>
 		<!-- The parent formats with palantir-java-format; this fork keeps upstream's formatting so upstream changes merge cleanly -->
@@ -66,19 +68,19 @@
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20260719</version>
+			<version>20260814</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.14.0</version>
+			<version>2.15.0</version>
 			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>redis.clients.authentication</groupId>
 			<artifactId>redis-authx-core</artifactId>
-			<version>0.1.1-beta2</version>
+			<version>0.2.0</version>
 		</dependency>
 
 		<!-- Optional dependencies -->
@@ -87,7 +89,7 @@
 		<dependency>
 			<groupId>com.kohlschutter.junixsocket</groupId>
 			<artifactId>junixsocket-core</artifactId>
-			<version>2.10.1</version>
+			<version>2.11.1</version>
 			<type>pom</type>
 			<scope>test</scope>
 		</dependency>
@@ -152,7 +154,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents.client5</groupId>
 			<artifactId>httpclient5-fluent</artifactId>
-			<version>5.6.3</version>
+			<version>5.6.5</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -166,7 +168,7 @@
 		<dependency>
 			<groupId>redis.clients.authentication</groupId>
 			<artifactId>redis-authx-entraid</artifactId>
-			<version>0.1.1-beta2</version>
+			<version>0.2.0</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -218,6 +220,14 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
+			</resource>
+			<!-- Declaring resources replaces the parent's list, so the LICENSE it packages is added again here -->
+			<resource>
+				<directory>${project.basedir}</directory>
+				<targetPath>META-INF</targetPath>
+				<includes>
+					<include>LICENSE</include>
+				</includes>
 			</resource>
 		</resources>
 		<plugins>
@@ -402,7 +412,10 @@
 						</goals>
 						<configuration>
 							<skip>${skipScenarioTests}</skip>
-							<argLine>@{failsafeScenarioArgLine} ${JVM_OPTS}</argLine>
+							<!-- short JVM DNS cache: scenario tests reconnect across endpoint rebinds
+							     (default 30s positive cache can outlive the DNS repoint) and await
+							     fresh, not-yet-propagated database names (default 10s negative cache) -->
+							<argLine>@{failsafeScenarioArgLine} ${JVM_OPTS} -Dsun.net.inetaddr.ttl=2 -Dsun.net.inetaddr.negative.ttl=2</argLine>
 							<groups>scenario</groups>
 							<excludedGroups>integration,unit</excludedGroups>
 							<includes>
@@ -439,11 +452,18 @@
 						<include>src/main/java/redis/clients/jedis/params/LMoveMParams.java</include>
 						<include>src/main/java/redis/clients/jedis/args/ListMoveOrder.java</include>
 						<include>src/test/java/redis/clients/jedis/params/LMoveMParamsTest.java</include>
+						<include>src/main/java/redis/clients/jedis/params/BitRangeIntArrayParams.java</include>
+						<include>src/test/java/redis/clients/jedis/params/BitRangeIntArrayParamsTest.java</include>
+						<include>**/*ZMove*.java</include>
+						<include>src/test/java/redis/clients/jedis/csc/DefaultCacheableTest.java</include>
 						<include>src/main/java/redis/clients/jedis/timeseries/TSNRangeParams.java</include>
 						<include>src/main/java/redis/clients/jedis/params/SUnionCardParams.java</include>
 						<include>src/main/java/redis/clients/jedis/params/SDiffCardParams.java</include>
 						<include>src/test/java/redis/clients/jedis/params/SUnionCardParamsTest.java</include>
 						<include>src/test/java/redis/clients/jedis/params/SDiffCardParamsTest.java</include>
+						<include>src/main/java/redis/clients/jedis/params/SAddExParams.java</include>
+						<include>src/test/java/redis/clients/jedis/params/SAddExParamsTest.java</include>
+						<include>src/test/java/redis/clients/jedis/params/GeoSearchParamTest.java</include>
 						<include>src/main/java/redis/clients/jedis/resps/StreamEntryDeletionResult.java</include>
 						<include>src/main/java/redis/clients/jedisargs/StreamDeletionPolicy.java</include>
 						<include>src/test/java/redis/clients/jedis/commands/StreamsCommandsTestBase.java</include>
@@ -460,7 +480,9 @@
                         <include>src/test/java/redis/clients/jedis/ProtocolFallbackPropagationTest.java</include>
                         <include>src/test/java/redis/clients/jedis/ConnectionHelloAuthTest.java</include>
                         <include>src/test/java/redis/clients/jedis/ConnectionErrorHandlingTest.java</include>
+                        <include>src/test/java/redis/clients/jedis/JedisMonitorMockTest.java</include>
 						<include>**/VectorSet*.java</include>
+						<include>src/test/java/redis/clients/jedis/mocked/pipeline/PipeliningBaseVectorSetCommandsTest.java</include>
 						<include>**/VectorTestUtils.java</include>
 						<include>**/VAddParams.java</include>
 						<include>**/VSimParams.java</include>
@@ -497,6 +519,7 @@
 						<include>**/search/hybrid/*.java</include>
 						<include>**/search/FTHybrid*.java</include>
 						<include>**/*Hotkeys*.java</include>
+						<include>**/*Bless*.java</include>
 						<include>**/TestDataUtil*.java</include>
 						<include>**/*JedisClientConfig*.java</include>
 
@@ -509,9 +532,13 @@
                         <include>**/XNack*.java</include>
 						<include>**/*SubkeyNotifications*.java</include>
 						<include>**/PubSubHelpers.java</include>
+						<include>**/JedisPubSubReplyHandlerTest.java</include>
+						<include>**/JedisSafeAuthenticatorTest.java</include>
 
                         <include>src/test/java/redis/clients/jedis/commands/unified/**bloom/*.java</include>
                         <include>src/test/java/redis/clients/jedis/commands/unified/**json/*.java</include>
+                        <include>src/main/java/redis/clients/jedis/json/JsonBuilderFactory.java</include>
+                        <include>src/test/java/redis/clients/jedis/json/JsonBuilderFactoryTest.java</include>
                         <include>src/test/java/redis/clients/jedis/commands/unified/**timeseries/*.java</include>
                         <include>src/main/java/redis/clients/jedis/timeseries/TSReadParams.java</include>
                         <include>src/test/java/redis/clients/jedis/**/search/*.java</include>
@@ -546,10 +573,41 @@
 						<include>src/test/jmh/**/*.java</include>
 						<include>**/RedisMultiDbClientSideCacheTest.java</include>
 						<include>**/MultiDbCSCTest.java</include>
+						<include>**/AuthXManagerHookRegistrationTest.java</include>
+						<include>**/TrackingConnectionPoolAuthXManagerTest.java</include>
+						<include>**/SentineledConnectionProviderAuthXManagerTest.java</include>
 						<include>**/*HashImport*.java</include>
 						<include>**/*Himport*.java</include>
 						<include>**/ConnectionRegistry*.java</include>
 						<include>**/CommandObjectTest.java</include>
+						<include>**/Rebind*.java</include>
+						<include>**/TimeoutOptions.java</include>
+						<include>**/*Handler.java</include>
+						<include>**/InitVisitor.java</include>
+						<include>**/NanoClock.java</include>
+						<include>**/*TimeoutSource*.java</include>
+						<include>**/RebindAwareEvictionPolicy.java</include>
+						<include>**/*Maintenance*.java</include>
+						<include>**/ConnectionRegistry.java</include>
+						<include>**/MovingOperations.java</include>
+						<include>src/test/java/com/redis/test/fi/*.java</include>
+						<include>**/*MaintNotifications*.java</include>
+						<include>**/TrafficRunner.java</include>
+						<include>**/*TestSupport.java</include>
+						<include>**/SocketAddress*.java</include>
+						<include>**/sch/*.java</include>
+						<include>**/ConnectionFactoryRebindTest.java</include>
+						<include>**/CommandObjectsCountMinSketchTest.java</include>
+						<include>**/CmsCellSize.java</include>
+						<include>**/RedisBloomBuilderFactory*.java</include>
+						<include>**/JedisClusterInfoCache.java</include>
+						<include>**/ClusterMaintenance*.java</include>
+						<include>**/HashSlotRanges.java</include>
+						<include>**/ClusterMaintenanceEventTest.java</include>
+						<include>**/HashSlotRangesTest.java</include>
+						<include>**/scenario/EnterpriseSentinelSupport.java</include>
+						<include>**/scenario/RedisEnterpriseClusterStatus.java</include>
+						<include>**/scenario/RedisEnterpriseClusterStatusUnitTests.java</include>
 					</includes>
 				</configuration>
 				<executions>
@@ -670,7 +728,7 @@
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>build-helper-maven-plugin</artifactId>
-						<version>3.6.1</version>
+						<version>3.8.0</version>
 						<executions>
 							<execution>
 								<id>add-jmh-source</id>
@@ -689,7 +747,7 @@
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>exec-maven-plugin</artifactId>
-						<version>3.6.3</version>
+						<version>3.7.0</version>
 						<executions>
 							<execution>
 								<id>run-benchmarks</id>

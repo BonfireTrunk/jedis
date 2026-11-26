@@ -2,6 +2,19 @@
 
 All notable changes to this fork of [Jedis](https://github.com/redis/jedis) are documented here. Changes that come from upstream are listed in the [Jedis release notes](https://github.com/redis/jedis/releases). The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Based on Jedis 8.1.0 (was 8.0.2). Upstream's changes, including smart client handoffs (maintenance notifications), are listed in the [Jedis 8.1.0 release notes](docs/release-notes/8.1.0.md).
+- Connections retired by a maintenance notification are evicted through simple-object-pool's `shouldEvict` hook, which takes the place of upstream's commons-pool2 eviction policy. simple-object-pool stays at 3.0.0.
+- Cluster node pools created without a pool config (for example `new ClusterConnectionProvider(nodes, clientConfig)`) no longer run scheduled idle validation, matching upstream. Clients built with `RedisClusterClient.builder()` are unaffected, since the builder always passes a pool config.
+- Built on bonfire-oss-parent 2.2.1 (was 2.1.1).
+
+### Added
+
+- The jar contains the license as `META-INF/LICENSE`, as the parent POM now does for every library.
+
 ## [8.0.2] - 2026-10-29
 
 ### Changed

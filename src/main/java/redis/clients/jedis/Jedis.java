@@ -1976,6 +1976,174 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
     return connection.executeCommand(commandObjects.smove(srckey, dstkey, member));
   }
 
+  @Override
+  public List<Long> sexpire(final byte[] key, final long seconds, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, members));
+  }
+
+  @Override
+  public List<Long> sexpire(final byte[] key, final long seconds, final ExpiryOption condition, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, condition, members));
+  }
+
+  @Override
+  public List<Long> spexpire(final byte[] key, final long milliseconds, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, members));
+  }
+
+  @Override
+  public List<Long> spexpire(final byte[] key, final long milliseconds, final ExpiryOption condition, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, condition, members));
+  }
+
+  @Override
+  public List<Long> sexpireAt(final byte[] key, final long unixTimeSeconds, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, members));
+  }
+
+  @Override
+  public List<Long> sexpireAt(final byte[] key, final long unixTimeSeconds, final ExpiryOption condition, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, condition, members));
+  }
+
+  @Override
+  public List<Long> spexpireAt(final byte[] key, final long unixTimeMillis, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, members));
+  }
+
+  @Override
+  public List<Long> spexpireAt(final byte[] key, final long unixTimeMillis, final ExpiryOption condition, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, condition, members));
+  }
+
+  @Override
+  public List<Long> sttl(final byte[] key, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sttl(key, members));
+  }
+
+  @Override
+  public List<Long> spttl(final byte[] key, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spttl(key, members));
+  }
+
+  @Override
+  public List<Long> sexpireTime(final byte[] key, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireTime(key, members));
+  }
+
+  @Override
+  public List<Long> spexpireTime(final byte[] key, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireTime(key, members));
+  }
+
+  @Override
+  public List<Long> spersist(final byte[] key, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spersist(key, members));
+  }
+
+  @Override
+  public long sexpire(final byte[] key, final long seconds, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, member));
+  }
+
+  @Override
+  public long sexpire(final byte[] key, final long seconds, final ExpiryOption condition, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, condition, member));
+  }
+
+  @Override
+  public long spexpire(final byte[] key, final long milliseconds, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, member));
+  }
+
+  @Override
+  public long spexpire(final byte[] key, final long milliseconds, final ExpiryOption condition, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, condition, member));
+  }
+
+  @Override
+  public long sexpireAt(final byte[] key, final long unixTimeSeconds, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, member));
+  }
+
+  @Override
+  public long sexpireAt(final byte[] key, final long unixTimeSeconds, final ExpiryOption condition, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, condition, member));
+  }
+
+  @Override
+  public long spexpireAt(final byte[] key, final long unixTimeMillis, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, member));
+  }
+
+  @Override
+  public long spexpireAt(final byte[] key, final long unixTimeMillis, final ExpiryOption condition, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, condition, member));
+  }
+
+  @Override
+  public long sttl(final byte[] key, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sttl(key, member));
+  }
+
+  @Override
+  public long spttl(final byte[] key, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spttl(key, member));
+  }
+
+  @Override
+  public long sexpireTime(final byte[] key, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireTime(key, member));
+  }
+
+  @Override
+  public long spexpireTime(final byte[] key, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireTime(key, member));
+  }
+
+  @Override
+  public long spersist(final byte[] key, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spersist(key, member));
+  }
+
+  @Override
+  public long saddex(final byte[] key, final SAddExParams params, final byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.saddex(key, params, members));
+  }
+
+  @Override
+  public long saddex(final byte[] key, final SAddExParams params, final byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.saddex(key, params, member));
+  }
+
   /**
    * Return the set cardinality (number of elements). If the key does not exist 0 is returned, like
    * for empty sets.
@@ -3557,6 +3725,78 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
     return connection.executeCommand(commandObjects.bzmpop(timeout, option, count, keys));
   }
 
+  @Override
+  public List<Tuple> zmove(byte[] srcKey, byte[] dstKey, SortedSetOption end) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmove(srcKey, dstKey, end));
+  }
+
+  @Override
+  public List<Tuple> zmove(byte[] srcKey, byte[] dstKey, SortedSetOption end, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmove(srcKey, dstKey, end, count));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(byte[] srcKey, byte[] dstKey, double min, double max) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(byte[] srcKey, byte[] dstKey, double min, double max, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max, count));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(byte[] srcKey, byte[] dstKey, byte[] min, byte[] max) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(byte[] srcKey, byte[] dstKey, byte[] min, byte[] max, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max, count));
+  }
+
+  @Override
+  public List<Tuple> bzmove(byte[] srcKey, byte[] dstKey, SortedSetOption end, double timeout) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bzmove(srcKey, dstKey, end, timeout));
+  }
+
+  @Override
+  public List<Tuple> bzmove(byte[] srcKey, byte[] dstKey, SortedSetOption end, double timeout, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bzmove(srcKey, dstKey, end, timeout, count));
+  }
+
+  @Override
+  public Tuple zmovemember(byte[] srcKey, byte[] dstKey, byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, member));
+  }
+
+  @Override
+  public List<Tuple> zmovemember(byte[] srcKey, byte[] dstKey, byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, members));
+  }
+
+  @Override
+  public Tuple zmovemember(byte[] srcKey, byte[] dstKey, ZMoveMemberParams params, byte[] member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, params, member));
+  }
+
+  @Override
+  public List<Tuple> zmovemember(byte[] srcKey, byte[] dstKey, ZMoveMemberParams params, byte[]... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, params, members));
+  }
+
   /**
    * Synchronously save the DB on disk.
    * <p>
@@ -4020,6 +4260,19 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   public long bitpos(final byte[] key, final boolean value, final BitPosParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.bitpos(key, value, params));
+  }
+
+  @Override
+  public List<Long> bitrangeintarray(final byte[] key, final long start, final long end) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bitrangeintarray(key, start, end));
+  }
+
+  @Override
+  public List<Long> bitrangeintarray(final byte[] key, final long start, final long end,
+      final BitRangeIntArrayParams params) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bitrangeintarray(key, start, end, params));
   }
 
   @Override
@@ -4839,6 +5092,36 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   public ScanResult<byte[]> scan(final byte[] cursor, final ScanParams params, final byte[] type) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.scan(cursor, params, type));
+  }
+
+  @Override
+  public long blessSet(final byte[] key, final BlessFlag flag) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessSet(key, flag));
+  }
+
+  @Override
+  public long blessClear(final byte[] key, final BlessFlag flag) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessClear(key, flag));
+  }
+
+  @Override
+  public List<byte[]> blessGet(final byte[] key) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessGet(key));
+  }
+
+  @Override
+  public ScanResult<byte[]> blessScan(final byte[] cursor, final BlessFlag flag) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessScan(cursor, flag));
+  }
+
+  @Override
+  public ScanResult<byte[]> blessScan(final byte[] cursor, final BlessFlag flag, final int count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessScan(cursor, flag, count));
   }
 
   @Override
@@ -6856,6 +7139,174 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
     return connection.executeCommand(commandObjects.smove(srckey, dstkey, member));
   }
 
+  @Override
+  public List<Long> sexpire(final String key, final long seconds, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, members));
+  }
+
+  @Override
+  public List<Long> sexpire(final String key, final long seconds, final ExpiryOption condition, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, condition, members));
+  }
+
+  @Override
+  public List<Long> spexpire(final String key, final long milliseconds, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, members));
+  }
+
+  @Override
+  public List<Long> spexpire(final String key, final long milliseconds, final ExpiryOption condition, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, condition, members));
+  }
+
+  @Override
+  public List<Long> sexpireAt(final String key, final long unixTimeSeconds, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, members));
+  }
+
+  @Override
+  public List<Long> sexpireAt(final String key, final long unixTimeSeconds, final ExpiryOption condition, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, condition, members));
+  }
+
+  @Override
+  public List<Long> spexpireAt(final String key, final long unixTimeMillis, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, members));
+  }
+
+  @Override
+  public List<Long> spexpireAt(final String key, final long unixTimeMillis, final ExpiryOption condition, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, condition, members));
+  }
+
+  @Override
+  public List<Long> sttl(final String key, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sttl(key, members));
+  }
+
+  @Override
+  public List<Long> spttl(final String key, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spttl(key, members));
+  }
+
+  @Override
+  public List<Long> sexpireTime(final String key, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireTime(key, members));
+  }
+
+  @Override
+  public List<Long> spexpireTime(final String key, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireTime(key, members));
+  }
+
+  @Override
+  public List<Long> spersist(final String key, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spersist(key, members));
+  }
+
+  @Override
+  public long sexpire(final String key, final long seconds, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, member));
+  }
+
+  @Override
+  public long sexpire(final String key, final long seconds, final ExpiryOption condition, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpire(key, seconds, condition, member));
+  }
+
+  @Override
+  public long spexpire(final String key, final long milliseconds, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, member));
+  }
+
+  @Override
+  public long spexpire(final String key, final long milliseconds, final ExpiryOption condition, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpire(key, milliseconds, condition, member));
+  }
+
+  @Override
+  public long sexpireAt(final String key, final long unixTimeSeconds, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, member));
+  }
+
+  @Override
+  public long sexpireAt(final String key, final long unixTimeSeconds, final ExpiryOption condition, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireAt(key, unixTimeSeconds, condition, member));
+  }
+
+  @Override
+  public long spexpireAt(final String key, final long unixTimeMillis, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, member));
+  }
+
+  @Override
+  public long spexpireAt(final String key, final long unixTimeMillis, final ExpiryOption condition, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireAt(key, unixTimeMillis, condition, member));
+  }
+
+  @Override
+  public long sttl(final String key, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sttl(key, member));
+  }
+
+  @Override
+  public long spttl(final String key, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spttl(key, member));
+  }
+
+  @Override
+  public long sexpireTime(final String key, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.sexpireTime(key, member));
+  }
+
+  @Override
+  public long spexpireTime(final String key, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spexpireTime(key, member));
+  }
+
+  @Override
+  public long spersist(final String key, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.spersist(key, member));
+  }
+
+  @Override
+  public long saddex(final String key, final SAddExParams params, final String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.saddex(key, params, members));
+  }
+
+  @Override
+  public long saddex(final String key, final SAddExParams params, final String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.saddex(key, params, member));
+  }
+
   /**
    * Return the set cardinality (number of elements). If the key does not exist 0 is returned, like
    * for empty sets.
@@ -8562,6 +9013,78 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public List<Tuple> zmove(String srcKey, String dstKey, SortedSetOption end) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmove(srcKey, dstKey, end));
+  }
+
+  @Override
+  public List<Tuple> zmove(String srcKey, String dstKey, SortedSetOption end, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmove(srcKey, dstKey, end, count));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(String srcKey, String dstKey, double min, double max) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(String srcKey, String dstKey, double min, double max, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max, count));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(String srcKey, String dstKey, String min, String max) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max));
+  }
+
+  @Override
+  public List<Tuple> zmoveByScore(String srcKey, String dstKey, String min, String max, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmoveByScore(srcKey, dstKey, min, max, count));
+  }
+
+  @Override
+  public List<Tuple> bzmove(String srcKey, String dstKey, SortedSetOption end, double timeout) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bzmove(srcKey, dstKey, end, timeout));
+  }
+
+  @Override
+  public List<Tuple> bzmove(String srcKey, String dstKey, SortedSetOption end, double timeout, long count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bzmove(srcKey, dstKey, end, timeout, count));
+  }
+
+  @Override
+  public Tuple zmovemember(String srcKey, String dstKey, String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, member));
+  }
+
+  @Override
+  public List<Tuple> zmovemember(String srcKey, String dstKey, String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, members));
+  }
+
+  @Override
+  public Tuple zmovemember(String srcKey, String dstKey, ZMoveMemberParams params, String member) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, params, member));
+  }
+
+  @Override
+  public List<Tuple> zmovemember(String srcKey, String dstKey, ZMoveMemberParams params, String... members) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.zmovemember(srcKey, dstKey, params, members));
+  }
+
+  @Override
   public long strlen(final String key) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.strlen(key));
@@ -8681,6 +9204,19 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   public long bitpos(final String key, final boolean value, final BitPosParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.bitpos(key, value, params));
+  }
+
+  @Override
+  public List<Long> bitrangeintarray(final String key, final long start, final long end) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bitrangeintarray(key, start, end));
+  }
+
+  @Override
+  public List<Long> bitrangeintarray(final String key, final long start, final long end,
+      final BitRangeIntArrayParams params) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.bitrangeintarray(key, start, end, params));
   }
 
   @Override
@@ -9483,6 +10019,36 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   public ScanResult<String> scan(final String cursor, final ScanParams params, final String type) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.scan(cursor, params, type));
+  }
+
+  @Override
+  public long blessSet(final String key, final BlessFlag flag) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessSet(key, flag));
+  }
+
+  @Override
+  public long blessClear(final String key, final BlessFlag flag) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessClear(key, flag));
+  }
+
+  @Override
+  public List<BlessFlag> blessGet(final String key) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessGet(key));
+  }
+
+  @Override
+  public ScanResult<String> blessScan(final String cursor, final BlessFlag flag) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessScan(cursor, flag));
+  }
+
+  @Override
+  public ScanResult<String> blessScan(final String cursor, final BlessFlag flag, final int count) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.blessScan(cursor, flag, count));
   }
 
   @Override
@@ -10935,9 +11501,21 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public boolean vadd(String key, float[] vector, String element, int reduceDim) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vadd(key, vector, element, reduceDim));
+  }
+
+  @Override
   public boolean vadd(String key, float[] vector, String element, int reduceDim, VAddParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vadd(key, vector, element, reduceDim, params));
+  }
+
+  @Override
+  public boolean vaddFP32(String key, byte[] vectorBlob, String element, int reduceDim) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vaddFP32(key, vectorBlob, element, reduceDim));
   }
 
   @Override
@@ -10959,9 +11537,21 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public Map<String, Double> vsimWithScores(String key, float[] vector) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimWithScores(key, vector));
+  }
+
+  @Override
   public Map<String, Double> vsimWithScores(String key, float[] vector, VSimParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vsimWithScores(key, vector, params));
+  }
+
+  @Override
+  public Map<String, VSimScoreAttribs> vsimWithScoresAndAttribs(String key, float[] vector) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimWithScoresAndAttribs(key, vector));
   }
 
   @Override
@@ -10983,9 +11573,21 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public Map<String, Double> vsimByElementWithScores(String key, String element) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimByElementWithScores(key, element));
+  }
+
+  @Override
   public Map<String, Double> vsimByElementWithScores(String key, String element, VSimParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vsimByElementWithScores(key, element, params));
+  }
+
+  @Override
+  public Map<String, VSimScoreAttribs> vsimByElementWithScoresAndAttribs(String key, String element) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimByElementWithScoresAndAttribs(key, element));
   }
 
   @Override
@@ -11098,9 +11700,21 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public boolean vadd(byte[] key, float[] vector, byte[] element, int reduceDim) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vadd(key, vector, element, reduceDim));
+  }
+
+  @Override
   public boolean vadd(byte[] key, float[] vector, byte[] element, int reduceDim, VAddParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vadd(key, vector, element, reduceDim, params));
+  }
+
+  @Override
+  public boolean vaddFP32(byte[] key, byte[] vectorBlob, byte[] element, int reduceDim) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vaddFP32(key, vectorBlob, element, reduceDim));
   }
 
   @Override
@@ -11122,9 +11736,21 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public Map<byte[], Double> vsimWithScores(byte[] key, float[] vector) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimWithScores(key, vector));
+  }
+
+  @Override
   public Map<byte[], Double> vsimWithScores(byte[] key, float[] vector, VSimParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vsimWithScores(key, vector, params));
+  }
+
+  @Override
+  public Map<byte[], VSimScoreAttribs> vsimWithScoresAndAttribs(byte[] key, float[] vector) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimWithScoresAndAttribs(key, vector));
   }
 
   @Override
@@ -11146,9 +11772,21 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
   }
 
   @Override
+  public Map<byte[], Double> vsimByElementWithScores(byte[] key, byte[] element) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimByElementWithScores(key, element));
+  }
+
+  @Override
   public Map<byte[], Double> vsimByElementWithScores(byte[] key, byte[] element, VSimParams params) {
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vsimByElementWithScores(key, element, params));
+  }
+
+  @Override
+  public Map<byte[], VSimScoreAttribs> vsimByElementWithScoresAndAttribs(byte[] key, byte[] element) {
+    checkIsInMultiOrPipeline();
+    return connection.executeCommand(commandObjects.vsimByElementWithScoresAndAttribs(key, element));
   }
 
   @Override
@@ -11228,5 +11866,4 @@ public class Jedis implements ServerCommands, DatabaseCommands, JedisCommands, J
     checkIsInMultiOrPipeline();
     return connection.executeCommand(commandObjects.vsetattr(key, element, attributes));
   }
-
 }

@@ -12,6 +12,7 @@ import redis.clients.jedis.authentication.AuthXEventListener;
 import redis.clients.jedis.csc.Cache;
 import redis.clients.jedis.csc.CacheConnection;
 import redis.clients.jedis.exceptions.JedisException;
+import today.bonfire.oss.sop.PooledObject;
 import today.bonfire.oss.sop.PooledObjectFactory;
 
 /**
@@ -25,6 +26,8 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
     private JedisSocketFactory jedisSocketFactory;
     private Cache cache;
     private HostAndPort hostAndPort;
+    private MaintenanceController maintenanceController;
+    private SocketAddressMapper socketAddressMapper;
 
     // Fluent API methods (preferred)
     public Builder clientConfig(JedisClientConfig clientConfig) {
@@ -52,6 +55,21 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
       return this;
     }
 
+    /**
+     * Maintenance controller propagated to the default socket factory (as the controller's post-DNS
+     * address mapper, when it has one) and to the default {@link Connection.Builder} (so each
+     * connection forwards push frames to it). {@code null} disables maintenance for this factory.
+     */
+    Builder maintenanceController(MaintenanceController maintenanceController) {
+      this.maintenanceController = maintenanceController;
+      return this;
+    }
+
+    Builder socketAddressMapper(SocketAddressMapper socketAddressMapper) {
+      this.socketAddressMapper = socketAddressMapper;
+      return this;
+    }
+
     public Connection.Builder getConnectionBuilder() {
       return connectionBuilder;
     }
@@ -70,6 +88,10 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
 
     public ConnectionFactory build() {
       withDefaults();
+      return create();
+    }
+
+    protected ConnectionFactory create() {
       return new ConnectionFactory(this);
     }
 
@@ -90,12 +112,16 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
       if (hostAndPort == null) {
         throw new IllegalStateException("HostAndPort is required when no socketFactory is provided");
       }
-      return new DefaultJedisSocketFactory(hostAndPort, clientConfig);
+      return new DefaultJedisSocketFactory(hostAndPort, clientConfig, socketAddressMapper);
     }
 
     private Connection.Builder createDefaultConnectionBuilder() {
       Connection.Builder connBuilder = cache == null ? Connection.builder() : CacheConnection.builder(cache);
       connBuilder.socketFactory(jedisSocketFactory).clientConfig(clientConfig);
+      if (maintenanceController != null) {
+        connBuilder.maintenanceConfig(maintenanceController.getConfig())
+            .addVisitor(new MaintenanceAwareVisitor(connBuilder, maintenanceController));
+      }
       return connBuilder;
     }
   }
@@ -109,7 +135,6 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
   private final JedisClientConfig clientConfig;
   private Supplier<Connection> objectMaker;
   private Connection.Builder connectionBuilder;
-
   private AuthXEventListener authXEventListener;
 
   public ConnectionFactory(final HostAndPort hostAndPort) {
@@ -208,12 +233,26 @@ public class ConnectionFactory implements PooledObjectFactory<Connection> {
       if (!jedis.isConnected()) {
         return false;
       }
+      if (jedis.isRetired()) {
+        return false; // marked by a maintenance marking pass -> recycle
+      }
       reAuthenticate(jedis);
-      return jedis.ping();
+      // Re-check after the ping: its read may consume a buffered MOVING push whose inline
+      // marking pass marks this connection.
+      return jedis.ping() && !jedis.isRetired();
     } catch (final Exception e) {
       logger.warn("Error while validating pooled Connection object.", e);
       return false;
     }
+  }
+
+  /**
+   * Evicts idle connections that a maintenance marking pass has retired, ahead of the idle-time
+   * rule and validation.
+   */
+  @Override
+  public boolean shouldEvict(Connection jedis, PooledObject<Connection> info) {
+    return jedis.isRetired();
   }
 
   private void reAuthenticate(Connection jedis) {

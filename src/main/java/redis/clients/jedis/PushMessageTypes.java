@@ -108,4 +108,75 @@ public final class PushMessageTypes {
    */
   public static final String SUNSUBSCRIBE = "sunsubscribe";
   public static final byte[] SUNSUBSCRIBE_BYTES = SafeEncoder.encode(SUNSUBSCRIBE);
+
+  // ==================== Maintenance Events ====================
+
+  /**
+   * Endpoint handoff notification — connections to this endpoint must move to the new target within
+   * the grace period, after which the old endpoint hard-disconnects.
+   * <p>
+   * Format: ["MOVING", seq, graceSeconds, "host:port"] — the target is null for the "none" endpoint
+   * type: reconnect to the configured endpoint instead.
+   * @since 8.1
+   */
+  public static final String MOVING = "MOVING";
+  public static final byte[] MOVING_BYTES = SafeEncoder.encode(MOVING);
+
+  /**
+   * Shard migration starts within the lead time — relax client timeouts until MIGRATED.
+   * <p>
+   * Format: ["MIGRATING", seq, startsInSeconds, shard-ids]
+   * @since 8.1
+   */
+  public static final String MIGRATING = "MIGRATING";
+  public static final byte[] MIGRATING_BYTES = SafeEncoder.encode(MIGRATING);
+
+  /**
+   * Shard migration complete — restore client timeouts.
+   * <p>
+   * Format: ["MIGRATED", seq, shard-ids]
+   * @since 8.1
+   */
+  public static final String MIGRATED = "MIGRATED";
+  public static final byte[] MIGRATED_BYTES = SafeEncoder.encode(MIGRATED);
+
+  /**
+   * Shard failover starts within the lead time — relax client timeouts until FAILED_OVER.
+   * <p>
+   * Format: ["FAILING_OVER", seq, startsInSeconds, shard-ids]
+   * @since 8.1
+   */
+  public static final String FAILING_OVER = "FAILING_OVER";
+  public static final byte[] FAILING_OVER_BYTES = SafeEncoder.encode(FAILING_OVER);
+
+  /**
+   * Shard failover complete — restore client timeouts.
+   * <p>
+   * Format: ["FAILED_OVER", seq, shard-ids]
+   * @since 8.1
+   */
+  public static final String FAILED_OVER = "FAILED_OVER";
+  public static final byte[] FAILED_OVER_BYTES = SafeEncoder.encode(FAILED_OVER);
+
+  // ==================== Cluster Maintenance Events ====================
+
+  /**
+   * Cluster slot migration starts — relax client timeouts until the matching SMIGRATED.
+   * <p>
+   * Format: ["SMIGRATING", seq, slots-or-ranges] — comma-separated slots and/or {@code from-to}
+   * ranges, e.g. {@code "123,456,789-1000"}.
+   * @since 8.1
+   */
+  public static final String SMIGRATING = "SMIGRATING";
+  public static final byte[] SMIGRATING_BYTES = SafeEncoder.encode(SMIGRATING);
+
+  /**
+   * Cluster slot migration complete — restore client timeouts and apply the slot delta.
+   * <p>
+   * Format: ["SMIGRATED", seq, [["src-host:port", "dest-host:port", slots-or-ranges], ...]] — each
+   * entry moves the given slots from the source node to the destination node.
+   * @since 8.1
+   */
+  public static final String SMIGRATED = "SMIGRATED";
+  public static final byte[] SMIGRATED_BYTES = SafeEncoder.encode(SMIGRATED);
 }

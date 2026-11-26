@@ -48,8 +48,8 @@ public final class Protocol {
   public static final byte[] BYTES_EQUAL = SafeEncoder.encode("=");
   public static final byte[] BYTES_ASTERISK = SafeEncoder.encode("*");
 
-  public static final byte[] POSITIVE_INFINITY_BYTES = "+inf".getBytes();
-  public static final byte[] NEGATIVE_INFINITY_BYTES = "-inf".getBytes();
+  public static final byte[] POSITIVE_INFINITY_BYTES = SafeEncoder.encode("+inf");
+  public static final byte[] NEGATIVE_INFINITY_BYTES = SafeEncoder.encode("-inf");
 
   static final List<KeyValue> PROTOCOL_EMPTY_MAP = Collections.unmodifiableList(new ArrayList<>(0));
 
@@ -86,29 +86,32 @@ public final class Protocol {
   }
 
   private static void processError(final RedisInputStream is) {
-    String message = is.readLine();
+    throw createError(is.readLine());
+  }
+
+  static JedisDataException createError(String message) {
     // TODO: I'm not sure if this is the best way to do this.
     // Maybe Read only first 5 bytes instead?
     if (message.startsWith(MOVED_PREFIX)) {
       String[] movedInfo = parseTargetHostAndSlot(message);
-      throw new JedisMovedDataException(message, HostAndPort.from(movedInfo[1]), Integer.parseInt(movedInfo[0]));
+      return new JedisMovedDataException(message, HostAndPort.from(movedInfo[1]), Integer.parseInt(movedInfo[0]));
     } else if (message.startsWith(ASK_PREFIX)) {
       String[] askInfo = parseTargetHostAndSlot(message);
-      throw new JedisAskDataException(message, HostAndPort.from(askInfo[1]), Integer.parseInt(askInfo[0]));
+      return new JedisAskDataException(message, HostAndPort.from(askInfo[1]), Integer.parseInt(askInfo[0]));
     } else if (message.startsWith(CLUSTERDOWN_PREFIX)) {
-      throw new JedisClusterException(message);
+      return new JedisClusterException(message);
     } else if (message.startsWith(BUSY_PREFIX)) {
-      throw new JedisBusyException(message);
+      return new JedisBusyException(message);
     } else if (message.startsWith(NOSCRIPT_PREFIX)) {
-      throw new JedisNoScriptException(message);
+      return new JedisNoScriptException(message);
     } else if (message.startsWith(NOAUTH_PREFIX)
         || message.startsWith(WRONGPASS_PREFIX)
         || message.startsWith(NOPERM_PREFIX)) {
-      throw new JedisAccessControlException(message);
+      return new JedisAccessControlException(message);
     } else if (message.startsWith(NOPROTO_PREFIX)) {
-      throw new JedisProtocolNotSupportedException(message);
+      return new JedisProtocolNotSupportedException(message);
     }
-    throw new JedisDataException(message);
+    return new JedisDataException(message);
   }
 
   public static String readErrorLineIfPossible(RedisInputStream is) {
@@ -260,9 +263,19 @@ public final class Protocol {
       default:
         final List<KeyValue> ret = new ArrayList<>(num);
         for (int i = 0; i < num; i++) {
-          ret.add(new KeyValue(process(is, null), process(is,null)));
+          ret.add(new KeyValue(processMapElement(is), processMapElement(is)));
         }
         return ret;
+    }
+  }
+
+  // Like processMultiBulkReply, keep a nested error as the element so the rest of the map is
+  // still read; otherwise its remaining entries are left on the connection.
+  private static Object processMapElement(final RedisInputStream is) {
+    try {
+      return process(is, null);
+    } catch (JedisDataException e) {
+      return e;
     }
   }
 
@@ -351,18 +364,20 @@ public final class Protocol {
     MULTI, DISCARD, EXEC, WATCH, UNWATCH, SORT, SORT_RO, INFO, SHUTDOWN, MONITOR, CONFIG, LCS, //
     GETSET, MGET, SETNX, SETEX, PSETEX, MSETEX, MSET, MSETNX, DECR, DECRBY, INCR, INCRBY, INCRBYFLOAT, INCREX,
     STRLEN, APPEND, SUBSTR, // <-- string
-    SETBIT, GETBIT, BITPOS, SETRANGE, GETRANGE, BITCOUNT, BITOP, BITFIELD, BITFIELD_RO, // <-- bit (string)
+    SETBIT, GETBIT, BITPOS, SETRANGE, GETRANGE, BITCOUNT, BITOP, BITFIELD, BITFIELD_RO, BITRANGEINTARRAY, // <-- bit (string)
     HSET, HGET, HSETNX, HMSET, HMGET, HINCRBY, HEXISTS, HDEL, HLEN, HKEYS, HVALS, HGETALL, HSTRLEN,
     HEXPIRE, HPEXPIRE, HEXPIREAT, HPEXPIREAT, HTTL, HPTTL, HEXPIRETIME, HPEXPIRETIME, HPERSIST,
     HRANDFIELD, HINCRBYFLOAT, HSETEX, HGETEX, HGETDEL, HIMPORT, // <-- hash
     RPUSH, LPUSH, LLEN, LRANGE, LTRIM, LINDEX, LSET, LREM, LPOP, RPOP, BLPOP, BRPOP, LINSERT, LPOS,
     RPOPLPUSH, BRPOPLPUSH, BLMOVE, LMOVE, LMOVEM, BLMOVEM, LMPOP, BLMPOP, LPUSHX, RPUSHX, // <-- list
     SADD, SMEMBERS, SREM, SPOP, SMOVE, SCARD, SRANDMEMBER, SINTER, SINTERSTORE, SUNION, SUNIONSTORE,
-    SDIFF, SDIFFSTORE, SISMEMBER, SMISMEMBER, SINTERCARD, SUNIONCARD, SDIFFCARD, // <-- set
+    SDIFF, SDIFFSTORE, SISMEMBER, SMISMEMBER, SINTERCARD, SUNIONCARD, SDIFFCARD,
+    SEXPIRE, SPEXPIRE, SEXPIREAT, SPEXPIREAT, STTL, SPTTL, SEXPIRETIME, SPEXPIRETIME, SPERSIST, SADDEX, // <-- set
     ZADD, ZDIFF, ZDIFFSTORE, ZRANGE, ZREM, ZINCRBY, ZRANK, ZREVRANK, ZREVRANGE, ZRANDMEMBER, ZCARD,
     ZSCORE, ZPOPMAX, ZPOPMIN, ZCOUNT, ZUNION, ZUNIONSTORE, ZINTER, ZINTERSTORE, ZRANGEBYSCORE,
     ZREVRANGEBYSCORE, ZREMRANGEBYRANK, ZREMRANGEBYSCORE, ZLEXCOUNT, ZRANGEBYLEX, ZREVRANGEBYLEX,
-    ZREMRANGEBYLEX, ZMSCORE, ZRANGESTORE, ZINTERCARD, ZMPOP, BZMPOP, BZPOPMIN, BZPOPMAX, // <-- zset
+    ZREMRANGEBYLEX, ZMSCORE, ZRANGESTORE, ZINTERCARD, ZMPOP, BZMPOP, BZPOPMIN, BZPOPMAX,
+    ZMOVE, BZMOVE, ZMOVEMEMBER, // <-- zset
     GEOADD, GEODIST, GEOHASH, GEOPOS, GEORADIUS, GEORADIUS_RO, GEOSEARCH, GEOSEARCHSTORE,
     GEORADIUSBYMEMBER, GEORADIUSBYMEMBER_RO, // <-- geo
     PFADD, PFCOUNT, PFMERGE, // <-- hyper log log
@@ -373,7 +388,7 @@ public final class Protocol {
     SSUBSCRIBE, SUNSUBSCRIBE, SPUBLISH, // <-- pub sub
     SAVE, BGSAVE, BGREWRITEAOF, LASTSAVE, PERSIST, ROLE, FAILOVER, SLOWLOG, OBJECT, CLIENT, TIME,
     SCAN, HSCAN, SSCAN, ZSCAN, WAIT, CLUSTER, ASKING, READONLY, READWRITE, SLAVEOF, REPLICAOF, COPY,
-    SENTINEL, MODULE, ACL, TOUCH, MEMORY, LOLWUT, COMMAND, RESET, LATENCY, WAITAOF, HOTKEYS,
+    SENTINEL, MODULE, ACL, TOUCH, MEMORY, LOLWUT, COMMAND, RESET, LATENCY, WAITAOF, HOTKEYS, BLESS,
     VADD, VSIM, VDIM, VCARD, VISMEMBER, VEMB, VREM, VLINKS, VRANDMEMBER, VGETATTR, VSETATTR, VINFO, // <-- vector set
     ARCOUNT, ARDEL, ARDELRANGE, ARGET, ARGETRANGE, ARGREP, ARINFO, ARINSERT, ARLASTITEMS, ARLEN,
     ARMGET, ARMSET, ARNEXT, AROP, ARRING, ARSCAN, ARSEEK, ARSET; // <-- array
@@ -420,8 +435,14 @@ public final class Protocol {
     EXACTLY,
     // SUNIONCARD keywords
     APPROX,
+    // Set member expiration keywords
+    MEMBERS, MNX, MXX,
     // HIMPORT keywords (SET reuses the existing SET keyword above)
-    PREPARE, DISCARD;
+    PREPARE, DISCARD,
+    // BITRANGEINTARRAY keywords
+    ZEROS,
+    // BLESS keywords (SET, GET and COUNT reuse the existing keywords above)
+    CLEAR, SCAN;
 
     private final byte[] raw;
 
